@@ -1,0 +1,126 @@
+# FreeSWITCH PBX Project - Git Ignore
+
+# ===== DOCKER & CONTAINERS =====
+# Docker volumes and runtime data
+configs/freeswitch-logs/
+configs/freeswitch-sounds/
+configs/freeswitch-data/
+
+# ===== FREESWITCH RUNTIME =====
+# FreeSWITCH runtime files
+*.log
+*.pid
+*.lock
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# FreeSWITCH recordings and voicemails
+recordings/
+voicemail/
+storage/
+
+# ===== DATABASE =====
+# PostgreSQL data
+postgres-data/
+*.sql.backup
+*.dump
+
+# ===== CACHE & SESSIONS =====
+# Redis data
+redis-data/
+
+# ===== MESSAGE QUEUE =====
+# RabbitMQ data
+rabbitmq-data/
+
+# ===== MONITORING =====
+# Prometheus data
+prometheus-data/
+# Grafana data
+grafana-data/
+# Nginx logs
+nginx-logs/
+
+# ===== NODE.JS / NESTJS =====
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Build outputs
+dist/
+build/
+
+# ===== ENVIRONMENT & SECRETS =====
+# Environment files (keep .env.example)
+.env
+.env.production
+.env.staging
+.env.development
+
+# Secrets and certificates
+*.key
+*.crt
+*.pem
+*.p12
+*.pfx
+secrets/
+ssl/
+
+# ===== DEVELOPMENT =====
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# ===== BACKUP & TEMP =====
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
+
+# Backup files (keep structured backups)
+*.backup
+*.bak
+*.old
+
+# ===== TESTING =====
+# Test coverage
+coverage/
+.nyc_output/
+
+# ===== KEEP THESE FILES =====
+# Keep configuration templates and examples
+!configs/freeswitch/**/*.xml
+!configs/freeswitch/**/*.conf
+!.env.example
+!README.md
+!docker-compose.yml
+!backups/working-config-*/
+
+# ===== DOCKER COMPOSE OVERRIDES =====
+# Keep main docker-compose.yml but ignore overrides
+docker-compose.override.yml
+docker-compose.local.yml
+docker-compose.dev.yml
