@@ -119,6 +119,10 @@ coverage/
 !docker-compose.yml
 !backups/working-config-*/
 
+# ===== EXCLUDE OLD BACKUP FOLDERS =====
+# Exclude temporary backup folders (keep only structured backups/)
+backup/
+
 # ===== DOCKER COMPOSE OVERRIDES =====
 # Keep main docker-compose.yml but ignore overrides
 docker-compose.override.yml
