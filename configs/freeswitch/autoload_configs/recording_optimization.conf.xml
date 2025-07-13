@@ -1,0 +1,51 @@
+<!--
+  Recording Optimization Configuration
+  Optimizes FreeSWITCH for high-volume call recording
+  
+  PRODUCTION OPTIMIZATION SETTINGS
+-->
+<configuration name="recording_optimization.conf" description="Recording Optimization Settings">
+  <settings>
+    <!-- Recording Performance Settings -->
+    <param name="recording-thread-pool-size" value="4"/>
+    <param name="recording-buffer-size" value="8192"/>
+    <param name="recording-queue-size" value="1000"/>
+    
+    <!-- File I/O Optimization -->
+    <param name="recording-write-buffer-size" value="65536"/>
+    <param name="recording-sync-interval" value="5"/>
+    <param name="recording-compression-level" value="6"/>
+    
+    <!-- Memory Management -->
+    <param name="recording-memory-pool-size" value="16MB"/>
+    <param name="recording-max-memory-usage" value="256MB"/>
+    <param name="recording-garbage-collection-interval" value="30"/>
+    
+    <!-- Storage Management -->
+    <param name="recording-storage-path" value="$${recordings_dir}"/>
+    <param name="recording-temp-path" value="$${temp_dir}/recordings"/>
+    <param name="recording-archive-path" value="$${recordings_dir}/archive"/>
+    
+    <!-- Quality Settings -->
+    <param name="recording-default-format" value="wav"/>
+    <param name="recording-default-rate" value="8000"/>
+    <param name="recording-default-channels" value="2"/>
+    <param name="recording-bit-depth" value="16"/>
+    
+    <!-- Monitoring and Logging -->
+    <param name="recording-log-level" value="INFO"/>
+    <param name="recording-stats-interval" value="60"/>
+    <param name="recording-health-check-interval" value="30"/>
+    
+    <!-- Error Handling -->
+    <param name="recording-retry-attempts" value="3"/>
+    <param name="recording-retry-delay" value="1000"/>
+    <param name="recording-error-threshold" value="10"/>
+    
+    <!-- Cleanup and Maintenance -->
+    <param name="recording-cleanup-enabled" value="true"/>
+    <param name="recording-cleanup-interval" value="3600"/>
+    <param name="recording-retention-days" value="90"/>
+    <param name="recording-archive-old-files" value="true"/>
+  </settings>
+</configuration>
