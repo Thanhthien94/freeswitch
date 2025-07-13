@@ -271,8 +271,12 @@
 	<action application="bind_meta_app" data="3 b s execute_extension::cf XML features"/>
 	<action application="bind_meta_app" data="4 b s execute_extension::att_xfer XML features"/>
 
-	<!-- Simple automatic recording -->
-	<action application="set" data="RECORD_STEREO=true"/>
+	<!-- Simple automatic recording with improved quality -->
+	<!-- Use mono recording for better quality and smaller files -->
+	<action application="set" data="RECORD_STEREO=false"/>
+	<!-- Set recording sample rate to 8kHz for better SIP compatibility -->
+	<action application="set" data="record_sample_rate=8000"/>
+	<!-- Start recording when call is answered -->
 	<action application="export" data="execute_on_answer=record_session $${recordings_dir}/${strftime(%Y%m%d-%H%M%S)}_${caller_id_number}_${destination_number}.wav"/>
 
 	<action application="set" data="ringback=${us-ring}"/>
