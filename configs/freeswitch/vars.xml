@@ -334,30 +334,6 @@
   <X-PRE-PROCESS cmd="set" data="default_areacode=918"/>
   <X-PRE-PROCESS cmd="set" data="default_country=US"/>
 
-  <!-- Call Recording Configuration -->
-  <!-- TESTING: Set global_recording_enabled=true for automatic recording of ALL calls -->
-  <!-- PRODUCTION: Set global_recording_enabled=false and selective_recording_enabled=true -->
-  <X-PRE-PROCESS cmd="set" data="global_recording_enabled=true"/>
-  <X-PRE-PROCESS cmd="set" data="selective_recording_enabled=false"/>
-
-  <!-- Alternative Recording Methods (choose one) -->
-  <X-PRE-PROCESS cmd="set" data="bridge_recording_enabled=false"/>
-  <X-PRE-PROCESS cmd="set" data="media_bug_recording_enabled=false"/>
-  <X-PRE-PROCESS cmd="set" data="uuid_recording_enabled=false"/>
-
-  <!-- Recording Quality Settings -->
-  <X-PRE-PROCESS cmd="set" data="recording_format=wav"/>
-  <X-PRE-PROCESS cmd="set" data="recording_rate=8000"/>
-  <X-PRE-PROCESS cmd="set" data="recording_channels=2"/>
-
-  <!-- Recording Storage Settings -->
-  <X-PRE-PROCESS cmd="set" data="recording_max_file_size=100MB"/>
-  <X-PRE-PROCESS cmd="set" data="recording_max_duration=7200"/>
-
-  <!-- Recording Retention Policy -->
-  <X-PRE-PROCESS cmd="set" data="recording_retention_days=90"/>
-  <X-PRE-PROCESS cmd="set" data="recording_archive_enabled=true"/>
-
   <!-- if false or undefined, the destination number is included in presence NOTIFY dm:note.
        if true, the destination number is not included -->
   <X-PRE-PROCESS cmd="set" data="presence_privacy=false"/>

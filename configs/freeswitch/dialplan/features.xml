@@ -55,22 +55,5 @@
       </condition>
     </extension>
 
-    <!-- Recording Control Features -->
-    <extension name="toggle_recording">
-      <condition field="destination_number" expression="^toggle_recording$">
-        <action application="log" data="INFO Recording toggle requested"/>
-        <action application="eval" data="${cond(${recording_active} == true ? stop_record_session : record_session $${recordings_dir}/manual_${strftime(%Y%m%d-%H%M%S)}_${caller_id_number}_${destination_number}.wav)}"/>
-        <action application="playback" data="tone_stream://%(200,100,800);%(200,100,1000)"/>
-      </condition>
-    </extension>
-
-    <extension name="pause_recording">
-      <condition field="destination_number" expression="^pause_recording$">
-        <action application="log" data="INFO Recording pause/resume requested"/>
-        <action application="eval" data="${cond(${recording_paused} == true ? resume_record_session : pause_record_session)}"/>
-        <action application="playback" data="tone_stream://%(100,100,600);%(100,100,600)"/>
-      </condition>
-    </extension>
-
   </context>
 </include>

@@ -4,7 +4,7 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import { WinstonModule } from 'nest-winston';
 import * as winston from 'winston';
-import * as helmet from 'helmet';
+// import * as helmet from 'helmet';
 import * as compression from 'compression';
 import { AppModule } from './app.module';
 
@@ -43,8 +43,10 @@ async function bootstrap() {
 
   const configService = app.get(ConfigService);
 
-  // Security middleware
-  app.use(helmet.default());
+  // Security middleware - Disabled for CORS testing
+  // app.use(helmet.default({
+  //   crossOriginResourcePolicy: false,
+  // }));
   app.use(compression());
 
   // Global validation pipe
@@ -61,8 +63,15 @@ async function bootstrap() {
 
   // CORS configuration
   app.enableCors({
-    origin: configService.get('CORS_ORIGIN', 'http://localhost:3000').split(','),
-    credentials: configService.get('CORS_CREDENTIALS', true),
+    origin: [
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'http://localhost:3002',
+      'http://127.0.0.1:3000',
+      'http://127.0.0.1:3001',
+      'http://127.0.0.1:3002'
+    ],
+    credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   });

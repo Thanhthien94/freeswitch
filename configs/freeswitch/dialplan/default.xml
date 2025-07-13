@@ -270,6 +270,11 @@
 	<action application="bind_meta_app" data="2 b s record_session::$${recordings_dir}/${caller_id_number}.${strftime(%Y-%m-%d-%H-%M-%S)}.wav"/>
 	<action application="bind_meta_app" data="3 b s execute_extension::cf XML features"/>
 	<action application="bind_meta_app" data="4 b s execute_extension::att_xfer XML features"/>
+
+	<!-- Simple automatic recording -->
+	<action application="set" data="RECORD_STEREO=true"/>
+	<action application="export" data="execute_on_answer=record_session $${recordings_dir}/${strftime(%Y%m%d-%H%M%S)}_${caller_id_number}_${destination_number}.wav"/>
+
 	<action application="set" data="ringback=${us-ring}"/>
 	<action application="set" data="transfer_ringback=$${hold_music}"/>
 	<action application="set" data="call_timeout=30"/>

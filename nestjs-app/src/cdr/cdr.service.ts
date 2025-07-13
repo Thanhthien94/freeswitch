@@ -4,6 +4,8 @@ import { Repository, Between, FindManyOptions } from 'typeorm';
 import { CallDetailRecord, CallDirection, CallStatus } from './cdr.entity';
 import { CallEvent } from './call-event.entity';
 import { CallParticipant, ParticipantType } from './call-participant.entity';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class CdrService {
@@ -102,13 +104,34 @@ export class CdrService {
         cdr.billableDuration = cdr.talkDuration; // Can be customized based on billing rules
       }
 
-      // Recording information - Enhanced with FreeSWITCH variables
-      cdr.recordingEnabled = eventData.recording_enabled === 'true' ||
-                            eventData.record_session === 'true' ||
-                            eventData.variable_record_session === 'true' || false;
-      cdr.recordingFilePath = eventData.recording_file_path ||
-                             eventData.variable_recording_file_path ||
-                             eventData.variable_record_name;
+      // Recording information - Enhanced with FreeSWITCH variables and file detection
+      this.logger.log(`Processing recording detection for call ${callUuid}`);
+
+      const recordingFromEvent = eventData.recording_enabled === 'true' ||
+                                 eventData.record_session === 'true' ||
+                                 eventData.variable_record_session === 'true' || false;
+
+      const recordingFilePathFromEvent = eventData.recording_file_path ||
+                                        eventData.variable_recording_file_path ||
+                                        eventData.variable_record_name;
+
+      this.logger.log(`Recording from event: enabled=${recordingFromEvent}, path=${recordingFilePathFromEvent}`);
+
+      // Detect recording file if not provided by event
+      const recordingDetection = await this.detectRecordingFile(
+        callUuid,
+        cdr.callerIdNumber,
+        cdr.destinationNumber,
+        cdr.callCreatedAt
+      );
+
+      this.logger.log(`Recording detection result: enabled=${recordingDetection.enabled}, path=${recordingDetection.filePath}`);
+
+      // Use detected recording info if available, otherwise use event data
+      cdr.recordingEnabled = recordingDetection.enabled || recordingFromEvent;
+      cdr.recordingFilePath = recordingDetection.filePath || recordingFilePathFromEvent;
+
+      this.logger.log(`Final recording info: enabled=${cdr.recordingEnabled}, path=${cdr.recordingFilePath}`);
 
       // Quality metrics (if available) with validation
       // Convert FreeSWITCH quality percentage (0-100) to MOS Score (1.0-5.0)
@@ -449,6 +472,44 @@ export class CdrService {
     }
 
     return result;
+  }
+
+  // Recording detection methods
+  private async detectRecordingFile(callUuid: string, callerNumber: string, destinationNumber: string, callCreatedAt: Date): Promise<{ enabled: boolean; filePath: string | null; fileSize?: number }> {
+    try {
+      const recordingsDir = process.env.RECORDINGS_DIR || '/var/lib/freeswitch/recordings';
+
+      // Generate possible recording file patterns
+      const timestamp = callCreatedAt.toISOString().replace(/[-:]/g, '').replace('T', '-').substring(0, 15); // YYYYMMDD-HHMMSS
+      const patterns = [
+        `${timestamp}_${callerNumber}_${destinationNumber}.wav`,
+        `${timestamp}_${callerNumber}_${destinationNumber}_${callUuid}.wav`,
+        `${callerNumber}_${destinationNumber}_${callUuid}.wav`,
+        `${callUuid}.wav`
+      ];
+
+      for (const pattern of patterns) {
+        const filePath = path.join(recordingsDir, pattern);
+        try {
+          if (fs.existsSync(filePath)) {
+            const stats = fs.statSync(filePath);
+            this.logger.log(`Recording file found: ${pattern} (${stats.size} bytes)`);
+            return {
+              enabled: true,
+              filePath: pattern, // Store relative path
+              fileSize: stats.size
+            };
+          }
+        } catch (error) {
+          this.logger.warn(`Error checking recording file ${pattern}: ${error.message}`);
+        }
+      }
+
+      return { enabled: false, filePath: null };
+    } catch (error) {
+      this.logger.error(`Error detecting recording file: ${error.message}`, error.stack);
+      return { enabled: false, filePath: null };
+    }
   }
 
   // Event logging methods

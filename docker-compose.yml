@@ -8,6 +8,11 @@ services:
     container_name: freeswitch-core
     hostname: freeswitch
     restart: unless-stopped
+    cap_add:
+      - SYS_NICE
+      - SYS_RESOURCE
+    security_opt:
+      - seccomp:unconfined
     ports:
       # SIP signaling
       - "5060:5060/udp"
@@ -20,7 +25,7 @@ services:
       - ./configs/freeswitch:/etc/freeswitch:rw
       - ./configs/freeswitch-logs:/var/log/freeswitch:rw
       - ./configs/freeswitch-sounds:/usr/share/freeswitch/sounds:rw
-      - ./configs/freeswitch-recordings:/var/lib/freeswitch/recordings:rw
+      - ./recordings:/var/lib/freeswitch/recordings:rw
       - freeswitch-data:/var/lib/freeswitch
     environment:
       - FREESWITCH_DOMAIN=${FREESWITCH_DOMAIN:-localhost}
@@ -50,6 +55,7 @@ services:
       - "3000:3000"
     volumes:
       - ./nestjs-app:/app
+      - ./recordings:/var/lib/freeswitch/recordings:ro
       - /app/node_modules
     environment:
       - NODE_ENV=${NODE_ENV:-development}
@@ -65,6 +71,7 @@ services:
       - FREESWITCH_ESL_PORT=8021
       - FREESWITCH_ESL_PASSWORD=${FREESWITCH_ESL_PASSWORD:-ClueCon}
       - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key}
+      - RECORDINGS_PATH=/var/lib/freeswitch/recordings
     networks:
       - pbx-network
     depends_on:
@@ -72,6 +79,31 @@ services:
       - redis
       - rabbitmq
       - freeswitch
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: frontend-ui
+    restart: unless-stopped
+    ports:
+      - "3002:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - NEXT_PUBLIC_API_URL=http://nestjs-api:3000/api/v1
+      - BACKEND_API_URL=http://nestjs-api:3000/api/v1
+      - API_URL=http://nestjs-api:3000/api/v1
+      - SESSION_SECRET=your-super-secret-session-key-change-in-production
+      - NEXTAUTH_URL=http://localhost:3002
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-your-nextauth-secret}
+    networks:
+      - pbx-network
+    depends_on:
+      - nestjs-api
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
       interval: 30s

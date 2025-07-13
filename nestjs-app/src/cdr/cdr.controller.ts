@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CdrService } from './cdr.service';
 
@@ -88,5 +88,33 @@ export class CdrController {
   @ApiResponse({ status: 404, description: 'CDR record not found' })
   async getCdrRecord(@Param('uuid') uuid: string) {
     return this.cdrService.getCdrRecord(uuid);
+  }
+
+  @Post('webhook')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Webhook endpoint for FreeSWITCH CDR data' })
+  @ApiResponse({ status: 200, description: 'CDR data processed successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid CDR data' })
+  async processCdrWebhook(@Body() cdrData: any) {
+    try {
+      // Log incoming CDR data for debugging
+      console.log('Received CDR webhook data:', JSON.stringify(cdrData, null, 2));
+
+      // Process the CDR data
+      const result = await this.cdrService.createCdrFromEvent(cdrData);
+
+      return {
+        success: true,
+        message: 'CDR data processed successfully',
+        data: result
+      };
+    } catch (error) {
+      console.error('Error processing CDR webhook:', error);
+      return {
+        success: false,
+        message: 'Failed to process CDR data',
+        error: error.message
+      };
+    }
   }
 }
