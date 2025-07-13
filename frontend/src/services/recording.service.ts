@@ -1,4 +1,5 @@
 // Modern NextJS 15 Pattern - Use Route Handlers instead of direct API calls
+import { api } from '@/lib/api-client';
 
 // Recording Types
 export interface Recording {
@@ -46,7 +47,7 @@ export interface RecordingListParams {
 // Recording Service - Modern NextJS 15 Pattern
 export const recordingService = {
   // Get recordings list - Use Route Handler
-  getRecordingsList: async (params: RecordingListParams = {}) => {
+  getRecordingsList: async (params: RecordingListParams = {}): Promise<{ data: Recording[], pagination: any }> => {
     const queryParams = new URLSearchParams();
 
     Object.entries(params).forEach(([key, value]) => {
@@ -55,16 +56,8 @@ export const recordingService = {
       }
     });
 
-    const response = await fetch(`/api/recordings?${queryParams.toString()}`, {
-      method: 'GET',
-      credentials: 'include',
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch recordings');
-    }
-
-    return response.json();
+    const response = await api.get<{ data: Recording[], pagination: any }>(`/recordings?${queryParams.toString()}`);
+    return response.data;
   },
 
   // Get recording info by call UUID

@@ -12,14 +12,12 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Bell, LogOut, Settings, User } from 'lucide-react';
-import { logout } from '@/app/actions/auth';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/hooks/useAuth';
 
 export function Header() {
-  // Mock user for now - will be replaced with server-side user data
-  const user = {
-    name: 'Admin User',
-    email: 'admin@example.com'
-  };
+  const router = useRouter();
+  const { user, logout: authLogout } = useAuth();
 
   return (
     <header className="flex h-16 items-center justify-between border-b px-6">
@@ -28,7 +26,7 @@ export function Header() {
         <div>
           <h1 className="text-xl font-semibold">Dashboard</h1>
           <p className="text-sm text-muted-foreground">
-            Welcome back, {user?.name || 'User'}
+            Welcome back, {user?.displayName || user?.username || 'User'}
           </p>
         </div>
       </div>
@@ -45,7 +43,7 @@ export function Header() {
             <Button variant="ghost" className="relative h-8 w-8 rounded-full">
               <Avatar className="h-8 w-8">
                 <AvatarFallback>
-                  {user?.name?.charAt(0).toUpperCase() || 'U'}
+                  {user?.displayName?.charAt(0).toUpperCase() || user?.username?.charAt(0).toUpperCase() || 'U'}
                 </AvatarFallback>
               </Avatar>
             </Button>
@@ -54,7 +52,7 @@ export function Header() {
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
                 <p className="text-sm font-medium leading-none">
-                  {user?.name || 'User'}
+                  {user?.displayName || user?.username || 'User'}
                 </p>
                 <p className="text-xs leading-none text-muted-foreground">
                   {user?.email || 'user@example.com'}
@@ -71,13 +69,12 @@ export function Header() {
               <span>Settings</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <form action={logout}>
-                <button type="submit" className="flex items-center w-full">
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Log out</span>
-                </button>
-              </form>
+            <DropdownMenuItem onClick={async () => {
+              await authLogout();
+              router.push('/login');
+            }}>
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Log out</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

@@ -9,6 +9,7 @@ import { cache } from 'react'
 export interface SessionPayload {
   userId: string
   expiresAt: Date
+  [key: string]: unknown
 }
 
 export interface User {
@@ -37,7 +38,7 @@ export async function decrypt(session: string | undefined = '') {
       algorithms: ['HS256'],
     })
     return payload as SessionPayload
-  } catch (error) {
+  } catch {
     console.log('Failed to verify session')
     return null
   }
@@ -112,7 +113,7 @@ export const getUser = cache(async (): Promise<User | null> => {
     
     const user = await response.json()
     return user.data
-  } catch (error) {
+  } catch {
     console.log('Failed to fetch user')
     return null
   }

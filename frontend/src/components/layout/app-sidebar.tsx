@@ -1,36 +1,42 @@
 'use client';
 
-import { 
-  Sidebar, 
-  SidebarContent, 
-  SidebarGroup, 
-  SidebarGroupContent, 
-  SidebarGroupLabel, 
-  SidebarMenu, 
-  SidebarMenuButton, 
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
   SidebarMenuItem,
   SidebarHeader,
   SidebarFooter
 } from '@/components/ui/sidebar';
-import { 
-  Home, 
-  Phone, 
-  PhoneCall, 
-  Mic, 
-  Users, 
-  Settings, 
-  BarChart3, 
-  Shield, 
-  Database,
+import {
+  Home,
+  Phone,
+  PhoneCall,
+  Mic,
+  Users,
+  Settings,
+  BarChart3,
+  Shield,
   Headphones,
   FileText,
-  Activity
+  Activity,
+  DollarSign,
+  Monitor,
+  Lock,
+  Building
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/hooks/useAuth';
 
-// Navigation items with permissions
+import { PermissionGate } from '@/components/auth/PermissionGate';
+
+// Navigation items with permissions and role requirements
 const navigationItems = [
   {
     title: 'Overview',
@@ -39,7 +45,7 @@ const navigationItems = [
         title: 'Dashboard',
         url: '/dashboard',
         icon: Home,
-        permission: 'dashboard:read',
+        permission: 'calls:read', // Basic permission for dashboard access
       },
       {
         title: 'Live Calls',
@@ -53,16 +59,18 @@ const navigationItems = [
     title: 'Call Management',
     items: [
       {
-        title: 'Call History',
+        title: 'Call History (CDR)',
         url: '/dashboard/cdr',
         icon: Phone,
         permission: 'cdr:read',
+        requireBusinessHours: true,
       },
       {
         title: 'Recordings',
         url: '/dashboard/recordings',
         icon: Mic,
         permission: 'recordings:read',
+        requireMinimumClearance: 'HIGH',
       },
       {
         title: 'Call Analytics',
@@ -73,54 +81,112 @@ const navigationItems = [
     ],
   },
   {
-    title: 'System',
+    title: 'User Management',
     items: [
       {
         title: 'Users',
         url: '/dashboard/users',
         icon: Users,
         permission: 'users:read',
+        requireAnyRole: ['SuperAdmin', 'DomainAdmin', 'DepartmentManager', 'Supervisor'],
       },
       {
         title: 'Extensions',
         url: '/dashboard/extensions',
         icon: Headphones,
         permission: 'extensions:read',
+        requireAnyRole: ['SuperAdmin', 'DomainAdmin', 'TechnicalManager', 'NetworkAdmin', 'PBXAdmin'],
       },
+    ],
+  },
+  {
+    title: 'Reports & Analytics',
+    items: [
       {
         title: 'Reports',
         url: '/dashboard/reports',
         icon: FileText,
         permission: 'reports:read',
       },
+      {
+        title: 'Advanced Analytics',
+        url: '/dashboard/analytics/advanced',
+        icon: BarChart3,
+        permission: 'analytics:execute',
+        requireAnyRole: ['SuperAdmin', 'DomainAdmin', 'DepartmentManager', 'ReportAnalyst'],
+      },
     ],
   },
   {
-    title: 'Administration',
+    title: 'Financial',
+    items: [
+      {
+        title: 'Billing',
+        url: '/dashboard/billing',
+        icon: DollarSign,
+        permission: 'billing:read',
+        requireMinimumClearance: 'HIGH',
+        requireBusinessHours: true,
+        requireAnyRole: ['SuperAdmin', 'BillingAdmin', 'DomainAdmin'],
+      },
+    ],
+  },
+  {
+    title: 'System Administration',
     items: [
       {
         title: 'System Status',
         url: '/dashboard/status',
         icon: Activity,
-        permission: 'system:read',
+        permission: 'monitoring:read',
+        requireAnyRole: ['SuperAdmin', 'SystemAdmin', 'TechnicalManager'],
       },
       {
-        title: 'Database',
-        url: '/dashboard/database',
-        icon: Database,
-        permission: 'database:read',
+        title: 'Configuration',
+        url: '/dashboard/config',
+        icon: Settings,
+        permission: 'config:read',
+        requireAnyRole: ['SuperAdmin', 'SystemAdmin', 'TechnicalManager'],
       },
       {
-        title: 'Security',
+        title: 'Monitoring',
+        url: '/dashboard/monitoring',
+        icon: Monitor,
+        permission: 'monitoring:execute',
+        requireAnyRole: ['SuperAdmin', 'SystemAdmin', 'TechnicalManager'],
+      },
+    ],
+  },
+  {
+    title: 'Security & Compliance',
+    items: [
+      {
+        title: 'Security Dashboard',
         url: '/dashboard/security',
         icon: Shield,
         permission: 'security:read',
+        requireMinimumClearance: 'HIGH',
+        requireAnyRole: ['SuperAdmin', 'SecurityAdmin', 'DomainAdmin'],
       },
       {
-        title: 'Settings',
-        url: '/dashboard/settings',
-        icon: Settings,
-        permission: 'settings:read',
+        title: 'Audit Logs',
+        url: '/dashboard/audit',
+        icon: Lock,
+        permission: 'security:read',
+        requireMinimumClearance: 'HIGH',
+        requireAnyRole: ['SuperAdmin', 'SecurityAdmin', 'DomainAdmin'],
+      },
+    ],
+  },
+  {
+    title: 'Domain Management',
+    items: [
+      {
+        title: 'Domains',
+        url: '/dashboard/domains',
+        icon: Building,
+        permission: 'domain:read',
+        requireAnyRole: ['SuperAdmin', 'DomainAdmin'],
       },
     ],
   },
@@ -128,18 +194,7 @@ const navigationItems = [
 
 export function AppSidebar() {
   const pathname = usePathname();
-
-  // Mock user for now - will be replaced with server-side user data
-  const user = {
-    name: 'Admin User',
-    role: 'admin'
-  };
-
-  // Simple permission check - will be replaced with server-side RBAC
-  const canAccess = (resource: string, action: string) => {
-    // For now, admin can access everything
-    return user.role === 'admin';
-  };
+  const { user } = useAuth();
 
   return (
     <Sidebar>
@@ -159,25 +214,32 @@ export function AppSidebar() {
             <SidebarGroupLabel>{group.title}</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {group.items
-                  .filter((item) => canAccess(item.permission.split(':')[0], item.permission.split(':')[1]))
-                  .map((item) => (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton
-                        asChild
-                        isActive={pathname === item.url}
-                        className={cn(
-                          'w-full justify-start',
-                          pathname === item.url && 'bg-accent text-accent-foreground'
-                        )}
-                      >
-                        <Link href={item.url}>
-                          <item.icon className="h-4 w-4" />
-                          <span>{item.title}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
+                {group.items.map((item) => {
+                  const isActive = pathname === item.url;
+
+                  return (
+                    <PermissionGate
+                      key={item.title}
+                      requirePermissions={item.permission ? [item.permission] : undefined}
+                    >
+                      <SidebarMenuItem>
+                        <SidebarMenuButton
+                          asChild
+                          isActive={isActive}
+                          className={cn(
+                            'w-full justify-start',
+                            isActive && 'bg-accent text-accent-foreground'
+                          )}
+                        >
+                          <Link href={item.url}>
+                            <item.icon className="h-4 w-4" />
+                            <span>{item.title}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    </PermissionGate>
+                  );
+                })}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
@@ -187,11 +249,11 @@ export function AppSidebar() {
       <SidebarFooter className="border-t p-4">
         <div className="flex items-center gap-2 text-sm">
           <div className="h-8 w-8 rounded-full bg-accent flex items-center justify-center">
-            {user?.name?.charAt(0).toUpperCase() || 'U'}
+            {user?.displayName?.charAt(0).toUpperCase() || user?.username?.charAt(0).toUpperCase() || 'U'}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-medium truncate">{user?.name || 'User'}</p>
-            <p className="text-muted-foreground truncate">{user?.role || 'user'}</p>
+            <p className="font-medium truncate">{user?.displayName || user?.username || 'User'}</p>
+            <p className="text-muted-foreground truncate">{user?.primaryRole || 'user'}</p>
           </div>
         </div>
       </SidebarFooter>

@@ -11,6 +11,9 @@ RUN npm install
 # Copy source code
 COPY . .
 
+# Copy Docker environment file
+COPY .env.docker .env.local
+
 # Expose port
 EXPOSE 3000
 

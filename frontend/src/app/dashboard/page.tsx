@@ -3,8 +3,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Phone, PhoneCall, Mic, Users, Activity, TrendingUp } from 'lucide-react';
-import { cdrService } from '@/services/cdr.service';
+import { Phone, PhoneCall, Mic, Activity, TrendingUp } from 'lucide-react';
+import { cdrService, CallDetailRecord } from '@/services/cdr.service';
 import { recordingService } from '@/services/recording.service';
 
 export default function DashboardPage() {
@@ -115,7 +115,7 @@ export default function DashboardPage() {
               </div>
             ) : (
               <div className="space-y-4">
-                {recentCalls?.data?.slice(0, 5).map((call) => (
+                {recentCalls?.data?.slice(0, 5).map((call: CallDetailRecord) => (
                   <div key={call.id} className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
                       <Phone className="h-4 w-4" />

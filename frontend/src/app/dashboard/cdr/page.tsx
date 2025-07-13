@@ -8,8 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Phone, Download, Search, Filter } from 'lucide-react';
-import { cdrService, CdrListParams } from '@/services/cdr.service';
+import { Download, Filter, Mic } from 'lucide-react';
+import { cdrService, CdrListParams, CallDetailRecord } from '@/services/cdr.service';
 import { format } from 'date-fns';
 
 export default function CdrPage() {
@@ -18,12 +18,12 @@ export default function CdrPage() {
     limit: 20,
   });
 
-  const { data: cdrData, isLoading, refetch } = useQuery({
+  const { data: cdrData, isLoading } = useQuery({
     queryKey: ['cdr-list', filters],
     queryFn: () => cdrService.getCdrList(filters),
   });
 
-  const handleFilterChange = (key: keyof CdrListParams, value: any) => {
+  const handleFilterChange = (key: keyof CdrListParams, value: string | number) => {
     setFilters(prev => ({
       ...prev,
       [key]: value,
@@ -91,14 +91,14 @@ export default function CdrPage() {
             </div>
             <div>
               <Select
-                value={filters.callStatus || ''}
-                onValueChange={(value) => handleFilterChange('callStatus', value)}
+                value={filters.callStatus || 'all'}
+                onValueChange={(value) => handleFilterChange('callStatus', value === 'all' ? '' : value)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Call Status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Status</SelectItem>
+                  <SelectItem value="all">All Status</SelectItem>
                   <SelectItem value="completed">Completed</SelectItem>
                   <SelectItem value="answered">Answered</SelectItem>
                   <SelectItem value="failed">Failed</SelectItem>
@@ -109,14 +109,14 @@ export default function CdrPage() {
             </div>
             <div>
               <Select
-                value={filters.direction || ''}
-                onValueChange={(value) => handleFilterChange('direction', value)}
+                value={filters.direction || 'all'}
+                onValueChange={(value) => handleFilterChange('direction', value === 'all' ? '' : value)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Direction" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Directions</SelectItem>
+                  <SelectItem value="all">All Directions</SelectItem>
                   <SelectItem value="inbound">Inbound</SelectItem>
                   <SelectItem value="outbound">Outbound</SelectItem>
                   <SelectItem value="internal">Internal</SelectItem>
@@ -156,7 +156,7 @@ export default function CdrPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {cdrData?.data?.map((call) => (
+                {cdrData?.data?.map((call: CallDetailRecord) => (
                   <TableRow key={call.id}>
                     <TableCell>
                       {format(new Date(call.callCreatedAt), 'MMM dd, HH:mm:ss')}

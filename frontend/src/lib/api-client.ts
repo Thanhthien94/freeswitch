@@ -1,6 +1,7 @@
 // Modern NextJS 15 API Client - Using native fetch instead of axios
 
 // API Client Configuration
+// For Docker: Frontend runs on :3002, Backend on :3000
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
 
 // Request configuration type
@@ -46,7 +47,7 @@ async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Re
 }
 
 // API Response Types
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   success: boolean;
   data: T;
   message?: string;
@@ -61,7 +62,7 @@ export interface ApiResponse<T = any> {
 // Modern API Methods using native fetch
 export const api = {
   // GET request
-  get: async <T = any>(url: string, config?: RequestConfig): Promise<ApiResponse<T>> => {
+  get: async <T = unknown>(url: string, config?: RequestConfig): Promise<ApiResponse<T>> => {
     const response = await fetchWithAuth(url, {
       method: 'GET',
       ...config,
@@ -71,11 +72,13 @@ export const api = {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    return response.json();
+    const data = await response.json();
+    // Backend returns direct data, wrap it in ApiResponse format
+    return { success: true, data };
   },
 
   // POST request
-  post: async <T = any>(url: string, data?: any, config?: RequestConfig): Promise<ApiResponse<T>> => {
+  post: async <T = unknown>(url: string, data?: unknown, config?: RequestConfig): Promise<ApiResponse<T>> => {
     const response = await fetchWithAuth(url, {
       method: 'POST',
       body: data ? JSON.stringify(data) : undefined,
@@ -86,11 +89,13 @@ export const api = {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    return response.json();
+    const responseData = await response.json();
+    // Backend returns direct data, wrap it in ApiResponse format
+    return { success: true, data: responseData };
   },
 
   // PUT request
-  put: async <T = any>(url: string, data?: any, config?: RequestConfig): Promise<ApiResponse<T>> => {
+  put: async <T = unknown>(url: string, data?: unknown, config?: RequestConfig): Promise<ApiResponse<T>> => {
     const response = await fetchWithAuth(url, {
       method: 'PUT',
       body: data ? JSON.stringify(data) : undefined,
@@ -105,7 +110,7 @@ export const api = {
   },
 
   // DELETE request
-  delete: async <T = any>(url: string, config?: RequestConfig): Promise<ApiResponse<T>> => {
+  delete: async <T = unknown>(url: string, config?: RequestConfig): Promise<ApiResponse<T>> => {
     const response = await fetchWithAuth(url, {
       method: 'DELETE',
       ...config,
@@ -119,7 +124,7 @@ export const api = {
   },
 
   // PATCH request
-  patch: async <T = any>(url: string, data?: any, config?: RequestConfig): Promise<ApiResponse<T>> => {
+  patch: async <T = unknown>(url: string, data?: unknown, config?: RequestConfig): Promise<ApiResponse<T>> => {
     const response = await fetchWithAuth(url, {
       method: 'PATCH',
       body: data ? JSON.stringify(data) : undefined,

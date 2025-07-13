@@ -28,7 +28,8 @@ export class RecordingController {
     @Query('callerNumber') callerNumber?: string,
     @Query('destinationNumber') destinationNumber?: string,
     @Query('limit') limit?: string,
-  ): Promise<RecordingInfo[]> {
+    @Query('page') page?: string,
+  ): Promise<{ data: RecordingInfo[], pagination: any }> {
     const filters: any = {};
 
     if (startDate) {
@@ -53,15 +54,22 @@ export class RecordingController {
       filters.destinationNumber = destinationNumber;
     }
 
-    if (limit) {
-      const limitNum = parseInt(limit, 10);
-      if (isNaN(limitNum) || limitNum <= 0) {
-        throw new BadRequestException('Invalid limit value');
-      }
-      filters.limit = limitNum;
+    // Add pagination support
+    const pageNum = page ? parseInt(page, 10) : 1;
+    const limitNum = limit ? parseInt(limit, 10) : 20;
+
+    if (isNaN(pageNum) || pageNum <= 0) {
+      throw new BadRequestException('Invalid page value');
     }
 
-    return await this.recordingService.getRecordings(filters);
+    if (isNaN(limitNum) || limitNum <= 0) {
+      throw new BadRequestException('Invalid limit value');
+    }
+
+    filters.page = pageNum;
+    filters.limit = limitNum;
+
+    return await this.recordingService.getRecordingsWithPagination(filters);
   }
 
   /**

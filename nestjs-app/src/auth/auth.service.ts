@@ -1,19 +1,310 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException, Logger } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { ConfigService } from '@nestjs/config';
+import { User } from '../users/user.entity';
+import { RBACService } from './services/rbac.service';
+import { ABACService } from './services/abac.service';
+import { AuditLog, AuditAction, AuditResult, RiskLevel } from './entities/audit-log.entity';
+import { LoginDto, RegisterDto } from './dto/login.dto';
+import { JwtPayload } from './strategies/jwt.strategy';
+import * as bcrypt from 'bcrypt';
+
+export interface LoginResponse {
+  access_token: string;
+  refresh_token?: string;
+  user: {
+    id: number;
+    username: string;
+    email: string;
+    displayName: string;
+    domainId: string;
+    roles: string[];
+    permissions: string[];
+    primaryRole: string;
+  };
+  expiresIn: number;
+  tokenType: string;
+}
 
 @Injectable()
 export class AuthService {
-  async login(loginDto: any) {
-    // TODO: Implement JWT authentication
-    return {
-      message: 'Login endpoint - TODO: Implement JWT authentication',
-      user: loginDto.username,
-      token: 'mock-jwt-token'
-    };
+  private readonly logger = new Logger(AuthService.name);
+
+  constructor(
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
+    @InjectRepository(AuditLog)
+    private readonly auditLogRepository: Repository<AuditLog>,
+    private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
+    private readonly rbacService: RBACService,
+    private readonly abacService: ABACService,
+  ) {}
+
+  async login(loginDto: LoginDto, clientIp?: string, userAgent?: string): Promise<LoginResponse> {
+    try {
+      // Find user by email or username with full RBAC relations
+      const user = await this.userRepository.findOne({
+        where: [
+          { email: loginDto.emailOrUsername },
+          { username: loginDto.emailOrUsername },
+        ],
+        relations: ['domain', 'userRoles', 'userRoles.role', 'userRoles.role.permissions'],
+      });
+
+      if (!user) {
+        await this.logFailedLogin(loginDto.emailOrUsername, 'User not found', clientIp, userAgent);
+        throw new UnauthorizedException('Invalid credentials');
+      }
+
+      // Check if user is active
+      if (!user.isActive) {
+        await this.logFailedLogin(user.username, 'Account inactive', clientIp, userAgent);
+        throw new UnauthorizedException('Account is inactive');
+      }
+
+      // Validate password
+      const isPasswordValid = await user.validatePassword(loginDto.password);
+      if (!isPasswordValid) {
+        await this.logFailedLogin(user.username, 'Invalid password', clientIp, userAgent);
+        throw new UnauthorizedException('Invalid credentials');
+      }
+
+      // Get user roles and permissions from RBAC system
+      const activeRoles = user.getActiveRoles();
+      const roles = activeRoles.map(ur => ur.role.name);
+      const permissions = activeRoles
+        .flatMap(ur => ur.role.permissions || [])
+        .filter(p => p.isActive)
+        .map(p => p.fullPermission);
+
+      // Generate session ID
+      const sessionId = this.generateSessionId();
+
+      // Create JWT payload
+      const payload: JwtPayload = {
+        sub: user.id,
+        username: user.username,
+        email: user.email,
+        domainId: user.domainId,
+        roles,
+        permissions,
+        sessionId,
+        iat: Math.floor(Date.now() / 1000),
+      };
+
+      // Generate tokens
+      try {
+        const accessToken = this.jwtService.sign(payload, {
+          expiresIn: this.getTokenExpiry(loginDto.rememberMe),
+        });
+        const refreshToken = loginDto.rememberMe ? this.generateRefreshToken(user.id, sessionId) : undefined;
+
+        // Log successful login
+        await this.logSuccessfulLogin(user, clientIp, userAgent, sessionId);
+
+        // Return response
+        return {
+          access_token: accessToken,
+          refresh_token: refreshToken,
+          user: {
+            id: user.id,
+            username: user.username,
+            email: user.email,
+            displayName: user.displayName,
+            domainId: user.domainId,
+            roles,
+            permissions,
+            primaryRole: user.getPrimaryRole()?.role?.name || roles[0] || 'user',
+          },
+          expiresIn: this.getTokenExpiry(loginDto.rememberMe),
+          tokenType: 'Bearer',
+        };
+      } catch (jwtError) {
+        throw new UnauthorizedException('Token generation failed');
+      }
+
+    } catch (error) {
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
+
+      this.logger.error('Login error:', error);
+      throw new UnauthorizedException('Authentication failed');
+    }
   }
 
-  async logout() {
-    return {
-      message: 'Logout successful'
+  async register(registerDto: RegisterDto, createdBy?: string): Promise<User> {
+    try {
+      // Check if user already exists
+      const existingUser = await this.userRepository.findOne({
+        where: [
+          { email: registerDto.email },
+          { username: registerDto.username },
+        ],
+      });
+
+      if (existingUser) {
+        if (existingUser.email === registerDto.email) {
+          throw new BadRequestException('Email already exists');
+        }
+        if (existingUser.username === registerDto.username) {
+          throw new BadRequestException('Username already exists');
+        }
+      }
+
+      // Create new user
+      const user = this.userRepository.create({
+        username: registerDto.username,
+        email: registerDto.email,
+        password: registerDto.password, // Will be hashed by entity hook
+        firstName: registerDto.firstName,
+        lastName: registerDto.lastName,
+        // Role will be assigned via RBAC system
+      });
+
+      const savedUser = await this.userRepository.save(user);
+
+      // Assign default role
+      await this.rbacService.assignRole(
+        savedUser.id,
+        await this.getDefaultRoleId(),
+        createdBy || 'system',
+        { isPrimary: true, reason: 'Default role assignment during registration' }
+      );
+
+      // Log registration
+      await this.createAuditLog(
+        savedUser.id,
+        AuditAction.LOGIN,
+        AuditResult.SUCCESS,
+        'User registered successfully',
+        { registeredBy: createdBy }
+      );
+
+      return savedUser;
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+
+      this.logger.error('Registration error:', error);
+      throw new BadRequestException('Registration failed');
+    }
+  }
+
+  async logout(userId: number, sessionId?: string): Promise<void> {
+    try {
+      // In a production system, you would:
+      // 1. Invalidate the session in Redis/database
+      // 2. Add token to blacklist
+      // 3. Clear any cached permissions
+
+      // Log logout
+      await this.createAuditLog(
+        userId,
+        AuditAction.LOGOUT,
+        AuditResult.SUCCESS,
+        'User logged out successfully',
+        { sessionId }
+      );
+
+      this.logger.debug(`User ${userId} logged out successfully`);
+    } catch (error) {
+      this.logger.error('Logout error:', error);
+      // Don't throw error for logout - it should always succeed
+    }
+  }
+
+  // ==================== UTILITY METHODS ====================
+
+  private async getDefaultRoleId(): Promise<string> {
+    // This would fetch the default role ID from database
+    // For now, return a placeholder
+    return 'default-user-role-id';
+  }
+
+  private generateSessionId(): string {
+    return Math.random().toString(36).substring(2, 15) +
+           Math.random().toString(36).substring(2, 15);
+  }
+
+  private getTokenExpiry(rememberMe?: boolean): number {
+    const defaultExpiry = this.configService.get<number>('JWT_EXPIRY', 3600); // 1 hour
+    const extendedExpiry = this.configService.get<number>('JWT_EXTENDED_EXPIRY', 604800); // 7 days
+
+    return rememberMe ? extendedExpiry : defaultExpiry;
+  }
+
+  private generateRefreshToken(userId: number, sessionId: string): string {
+    const payload = {
+      sub: userId,
+      sessionId,
+      type: 'refresh',
     };
+
+    return this.jwtService.sign(payload, {
+      secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
+      expiresIn: '30d',
+    });
+  }
+
+  private async logSuccessfulLogin(
+    user: User,
+    clientIp?: string,
+    userAgent?: string,
+    sessionId?: string,
+  ): Promise<void> {
+    await this.createAuditLog(
+      user.id,
+      AuditAction.LOGIN,
+      AuditResult.SUCCESS,
+      'User logged in successfully',
+      {
+        username: user.username,
+        domainId: user.domainId,
+        clientIp,
+        userAgent,
+        sessionId,
+      }
+    );
+  }
+
+  private async logFailedLogin(
+    identifier: string,
+    reason: string,
+    clientIp?: string,
+    userAgent?: string,
+  ): Promise<void> {
+    await this.auditLogRepository.save({
+      action: AuditAction.LOGIN,
+      result: AuditResult.FAILURE,
+      description: `Login failed: ${reason}`,
+      username: identifier,
+      clientIp,
+      userAgent,
+      riskLevel: RiskLevel.MEDIUM,
+      metadata: { reason, identifier },
+    });
+  }
+
+  private async createAuditLog(
+    userId: number,
+    action: AuditAction,
+    result: AuditResult,
+    description: string,
+    metadata?: Record<string, any>,
+  ): Promise<void> {
+    const auditLog = this.auditLogRepository.create({
+      userId,
+      action,
+      result,
+      description,
+      metadata,
+    });
+
+    await this.auditLogRepository.save(auditLog);
   }
 }

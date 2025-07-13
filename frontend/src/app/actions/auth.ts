@@ -127,7 +127,7 @@ export async function signup(state: FormState, formData: FormData): Promise<Form
 
     // 4. Redirect user
     redirect('/dashboard')
-  } catch (error) {
+  } catch {
     return {
       message: 'An error occurred during signup.',
     }

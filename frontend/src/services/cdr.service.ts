@@ -1,4 +1,5 @@
-// Modern NextJS 15 API Pattern - Use Route Handlers instead of direct API calls
+// Modern NextJS 15 API Pattern - Direct API calls to backend
+import { api } from '@/lib/api-client';
 
 // CDR Types
 export interface CallDetailRecord {
@@ -77,7 +78,7 @@ export interface CdrStats {
 // CDR Service - Modern NextJS 15 Pattern
 export const cdrService = {
   // Get CDR list with filters - Use Route Handler
-  getCdrList: async (params: CdrListParams = {}) => {
+  getCdrList: async (params: CdrListParams = {}): Promise<{ data: CallDetailRecord[], pagination: any }> => {
     const queryParams = new URLSearchParams();
 
     Object.entries(params).forEach(([key, value]) => {
@@ -86,49 +87,23 @@ export const cdrService = {
       }
     });
 
-    const response = await fetch(`/api/cdr?${queryParams.toString()}`, {
-      method: 'GET',
-      credentials: 'include', // Include cookies for auth
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch CDR data');
-    }
-
-    return response.json();
+    const response = await api.get<{ data: CallDetailRecord[], pagination: any }>(`/cdr?${queryParams.toString()}`);
+    return response.data;
   },
 
-  // Get CDR by ID - Use Route Handler
+  // Get CDR by ID
   getCdrById: async (id: string): Promise<CallDetailRecord> => {
-    const response = await fetch(`/api/cdr/${id}`, {
-      method: 'GET',
-      credentials: 'include',
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch CDR record');
-    }
-
-    const result = await response.json();
-    return result.data;
+    const response = await api.get<CallDetailRecord>(`/cdr/${id}`);
+    return response.data;
   },
 
-  // Get CDR by call UUID - Use Route Handler
+  // Get CDR by call UUID
   getCdrByCallUuid: async (callUuid: string): Promise<CallDetailRecord> => {
-    const response = await fetch(`/api/cdr/call/${callUuid}`, {
-      method: 'GET',
-      credentials: 'include',
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch CDR record');
-    }
-
-    const result = await response.json();
-    return result.data;
+    const response = await api.get<CallDetailRecord>(`/cdr/call/${callUuid}`);
+    return response.data;
   },
 
-  // Get CDR statistics - Use Route Handler
+  // Get CDR statistics
   getCdrStats: async (params: Omit<CdrListParams, 'page' | 'limit'> = {}): Promise<CdrStats> => {
     const queryParams = new URLSearchParams();
 
@@ -138,20 +113,11 @@ export const cdrService = {
       }
     });
 
-    const response = await fetch(`/api/cdr/stats?${queryParams.toString()}`, {
-      method: 'GET',
-      credentials: 'include',
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch CDR statistics');
-    }
-
-    const result = await response.json();
-    return result.data;
+    const response = await api.get<CdrStats>(`/cdr/stats?${queryParams.toString()}`);
+    return response.data;
   },
 
-  // Export CDR data - Use Route Handler
+  // Export CDR data
   exportCdr: async (params: CdrListParams = {}, format: 'csv' | 'excel' = 'csv'): Promise<void> => {
     const queryParams = new URLSearchParams();
 
@@ -163,9 +129,15 @@ export const cdrService = {
 
     queryParams.append('format', format);
 
-    const response = await fetch(`/api/cdr/export?${queryParams.toString()}`, {
+    // Use direct fetch for file download
+    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
+
+    const response = await fetch(`${API_BASE_URL}/cdr/export?${queryParams.toString()}`, {
       method: 'GET',
-      credentials: 'include',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
     });
 
     if (!response.ok) {

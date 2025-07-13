@@ -42,8 +42,13 @@ import { AppService } from './app.service';
         username: configService.get('POSTGRES_USER', 'pbx_user'),
         password: configService.get('POSTGRES_PASSWORD', 'pbx_password'),
         database: configService.get('POSTGRES_DB', 'pbx_db'),
-        autoLoadEntities: true,
-        synchronize: false, // Disabled - manual schema management for production stability
+        entities: [
+          __dirname + '/**/*.entity{.ts,.js}',
+        ],
+        migrations: [
+          __dirname + '/migrations/*{.ts,.js}',
+        ],
+        synchronize: false, // Disable to prevent schema conflicts
         logging: configService.get('NODE_ENV') === 'development',
         retryAttempts: 3,
         retryDelay: 3000,

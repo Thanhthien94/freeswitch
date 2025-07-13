@@ -145,6 +145,97 @@ export class RecordingService {
   }
 
   /**
+   * Get recordings with pagination (consistent with CDR service)
+   */
+  async getRecordingsWithPagination(filters?: {
+    startDate?: Date;
+    endDate?: Date;
+    callerNumber?: string;
+    destinationNumber?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<{ data: RecordingInfo[], pagination: any }> {
+    const page = filters?.page || 1;
+    const limit = filters?.limit || 20;
+    const offset = (page - 1) * limit;
+
+    const query = this.cdrRepository.createQueryBuilder('cdr')
+      .select([
+        'cdr.callUuid',
+        'cdr.recordingFilePath',
+        'cdr.totalDuration',
+        'cdr.callerIdNumber',
+        'cdr.destinationNumber',
+        'cdr.createdAt'
+      ])
+      .where('cdr.recordingEnabled = :enabled', { enabled: true })
+      .andWhere('cdr.recordingFilePath IS NOT NULL')
+      .orderBy('cdr.createdAt', 'DESC');
+
+    if (filters?.startDate) {
+      query.andWhere('cdr.createdAt >= :startDate', { startDate: filters.startDate });
+    }
+    if (filters?.endDate) {
+      query.andWhere('cdr.createdAt <= :endDate', { endDate: filters.endDate });
+    }
+    if (filters?.callerNumber) {
+      query.andWhere('cdr.callerIdNumber = :callerNumber', { callerNumber: filters.callerNumber });
+    }
+    if (filters?.destinationNumber) {
+      query.andWhere('cdr.destinationNumber = :destinationNumber', { destinationNumber: filters.destinationNumber });
+    }
+
+    // Get total count for pagination
+    const total = await query.getCount();
+
+    // Apply pagination
+    query.skip(offset).take(limit);
+
+    const cdrs = await query.getMany();
+    const recordings: RecordingInfo[] = [];
+
+    for (const cdr of cdrs) {
+      const fullPath = path.isAbsolute(cdr.recordingFilePath)
+        ? cdr.recordingFilePath
+        : path.join(this.recordingsPath, cdr.recordingFilePath);
+
+      const exists = fs.existsSync(fullPath);
+      let fileSize = 0;
+
+      if (exists) {
+        try {
+          const stats = fs.statSync(fullPath);
+          fileSize = stats.size;
+        } catch (error) {
+          this.logger.error(`Failed to get file stats for ${fullPath}: ${error.message}`);
+        }
+      }
+
+      recordings.push({
+        callUuid: cdr.callUuid,
+        filePath: fullPath,
+        fileSize,
+        duration: cdr.totalDuration,
+        format: path.extname(cdr.recordingFilePath).toLowerCase().substring(1),
+        exists,
+        createdAt: cdr.createdAt,
+        callerNumber: cdr.callerIdNumber,
+        destinationNumber: cdr.destinationNumber,
+      });
+    }
+
+    return {
+      data: recordings,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit)
+      }
+    };
+  }
+
+  /**
    * Get recording file stream for download/playback
    */
   async getRecordingStream(callUuid: string): Promise<fs.ReadStream | null> {

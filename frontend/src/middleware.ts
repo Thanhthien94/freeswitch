@@ -1,33 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { decrypt } from '@/lib/auth'
-import { cookies } from 'next/headers'
 
-// 1. Specify protected and public routes
-const protectedRoutes = ['/dashboard']
-const publicRoutes = ['/login', '/signup', '/']
+// 1. Specify protected and public routes (for future use)
+// const protectedRoutes = ['/dashboard']
+// const publicRoutes = ['/login', '/signup', '/']
 
 export default async function middleware(req: NextRequest) {
   // 2. Check if the current route is protected or public
   const path = req.nextUrl.pathname
-  const isProtectedRoute = protectedRoutes.includes(path) || path.startsWith('/dashboard')
-  const isPublicRoute = publicRoutes.includes(path)
 
-  // 3. Decrypt the session from the cookie
-  const cookie = (await cookies()).get('session')?.value
-  const session = await decrypt(cookie)
+  // 3. Check for auth token in Authorization header (for API calls)
+  const authHeader = req.headers.get('authorization')
+  const hasAuthToken = authHeader && authHeader.startsWith('Bearer ')
 
-  // 4. Redirect to /login if the user is not authenticated
-  if (isProtectedRoute && !session?.userId) {
-    return NextResponse.redirect(new URL('/login', req.nextUrl))
-  }
+  // 4. For protected routes, check if we have authentication
+  // Since we're using localStorage, we can't check it server-side
+  // So we'll let the client-side handle authentication redirects
+  // This middleware mainly handles API route protection
 
-  // 5. Redirect to /dashboard if the user is authenticated
-  if (
-    isPublicRoute &&
-    session?.userId &&
-    !req.nextUrl.pathname.startsWith('/dashboard')
-  ) {
-    return NextResponse.redirect(new URL('/dashboard', req.nextUrl))
+  // 5. For API routes, check authentication
+  if (path.startsWith('/api') && !path.startsWith('/api/auth') && !hasAuthToken) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   return NextResponse.next()
