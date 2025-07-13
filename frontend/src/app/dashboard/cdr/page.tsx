@@ -8,8 +8,9 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Download, Filter, Mic } from 'lucide-react';
+import { Download, Filter, Mic, Play } from 'lucide-react';
 import { cdrService, CdrListParams, CallDetailRecord } from '@/services/cdr.service';
+import { AudioPlayerDialog } from '@/components/ui/audio-player-dialog';
 import { format } from 'date-fns';
 
 export default function CdrPage() {
@@ -17,6 +18,10 @@ export default function CdrPage() {
     page: 1,
     limit: 20,
   });
+
+  // Audio player state
+  const [audioPlayerOpen, setAudioPlayerOpen] = useState(false);
+  const [selectedCall, setSelectedCall] = useState<CallDetailRecord | null>(null);
 
   const { data: cdrData, isLoading } = useQuery({
     queryKey: ['cdr-list', filters],
@@ -48,6 +53,13 @@ export default function CdrPage() {
       no_answer: 'secondary',
     };
     return variants[status] || 'secondary';
+  };
+
+  const handlePlayRecording = (call: CallDetailRecord) => {
+    if (call.recordingEnabled && call.recordingFilePath) {
+      setSelectedCall(call);
+      setAudioPlayerOpen(true);
+    }
   };
 
   return (
@@ -195,10 +207,20 @@ export default function CdrPage() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      {call.recordingEnabled ? (
-                        <Badge variant="default">
+                      {call.recordingEnabled && call.recordingFilePath ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handlePlayRecording(call)}
+                          className="h-8 gap-1"
+                        >
+                          <Play className="h-3 w-3" />
+                          Play
+                        </Button>
+                      ) : call.recordingEnabled ? (
+                        <Badge variant="secondary">
                           <Mic className="mr-1 h-3 w-3" />
-                          Yes
+                          Processing
                         </Badge>
                       ) : (
                         <Badge variant="secondary">No</Badge>
@@ -240,6 +262,27 @@ export default function CdrPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Audio Player Dialog */}
+      {selectedCall && (
+        <AudioPlayerDialog
+          isOpen={audioPlayerOpen}
+          onClose={() => {
+            setAudioPlayerOpen(false);
+            setSelectedCall(null);
+          }}
+          callUuid={selectedCall.callUuid}
+          callInfo={{
+            caller: selectedCall.callerIdNumber,
+            destination: selectedCall.destinationNumber,
+            duration: selectedCall.talkDuration
+              ? `${Math.floor(selectedCall.talkDuration / 60)}:${(selectedCall.talkDuration % 60).toString().padStart(2, '0')}`
+              : '0:00',
+            timestamp: format(new Date(selectedCall.callCreatedAt), 'MMM dd, yyyy HH:mm:ss'),
+            callUuid: selectedCall.callUuid,
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -156,6 +156,38 @@ export const cdrService = {
     window.URL.revokeObjectURL(downloadUrl);
   },
 
+  // Get recording stream URL for a call
+  getRecordingUrl: (callUuid: string): string => {
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
+
+    // Return URL for audio streaming (auth will be handled by Authorization header)
+    return `${API_BASE_URL}/recordings/${callUuid}/stream`;
+  },
+
+  // Get recording stream with auth headers for audio element
+  getRecordingUrlWithAuth: async (callUuid: string): Promise<string> => {
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
+    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+
+    if (!token) {
+      throw new Error('No authentication token available');
+    }
+
+    // Create a blob URL with authenticated fetch
+    const response = await fetch(`${API_BASE_URL}/recordings/${callUuid}/stream`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch recording: ${response.status}`);
+    }
+
+    const blob = await response.blob();
+    return URL.createObjectURL(blob);
+  },
+
   // Delete CDR record - Use Route Handler
   deleteCdr: async (id: string): Promise<void> => {
     const response = await fetch(`/api/cdr/${id}`, {
