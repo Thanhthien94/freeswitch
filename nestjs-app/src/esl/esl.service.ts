@@ -1,7 +1,8 @@
-import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit, OnModuleDestroy, Inject, forwardRef } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Connection as ESLConnection } from 'modesl';
+import { CdrService } from '../cdr/cdr.service';
 
 @Injectable()
 export class EslService implements OnModuleInit, OnModuleDestroy {
@@ -14,6 +15,7 @@ export class EslService implements OnModuleInit, OnModuleDestroy {
   constructor(
     private configService: ConfigService,
     private eventEmitter: EventEmitter2,
+    private cdrService: CdrService,
   ) {}
 
   async onModuleInit() {
@@ -119,6 +121,9 @@ export class EslService implements OnModuleInit, OnModuleDestroy {
         case 'CHANNEL_HANGUP':
           this.handleChannelHangup(event);
           break;
+        case 'CHANNEL_HANGUP_COMPLETE':
+          this.handleChannelHangupComplete(event);
+          break;
         case 'DTMF':
           this.handleDtmf(event);
           break;
@@ -141,7 +146,7 @@ export class EslService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  private handleChannelCreate(event: any): void {
+  private async handleChannelCreate(event: any): Promise<void> {
     try {
       if (!event || typeof event.getHeader !== 'function') {
         this.logger.warn('Invalid event in handleChannelCreate');
@@ -151,8 +156,34 @@ export class EslService implements OnModuleInit, OnModuleDestroy {
       const uuid = event.getHeader('Unique-ID');
       const callerNumber = event.getHeader('Caller-Caller-ID-Number');
       const destinationNumber = event.getHeader('Caller-Destination-Number');
+      const direction = event.getHeader('Call-Direction') || 'inbound';
 
-      this.logger.log(`New call: ${callerNumber} -> ${destinationNumber} (${uuid})`);
+      // B-leg focused approach: Identify billing leg using FreeSWITCH variables
+      // Check if this is the destination channel (B-leg) for billing
+      const channelName = event.getHeader('Channel-Name') || '';
+      const origination = event.getHeader('variable_origination_uuid') || '';
+      const bridgedTo = event.getHeader('variable_bridge_to') || '';
+
+      // B-leg is the channel that receives the call (has origination_uuid)
+      const isBLeg = !!origination || channelName.includes('sofia/internal/' + destinationNumber);
+
+      this.logger.log(`Channel created: ${callerNumber} -> ${destinationNumber} (${uuid}) [${direction}] ${isBLeg ? '[B-LEG-BILLING]' : '[A-LEG-TRACKING]'}`);
+
+      // Create CDR record with B-leg billing flag
+      const eventData = {
+        uuid,
+        caller_id_number: callerNumber,
+        destination_number: destinationNumber,
+        context: event.getHeader('Caller-Context'),
+        domain_name: event.getHeader('variable_domain_name'),
+        caller_ip: event.getHeader('Caller-Network-Addr'),
+        user_agent: event.getHeader('variable_sip_user_agent'),
+        created_time: event.getHeader('Caller-Channel-Created-Time'),
+        direction,
+        is_billing_leg: isBLeg, // B-leg is billing leg for agent
+      };
+
+      await this.cdrService.createCdrFromEvent(eventData);
 
       this.eventEmitter.emit('call.created', {
         uuid,
@@ -166,7 +197,7 @@ export class EslService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  private handleChannelAnswer(event: any): void {
+  private async handleChannelAnswer(event: any): Promise<void> {
     try {
       if (!event || typeof event.getHeader !== 'function') {
         this.logger.warn('Invalid event in handleChannelAnswer');
@@ -175,6 +206,14 @@ export class EslService implements OnModuleInit, OnModuleDestroy {
 
       const uuid = event.getHeader('Unique-ID');
       this.logger.log(`Call answered: ${uuid}`);
+
+      // Update CDR record
+      const eventData = {
+        answered_time: event.getHeader('Caller-Channel-Answered-Time'),
+        answer_disposition: 'answered',
+      };
+
+      await this.cdrService.updateCdrOnAnswer(uuid, eventData);
 
       this.eventEmitter.emit('call.answered', {
         uuid,
@@ -186,7 +225,7 @@ export class EslService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  private handleChannelHangup(event: any): void {
+  private async handleChannelHangup(event: any): Promise<void> {
     try {
       if (!event || typeof event.getHeader !== 'function') {
         this.logger.warn('Invalid event in handleChannelHangup');
@@ -208,6 +247,59 @@ export class EslService implements OnModuleInit, OnModuleDestroy {
       });
     } catch (error) {
       this.logger.error('Error in handleChannelHangup:', error);
+    }
+  }
+
+  private async handleChannelHangupComplete(event: any): Promise<void> {
+    try {
+      if (!event || typeof event.getHeader !== 'function') {
+        this.logger.warn('Invalid event in handleChannelHangupComplete');
+        return;
+      }
+
+      const uuid = event.getHeader('Unique-ID');
+      const cause = event.getHeader('Hangup-Cause');
+
+      this.logger.log(`Call hangup complete: ${uuid} (${cause}) - Processing CDR`);
+
+      // Complete CDR record with all final data
+      const eventData = {
+        hangup_time: event.getHeader('Caller-Channel-Hangup-Time'),
+        hangup_cause: cause,
+        hangup_disposition: event.getHeader('variable_hangup_disposition'),
+        recording_enabled: event.getHeader('variable_record_session') === 'true',
+        recording_file_path: event.getHeader('variable_recording_file_path'),
+        audio_quality_score: event.getHeader('variable_rtp_audio_in_quality_percentage'),
+        packet_loss: event.getHeader('variable_rtp_audio_in_packet_loss_percent'),
+        jitter: event.getHeader('variable_rtp_audio_in_jitter_min_variance'),
+        latency: event.getHeader('variable_rtp_audio_in_mean_interval'),
+        duration: event.getHeader('variable_duration'),
+        billsec: event.getHeader('variable_billsec'),
+        progresssec: event.getHeader('variable_progresssec'),
+        answersec: event.getHeader('variable_answersec'),
+        waitsec: event.getHeader('variable_waitsec'),
+        progress_mediasec: event.getHeader('variable_progress_mediasec'),
+        flow_billsec: event.getHeader('variable_flow_billsec'),
+        mduration: event.getHeader('variable_mduration'),
+        billusec: event.getHeader('variable_billusec'),
+        progressusec: event.getHeader('variable_progressusec'),
+        answerusec: event.getHeader('variable_answerusec'),
+        waitusec: event.getHeader('variable_waitusec'),
+        progress_mediausec: event.getHeader('variable_progress_mediausec'),
+        flow_billusec: event.getHeader('variable_flow_billusec'),
+        uduration: event.getHeader('variable_uduration'),
+      };
+
+      await this.cdrService.updateCdrOnHangup(uuid, eventData);
+
+      this.eventEmitter.emit('call.hangup.complete', {
+        uuid,
+        cause,
+        timestamp: new Date(),
+        event: typeof event.serialize === 'function' ? event.serialize('json') : null
+      });
+    } catch (error) {
+      this.logger.error('Error in handleChannelHangupComplete:', error);
     }
   }
 

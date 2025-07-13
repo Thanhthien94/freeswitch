@@ -20,6 +20,10 @@ configs/freeswitch-data/
 recordings/
 voicemail/
 storage/
+configs/freeswitch-recordings/
+*.wav
+*.mp3
+*.ogg
 
 # ===== DATABASE =====
 # PostgreSQL data

@@ -14,6 +14,67 @@ export class CdrController {
     return this.cdrService.getCdrRecords(query);
   }
 
+  @Get('billing')
+  @ApiOperation({ summary: 'Get B-leg billing records for agent billing' })
+  @ApiResponse({ status: 200, description: 'B-leg CDR records for agent billing' })
+  async getBillingCDRs(
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+    @Query('agentNumber') agentNumber?: string,
+    @Query('limit') limit?: string,
+  ) {
+    const filters: any = {};
+
+    if (startDate) {
+      filters.startDate = new Date(startDate);
+    }
+
+    if (endDate) {
+      filters.endDate = new Date(endDate);
+    }
+
+    if (agentNumber) {
+      filters.agentNumber = agentNumber;
+    }
+
+    if (limit) {
+      filters.limit = parseInt(limit, 10);
+    }
+
+    return this.cdrService.getBillingCDRs(filters);
+  }
+
+  @Get('consolidated')
+  @ApiOperation({ summary: 'Get consolidated CDR view (A-leg perspective with aggregated metrics)' })
+  @ApiResponse({ status: 200, description: 'Consolidated CDR records for reporting' })
+  async getConsolidatedCDRs(
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+    @Query('callerNumber') callerNumber?: string,
+    @Query('destinationNumber') destinationNumber?: string,
+    @Query('limit') limit?: string,
+  ) {
+    const filters: any = {};
+
+    if (startDate) {
+      filters.startDate = new Date(startDate);
+    }
+    if (endDate) {
+      filters.endDate = new Date(endDate);
+    }
+    if (callerNumber) {
+      filters.callerNumber = callerNumber;
+    }
+    if (destinationNumber) {
+      filters.destinationNumber = destinationNumber;
+    }
+    if (limit) {
+      filters.limit = parseInt(limit, 10);
+    }
+
+    return await this.cdrService.getConsolidatedCDRs(filters);
+  }
+
   @Get('stats')
   @ApiOperation({ summary: 'Get call statistics' })
   @ApiResponse({ status: 200, description: 'Call statistics' })

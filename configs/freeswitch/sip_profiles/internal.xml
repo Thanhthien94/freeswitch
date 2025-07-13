@@ -138,8 +138,14 @@
     -->
     <!--<param name="enable-timer" value="false"/>-->
     <!--<param name="minimum-session-expires" value="120"/>-->
-    <param name="apply-inbound-acl" value="sip_profiles"/>
-    <param name="apply-register-acl" value="sip_profiles"/>
+    <!-- DISABLED: IP-based ACL for professional VPN/mobile support -->
+    <!-- <param name="apply-inbound-acl" value="sip_profiles"/> -->
+    <!-- <param name="apply-register-acl" value="sip_profiles"/> -->
+    <!-- Rely on authentication instead of IP restrictions -->
+    <param name="auth-calls" value="true"/>
+    <param name="auth-all-packets" value="false"/>
+    <!-- Challenge all registration attempts -->
+    <param name="challenge-realm" value="auto_from"/>
     <!-- Treat every IP as coming from Internet for optimal NAT (best practice) -->
     <param name="apply-nat-acl" value="none"/>
     <!--

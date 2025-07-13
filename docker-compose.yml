@@ -20,6 +20,7 @@ services:
       - ./configs/freeswitch:/etc/freeswitch:rw
       - ./configs/freeswitch-logs:/var/log/freeswitch:rw
       - ./configs/freeswitch-sounds:/usr/share/freeswitch/sounds:rw
+      - ./configs/freeswitch-recordings:/var/lib/freeswitch/recordings:rw
       - freeswitch-data:/var/lib/freeswitch
     environment:
       - FREESWITCH_DOMAIN=${FREESWITCH_DOMAIN:-localhost}

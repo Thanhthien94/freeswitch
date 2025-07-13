@@ -11,6 +11,7 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { CallsModule } from './calls/calls.module';
 import { CdrModule } from './cdr/cdr.module';
+import { RecordingModule } from './recording/recording.module';
 import { EslModule } from './esl/esl.module';
 import { HealthModule } from './health/health.module';
 import { MetricsModule } from './metrics/metrics.module';
@@ -41,7 +42,7 @@ import { AppService } from './app.service';
         password: configService.get('POSTGRES_PASSWORD', 'pbx_password'),
         database: configService.get('POSTGRES_DB', 'pbx_db'),
         autoLoadEntities: true,
-        synchronize: configService.get('NODE_ENV') === 'development',
+        synchronize: false, // Disabled - manual schema management for production stability
         logging: configService.get('NODE_ENV') === 'development',
         retryAttempts: 3,
         retryDelay: 3000,
@@ -137,6 +138,7 @@ import { AppService } from './app.service';
     UsersModule,
     CallsModule,
     CdrModule,
+    RecordingModule,
     EslModule,
     HealthModule,
     MetricsModule,
