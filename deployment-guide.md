@@ -14,6 +14,21 @@ git clone https://github.com/Thanhthien94/freeswitch.git
 cd freeswitch
 ```
 
+### 1.5. Backup Current Data (If Migrating)
+If you're migrating from an existing host, backup your current data first:
+
+```bash
+# On current host - backup data
+./scripts/backup-current-data.sh
+
+# Copy backup to new host
+scp -r backups/YYYYMMDD_HHMMSS user@new-host:/path/to/freeswitch/
+
+# On new host - restore data after deployment
+cd backups/YYYYMMDD_HHMMSS
+./restore.sh
+```
+
 ### 2. Environment Configuration
 ```bash
 # Copy and edit environment file

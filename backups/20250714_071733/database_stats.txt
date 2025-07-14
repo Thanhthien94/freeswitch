@@ -1,0 +1,25 @@
+Database Backup Statistics
+Generated: Mon Jul 14 07:17:34 +07 2025
+Host: Thiens-MacBook-Pro.local
+Docker Container: postgres-db
+
+Table Row Counts:
+ schemaname |       tablename       | inserts | updates | deletes | live_rows | dead_rows 
+------------+-----------------------+---------+---------+---------+-----------+-----------
+ public     | audit_logs            |      14 |       0 |       0 |        14 |         0
+ public     | call_detail_records   |      38 |      69 |       0 |        38 |        13
+ public     | call_events           |       0 |       0 |       0 |         0 |         0
+ public     | call_participants     |       0 |       0 |       0 |         0 |         0
+ public     | call_recordings       |       0 |       0 |       0 |         0 |         0
+ public     | domains               |       1 |       1 |       0 |         1 |         1
+ public     | permissions           |      45 |       9 |       9 |        34 |        11
+ public     | policies              |       0 |       0 |       0 |         0 |         0
+ public     | recording_access_logs |       0 |       0 |       0 |         0 |         0
+ public     | recording_tags        |       0 |       0 |       0 |         0 |         0
+ public     | role_permissions      |     105 |       0 |      11 |        78 |        27
+ public     | roles                 |      19 |       5 |       5 |         7 |        17
+ public     | user_attributes       |       0 |       0 |       0 |         0 |         0
+ public     | user_roles            |       4 |       3 |       3 |         1 |         6
+ public     | users                 |       3 |       5 |       0 |         3 |         5
+(15 rows)
+
