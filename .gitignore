@@ -108,11 +108,15 @@ tmp/
 *.backup
 *.bak
 *.old
-backups/
+backups/*/
 database/backups/
 *.sql
 *.csv
 *.tar.gz
+
+# Allow backups directory structure but exclude content
+!backups/
+!backups/README.md
 
 # ===== TESTING =====
 # Test coverage
