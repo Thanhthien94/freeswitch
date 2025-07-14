@@ -1,6 +1,0 @@
-Database Backup Statistics
-Generated: Mon Jul 14 07:17:12 +07 2025
-Host: Thiens-MacBook-Pro.local
-Docker Container: postgres-db
-
-Table Row Counts:

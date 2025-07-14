@@ -1,1 +1,0 @@
-id,call_uuid,caller_number,callee_number,direction,file_path,file_name,file_size,file_format,duration_seconds,recording_started_at,recording_ended_at,recording_quality,is_stereo,call_started_at,call_answered_at,call_ended_at,hangup_cause,domain_name,context,recording_status,is_archived,is_deleted,created_at,updated_at,created_by

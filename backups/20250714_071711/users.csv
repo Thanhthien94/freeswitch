@@ -1,4 +1,0 @@
-id,username,email,created_at,updated_at,domain_id,first_name,last_name,display_name,extension,department_id,team_id,manager_id,is_active,last_login,password_hash
-2,manager,manager@localhost,2025-07-13 15:07:44.085781,2025-07-13 15:07:44.085781,localhost,John,Manager,John Manager,,,,,t,,$2b$10$K7L/8Y3TAFHy.E4PdNn8aeUi.aZc0.cswxg6RGAGiYMu2Wt.Oq9S2
-3,agent,agent@localhost,2025-07-13 15:07:44.085781,2025-07-13 15:07:44.085781,localhost,Bob,Agent,Bob Agent,,,,,t,,$2b$10$K7L/8Y3TAFHy.E4PdNn8aeUi.aZc0.cswxg6RGAGiYMu2Wt.Oq9S2
-1,admin,admin@localhost,2025-07-13 15:07:44.085781,2025-07-13 15:07:44.085781,localhost,System,Administrator,System Administrator,,,,,t,,$2b$10$6RUEQZXBgdXZ7/kfJIOR7eLuV/1apXApNVV930Xv9f5NFABDqnieG

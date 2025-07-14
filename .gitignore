@@ -104,10 +104,15 @@ Thumbs.db
 temp/
 tmp/
 
-# Backup files (keep structured backups)
+# Backup files and directories (NEVER commit production data)
 *.backup
 *.bak
 *.old
+backups/
+database/backups/
+*.sql
+*.csv
+*.tar.gz
 
 # ===== TESTING =====
 # Test coverage
@@ -123,8 +128,13 @@ coverage/
 !docker-compose.yml
 !backups/working-config-*/
 
-# ===== EXCLUDE OLD BACKUP FOLDERS =====
-# Exclude temporary backup folders (keep only structured backups/)
+# ===== PRODUCTION DATA (NEVER COMMIT) =====
+# Database dumps and backups
+database/init/00-*.sql
+database/init/01-current-data.sql
+database/init/*backup*.sql
+
+# Production backups (contain sensitive data)
 backup/
 
 # ===== DOCKER COMPOSE OVERRIDES =====
