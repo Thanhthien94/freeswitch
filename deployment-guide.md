@@ -49,7 +49,10 @@ DOMAIN=your-domain.com
 
 ### 4. Deploy with Docker Compose
 ```bash
-# Use production compose file (without internal nginx)
+# For DEVELOPMENT (with monitoring, internal nginx):
+docker-compose up -d
+
+# For PRODUCTION (clean, no internal nginx):
 docker-compose -f docker-compose.production.yml up -d
 
 # Check services status
