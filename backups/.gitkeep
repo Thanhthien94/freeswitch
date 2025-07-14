@@ -1,0 +1,15 @@
+# This file ensures the backups directory is tracked in Git
+# while actual backup data remains excluded by .gitignore
+
+# The backups directory structure is needed for:
+# - backup-current-data.sh script functionality
+# - Migration workflow between hosts
+# - Proper directory permissions and setup
+
+# Production backup data is excluded via .gitignore:
+# - backups/*/  (all timestamped subdirectories)
+# - *.sql, *.csv, *.tar.gz files
+
+# Only tracked files in backups/:
+# - README.md (documentation)
+# - .gitkeep (this file)
