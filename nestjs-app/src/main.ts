@@ -62,15 +62,50 @@ async function bootstrap() {
   );
 
   // CORS configuration
+  const corsOrigins = [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://localhost:3002',
+    'http://127.0.0.1:3000',
+    'http://127.0.0.1:3001',
+    'http://127.0.0.1:3002'
+  ];
+
+  // Add production origins from environment
+  const productionOrigin = configService.get('CORS_ORIGIN');
+  if (productionOrigin) {
+    corsOrigins.push(...productionOrigin.split(',').map(origin => origin.trim()));
+  }
+
+  // Add current domain from DOMAIN env var
+  const domain = configService.get('DOMAIN');
+  if (domain) {
+    corsOrigins.push(domain);
+    // Also add with port 3002 for frontend
+    try {
+      const domainUrl = new URL(domain);
+      corsOrigins.push(`${domainUrl.protocol}//${domainUrl.hostname}:3002`);
+    } catch (error) {
+      // If domain is not a valid URL, try to construct it
+      corsOrigins.push(`http://${domain}:3002`);
+    }
+  }
+
+  // Log CORS origins for debugging
+  logger.log(`CORS Origins: ${corsOrigins.join(', ')}`, 'Bootstrap');
+
   app.enableCors({
-    origin: [
-      'http://localhost:3000',
-      'http://localhost:3001',
-      'http://localhost:3002',
-      'http://127.0.0.1:3000',
-      'http://127.0.0.1:3001',
-      'http://127.0.0.1:3002'
-    ],
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+
+      if (corsOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      logger.warn(`CORS blocked origin: ${origin}`, 'Bootstrap');
+      return callback(new Error('Not allowed by CORS'), false);
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],

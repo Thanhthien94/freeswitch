@@ -72,6 +72,11 @@ services:
       - FREESWITCH_ESL_PASSWORD=${FREESWITCH_ESL_PASSWORD:-ClueCon}
       - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key}
       - RECORDINGS_PATH=/var/lib/freeswitch/recordings
+      - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:3002}
+      - DOMAIN=${DOMAIN:-http://localhost}
+      - API_PREFIX=${API_PREFIX:-api/v1}
+      - SWAGGER_ENABLED=${SWAGGER_ENABLED:-true}
+      - SWAGGER_PATH=${SWAGGER_PATH:-api/docs}
     networks:
       - pbx-network
     depends_on:
