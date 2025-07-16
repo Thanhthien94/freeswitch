@@ -107,7 +107,7 @@ services:
     environment:
       - NODE_ENV=${NODE_ENV:-production}
       # For production, this should be your domain
-      - NEXT_PUBLIC_API_URL=${DOMAIN:-http://localhost:3000}/api/v1
+      - NEXT_PUBLIC_API_URL=${DOMAIN_API:-http://localhost:3000}/api/v1
       # Server-side API URL (container-to-container communication)
       - BACKEND_API_URL=http://nestjs-api:3000/api/v1
       - API_URL=http://nestjs-api:3000
