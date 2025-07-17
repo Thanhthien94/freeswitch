@@ -16,6 +16,7 @@ import { RecordingModule } from './recording/recording.module';
 import { EslModule } from './esl/esl.module';
 import { HealthModule } from './health/health.module';
 import { MetricsModule } from './metrics/metrics.module';
+import { WebSocketModule } from './websocket/websocket.module';
 
 // Controllers
 import { AppController } from './app.controller';
@@ -148,6 +149,7 @@ import { AppService } from './app.service';
     EslModule,
     HealthModule,
     MetricsModule,
+    WebSocketModule,
   ],
   controllers: [AppController],
   providers: [AppService],

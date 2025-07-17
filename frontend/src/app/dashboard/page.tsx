@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Phone, PhoneCall, Mic, Activity, TrendingUp } from 'lucide-react';
 import { cdrService, CallDetailRecord } from '@/services/cdr.service';
 import { recordingService } from '@/services/recording.service';
+import { WebSocketStatus } from '@/components/realtime/WebSocketStatus';
 
 export default function DashboardPage() {
   // Fetch CDR stats
@@ -140,39 +141,10 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>System Status</CardTitle>
-            <CardDescription>
-              Current system health
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <Activity className="h-4 w-4" />
-                  <span className="text-sm">FreeSWITCH</span>
-                </div>
-                <Badge variant="default">Online</Badge>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <Activity className="h-4 w-4" />
-                  <span className="text-sm">Database</span>
-                </div>
-                <Badge variant="default">Connected</Badge>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <Activity className="h-4 w-4" />
-                  <span className="text-sm">API Server</span>
-                </div>
-                <Badge variant="default">Running</Badge>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Real-time WebSocket Status */}
+        <div>
+          <WebSocketStatus />
+        </div>
       </div>
     </div>
   );
