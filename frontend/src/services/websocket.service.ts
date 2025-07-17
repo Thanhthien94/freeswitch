@@ -46,7 +46,7 @@ class WebSocketService {
   private reconnectDelay = 1000;
 
   // Event listeners
-  private eventListeners: Map<string, Set<Function>> = new Map();
+  private eventListeners: Map<string, Set<(...args: any[]) => void>> = new Map();
 
   constructor() {
     this.initializeEventListeners();
@@ -170,14 +170,14 @@ class WebSocketService {
   }
 
   // Event subscription methods
-  on(event: string, callback: Function) {
+  on(event: string, callback: (...args: any[]) => void) {
     if (!this.eventListeners.has(event)) {
       this.eventListeners.set(event, new Set());
     }
     this.eventListeners.get(event)!.add(callback);
   }
 
-  off(event: string, callback: Function) {
+  off(event: string, callback: (...args: any[]) => void) {
     const listeners = this.eventListeners.get(event);
     if (listeners) {
       listeners.delete(callback);

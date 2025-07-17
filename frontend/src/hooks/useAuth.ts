@@ -6,6 +6,7 @@ export interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
+  token: string | null;
 }
 
 export const useAuth = () => {
@@ -14,6 +15,7 @@ export const useAuth = () => {
     isAuthenticated: false,
     isLoading: true,
     error: null,
+    token: null,
   });
 
   // Initialize auth state
@@ -22,12 +24,14 @@ export const useAuth = () => {
       try {
         const isAuthenticated = authService.isAuthenticated();
         const user = authService.getStoredUser();
-        
+        const token = authService.getToken();
+
         setAuthState({
           user,
           isAuthenticated,
           isLoading: false,
           error: null,
+          token,
         });
       } catch {
         setAuthState({
@@ -35,6 +39,7 @@ export const useAuth = () => {
           isAuthenticated: false,
           isLoading: false,
           error: 'Failed to initialize authentication',
+          token: null,
         });
       }
     };
@@ -54,6 +59,7 @@ export const useAuth = () => {
         isAuthenticated: true,
         isLoading: false,
         error: null,
+        token: response.access_token,
       });
       
       return response;
@@ -80,6 +86,7 @@ export const useAuth = () => {
         isAuthenticated: true,
         isLoading: false,
         error: null,
+        token: null, // Register doesn't return token in this flow
       });
       
       return user;
@@ -106,6 +113,7 @@ export const useAuth = () => {
         isAuthenticated: false,
         isLoading: false,
         error: null,
+        token: null,
       });
     } catch {
       // Even if logout fails, clear local state
@@ -114,6 +122,7 @@ export const useAuth = () => {
         isAuthenticated: false,
         isLoading: false,
         error: null,
+        token: null,
       });
     }
   }, []);

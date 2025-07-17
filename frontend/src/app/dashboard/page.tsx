@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Phone, PhoneCall, Mic, Activity, TrendingUp } from 'lucide-react';
+import { Phone, PhoneCall, Mic, TrendingUp } from 'lucide-react';
 import { cdrService, CallDetailRecord } from '@/services/cdr.service';
 import { recordingService } from '@/services/recording.service';
 import { WebSocketStatus } from '@/components/realtime/WebSocketStatus';

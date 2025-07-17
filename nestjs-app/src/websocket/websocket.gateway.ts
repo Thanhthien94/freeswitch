@@ -8,8 +8,9 @@ import {
   OnGatewayDisconnect,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { Logger, UseGuards } from '@nestjs/common';
+import { Logger, UseGuards, Inject, forwardRef } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { EslService } from '../esl/esl.service';
 
 export interface CallEvent {
   eventType: 'CHANNEL_CREATE' | 'CHANNEL_ANSWER' | 'CHANNEL_HANGUP' | 'CHANNEL_BRIDGE' | 'CHANNEL_UNBRIDGE';
@@ -49,6 +50,11 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
   private readonly logger = new Logger(RealtimeGateway.name);
   private connectedClients = new Map<string, Socket>();
 
+  constructor(
+    @Inject(forwardRef(() => EslService))
+    private eslService: EslService,
+  ) {}
+
   handleConnection(client: Socket) {
     this.logger.log(`Client connected: ${client.id}`);
     this.connectedClients.set(client.id, client);
@@ -65,14 +71,14 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
   private async sendInitialData(client: Socket) {
     try {
       // Send current active calls
-      // TODO: Get from active calls service
-      const activeCalls: ActiveCall[] = [];
+      const activeCalls = this.eslService.getActiveCalls();
       client.emit('active-calls', activeCalls);
-      
+
       // Send system status
+      const isConnected = await this.eslService.isConnected();
       client.emit('system-status', {
-        freeswitchStatus: 'online',
-        databaseStatus: 'connected',
+        freeswitchStatus: isConnected ? 'online' : 'offline',
+        databaseStatus: 'connected', // TODO: Check database connection
         totalActiveCalls: activeCalls.length,
         timestamp: new Date(),
       });
@@ -107,19 +113,22 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
     this.logger.log(`Call control command: ${data.action} for call ${data.callId}`);
     
     try {
-      // TODO: Implement call control via ESL service
+      // Implement call control via ESL service
       switch (data.action) {
         case 'hangup':
-          // await this.eslService.hangupCall(data.callId);
+          await this.eslService.hangupCall(data.callId);
           break;
         case 'transfer':
-          // await this.eslService.transferCall(data.callId, data.params.destination);
+          if (!data.params?.destination) {
+            throw new Error('Transfer destination is required');
+          }
+          await this.eslService.transferCall(data.callId, data.params.destination);
           break;
         case 'hold':
-          // await this.eslService.holdCall(data.callId);
+          await this.eslService.holdCall(data.callId);
           break;
         case 'unhold':
-          // await this.eslService.unholdCall(data.callId);
+          await this.eslService.unholdCall(data.callId);
           break;
         default:
           throw new Error(`Unknown call control action: ${data.action}`);
@@ -145,8 +154,7 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
   @SubscribeMessage('get-active-calls')
   async handleGetActiveCalls(@ConnectedSocket() client: Socket) {
     try {
-      // TODO: Get from active calls service
-      const activeCalls: ActiveCall[] = [];
+      const activeCalls = this.eslService.getActiveCalls();
       client.emit('active-calls', activeCalls);
     } catch (error) {
       this.logger.error('Error getting active calls:', error);
@@ -158,11 +166,13 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
   @SubscribeMessage('get-system-status')
   async handleGetSystemStatus(@ConnectedSocket() client: Socket) {
     try {
-      // TODO: Get real system status
+      const isConnected = await this.eslService.isConnected();
+      const activeCallsCount = this.eslService.getActiveCallsCount();
+
       const status = {
-        freeswitchStatus: 'online',
-        databaseStatus: 'connected',
-        totalActiveCalls: 0,
+        freeswitchStatus: isConnected ? 'online' : 'offline',
+        databaseStatus: 'connected', // TODO: Check database connection
+        totalActiveCalls: activeCallsCount,
         timestamp: new Date(),
       };
       client.emit('system-status', status);

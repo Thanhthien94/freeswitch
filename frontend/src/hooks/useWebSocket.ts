@@ -34,12 +34,13 @@ interface UseWebSocketReturn {
 }
 
 export const useWebSocket = (): UseWebSocketReturn => {
-  const { token, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>({
     connected: false,
     reconnectAttempts: 0,
     maxReconnectAttempts: 5,
   });
+  const [wsToken, setWsToken] = useState<string | null>(null);
   const [activeCalls, setActiveCalls] = useState<ActiveCall[]>([]);
   const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
   
@@ -47,16 +48,40 @@ export const useWebSocket = (): UseWebSocketReturn => {
   const callEventCallbacks = useRef<Set<(event: CallEvent) => void>>(new Set());
   const callControlCallbacks = useRef<Set<(response: CallControlResponse) => void>>(new Set());
 
-  // Initialize WebSocket connection
+  // Get WebSocket token when authenticated
   useEffect(() => {
     if (!isAuthenticated) {
+      setWsToken(null);
+      return;
+    }
+
+    const getWebSocketToken = async () => {
+      try {
+        const response = await fetch('/api/websocket-token');
+        if (response.ok) {
+          const data = await response.json();
+          setWsToken(data.token);
+        } else {
+          console.error('Failed to get WebSocket token');
+        }
+      } catch (error) {
+        console.error('Error getting WebSocket token:', error);
+      }
+    };
+
+    getWebSocketToken();
+  }, [isAuthenticated]);
+
+  // Initialize WebSocket connection
+  useEffect(() => {
+    if (!isAuthenticated || !wsToken) {
       websocketService.disconnect();
       return;
     }
 
     const connect = async () => {
       try {
-        await websocketService.connect(token);
+        await websocketService.connect(wsToken);
       } catch (error) {
         console.error('Failed to connect WebSocket:', error);
       }
@@ -68,7 +93,7 @@ export const useWebSocket = (): UseWebSocketReturn => {
     return () => {
       websocketService.disconnect();
     };
-  }, [isAuthenticated, token]);
+  }, [isAuthenticated, wsToken]);
 
   // Set up event listeners
   useEffect(() => {
@@ -76,10 +101,10 @@ export const useWebSocket = (): UseWebSocketReturn => {
     const handleConnectionStatus = (status: any) => {
       setConnectionStatus(prev => ({
         ...prev,
+        ...websocketService.connectionState,
         connected: status.connected,
         error: status.error,
         reason: status.reason,
-        ...websocketService.connectionState,
       }));
     };
 

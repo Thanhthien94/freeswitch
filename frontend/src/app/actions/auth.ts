@@ -2,7 +2,8 @@
 
 import { z } from 'zod'
 import { redirect } from 'next/navigation'
-import { createSession, deleteSession } from '@/lib/auth'
+import { createSession, deleteSession, decrypt } from '@/lib/auth'
+import { cookies } from 'next/headers'
 
 // Validation schemas
 const LoginSchema = z.object({
@@ -132,6 +133,24 @@ export async function signup(state: FormState, formData: FormData): Promise<Form
       message: 'An error occurred during signup.',
     }
   }
+}
+
+// Get Session Server Action
+export async function getSession() {
+  const cookieStore = await cookies()
+  const cookie = cookieStore.get('session')?.value
+
+  if (!cookie) {
+    return null
+  }
+
+  const session = await decrypt(cookie)
+
+  if (!session?.userId) {
+    return null
+  }
+
+  return session
 }
 
 // Logout Server Action

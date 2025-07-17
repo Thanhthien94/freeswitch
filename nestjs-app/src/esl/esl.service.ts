@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Connection as ESLConnection } from 'modesl';
 import { CdrService } from '../cdr/cdr.service';
+import { RealtimeGateway, CallEvent, ActiveCall } from '../websocket/websocket.gateway';
 
 @Injectable()
 export class EslService implements OnModuleInit, OnModuleDestroy {
@@ -12,10 +13,15 @@ export class EslService implements OnModuleInit, OnModuleDestroy {
   private maxReconnectAttempts = 5;
   private isConnecting = false;
 
+  // Active calls tracking
+  private activeCalls = new Map<string, ActiveCall>();
+
   constructor(
     private configService: ConfigService,
     private eventEmitter: EventEmitter2,
     private cdrService: CdrService,
+    @Inject(forwardRef(() => RealtimeGateway))
+    private realtimeGateway: RealtimeGateway,
   ) {}
 
   async onModuleInit() {
@@ -185,6 +191,40 @@ export class EslService implements OnModuleInit, OnModuleDestroy {
 
       await this.cdrService.createCdrFromEvent(eventData);
 
+      // Create active call entry
+      const activeCall: ActiveCall = {
+        callId: uuid,
+        callerNumber,
+        calleeNumber: destinationNumber,
+        status: 'ringing',
+        direction,
+        startTime: new Date(),
+        duration: 0,
+        recording: false, // TODO: Check if recording is enabled
+      };
+
+      this.activeCalls.set(uuid, activeCall);
+
+      // Broadcast real-time call event
+      const callEvent: CallEvent = {
+        eventType: 'CHANNEL_CREATE',
+        callId: uuid,
+        callerNumber,
+        calleeNumber: destinationNumber,
+        timestamp: new Date(),
+        status: 'ringing',
+        direction,
+        metadata: {
+          context: event.getHeader('Caller-Context'),
+          domainName: event.getHeader('variable_domain_name'),
+          callerIp: event.getHeader('Caller-Network-Addr'),
+          userAgent: event.getHeader('variable_sip_user_agent'),
+        },
+      };
+
+      this.realtimeGateway.broadcastCallEvent(callEvent);
+      this.realtimeGateway.broadcastActiveCallsUpdate(Array.from(this.activeCalls.values()));
+
       this.eventEmitter.emit('call.created', {
         uuid,
         callerNumber,
@@ -215,6 +255,31 @@ export class EslService implements OnModuleInit, OnModuleDestroy {
 
       await this.cdrService.updateCdrOnAnswer(uuid, eventData);
 
+      // Update active call
+      const activeCall = this.activeCalls.get(uuid);
+      if (activeCall) {
+        activeCall.status = 'answered';
+        activeCall.answerTime = new Date();
+        this.activeCalls.set(uuid, activeCall);
+
+        // Broadcast real-time call event
+        const callEvent: CallEvent = {
+          eventType: 'CHANNEL_ANSWER',
+          callId: uuid,
+          callerNumber: activeCall.callerNumber,
+          calleeNumber: activeCall.calleeNumber,
+          timestamp: new Date(),
+          status: 'answered',
+          direction: activeCall.direction,
+          metadata: {
+            answeredTime: event.getHeader('Caller-Channel-Answered-Time'),
+          },
+        };
+
+        this.realtimeGateway.broadcastCallEvent(callEvent);
+        this.realtimeGateway.broadcastActiveCallsUpdate(Array.from(this.activeCalls.values()));
+      }
+
       this.eventEmitter.emit('call.answered', {
         uuid,
         timestamp: new Date(),
@@ -237,6 +302,36 @@ export class EslService implements OnModuleInit, OnModuleDestroy {
       const duration = event.getHeader('variable_duration');
 
       this.logger.log(`Call hangup: ${uuid} (${cause})`);
+
+      // Get active call before removing
+      const activeCall = this.activeCalls.get(uuid);
+      if (activeCall) {
+        // Calculate final duration
+        const finalDuration = duration ? parseInt(duration) :
+          Math.floor((new Date().getTime() - activeCall.startTime.getTime()) / 1000);
+
+        // Broadcast real-time call event
+        const callEvent: CallEvent = {
+          eventType: 'CHANNEL_HANGUP',
+          callId: uuid,
+          callerNumber: activeCall.callerNumber,
+          calleeNumber: activeCall.calleeNumber,
+          timestamp: new Date(),
+          duration: finalDuration,
+          status: 'hangup',
+          direction: activeCall.direction,
+          metadata: {
+            hangupCause: cause,
+            duration: finalDuration,
+          },
+        };
+
+        this.realtimeGateway.broadcastCallEvent(callEvent);
+
+        // Remove from active calls
+        this.activeCalls.delete(uuid);
+        this.realtimeGateway.broadcastActiveCallsUpdate(Array.from(this.activeCalls.values()));
+      }
 
       this.eventEmitter.emit('call.hangup', {
         uuid,
@@ -536,6 +631,97 @@ export class EslService implements OnModuleInit, OnModuleDestroy {
 
   private getUptime(): number {
     return process.uptime();
+  }
+
+  // Active calls management
+  getActiveCalls(): ActiveCall[] {
+    // Update durations for active calls
+    const now = new Date();
+    const activeCallsArray = Array.from(this.activeCalls.values()).map(call => ({
+      ...call,
+      duration: Math.floor((now.getTime() - call.startTime.getTime()) / 1000),
+    }));
+
+    return activeCallsArray;
+  }
+
+  getActiveCallsCount(): number {
+    return this.activeCalls.size;
+  }
+
+  // Call control methods
+  async hangupCall(callId: string): Promise<void> {
+    if (!this.isConnectionActive()) {
+      throw new Error('ESL not connected to FreeSWITCH');
+    }
+
+    try {
+      await this.connection.api('uuid_kill', callId);
+      this.logger.log(`Hangup call initiated: ${callId}`);
+    } catch (error) {
+      this.logger.error(`Failed to hangup call ${callId}:`, error);
+      throw error;
+    }
+  }
+
+  async transferCall(callId: string, destination: string): Promise<void> {
+    if (!this.isConnectionActive()) {
+      throw new Error('ESL not connected to FreeSWITCH');
+    }
+
+    try {
+      await this.connection.api('uuid_transfer', `${callId} ${destination}`);
+      this.logger.log(`Transfer call initiated: ${callId} -> ${destination}`);
+    } catch (error) {
+      this.logger.error(`Failed to transfer call ${callId}:`, error);
+      throw error;
+    }
+  }
+
+  async holdCall(callId: string): Promise<void> {
+    if (!this.isConnectionActive()) {
+      throw new Error('ESL not connected to FreeSWITCH');
+    }
+
+    try {
+      await this.connection.api('uuid_hold', callId);
+
+      // Update active call status
+      const activeCall = this.activeCalls.get(callId);
+      if (activeCall) {
+        activeCall.status = 'hold';
+        this.activeCalls.set(callId, activeCall);
+        this.realtimeGateway.broadcastActiveCallsUpdate(Array.from(this.activeCalls.values()));
+      }
+
+      this.logger.log(`Hold call initiated: ${callId}`);
+    } catch (error) {
+      this.logger.error(`Failed to hold call ${callId}:`, error);
+      throw error;
+    }
+  }
+
+  async unholdCall(callId: string): Promise<void> {
+    if (!this.isConnectionActive()) {
+      throw new Error('ESL not connected to FreeSWITCH');
+    }
+
+    try {
+      await this.connection.api('uuid_hold', `${callId} off`);
+
+      // Update active call status
+      const activeCall = this.activeCalls.get(callId);
+      if (activeCall) {
+        activeCall.status = activeCall.answerTime ? 'answered' : 'ringing';
+        this.activeCalls.set(callId, activeCall);
+        this.realtimeGateway.broadcastActiveCallsUpdate(Array.from(this.activeCalls.values()));
+      }
+
+      this.logger.log(`Unhold call initiated: ${callId}`);
+    } catch (error) {
+      this.logger.error(`Failed to unhold call ${callId}:`, error);
+      throw error;
+    }
   }
 
   // Health check

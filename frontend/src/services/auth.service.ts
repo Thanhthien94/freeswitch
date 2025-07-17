@@ -262,6 +262,11 @@ export const authService = {
     return userStr ? JSON.parse(userStr) : null;
   },
 
+  // Get stored token
+  getToken: (): string | null => {
+    return localStorage.getItem('auth_token');
+  },
+
   // Check if user has specific role
   hasRole: (roleName: string): boolean => {
     const user = authService.getStoredUser();
