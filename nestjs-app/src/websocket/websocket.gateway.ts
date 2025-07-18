@@ -6,11 +6,13 @@ import {
   ConnectedSocket,
   OnGatewayConnection,
   OnGatewayDisconnect,
+  OnGatewayInit,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { Logger, UseGuards, Inject, forwardRef } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { EslService } from '../esl/esl.service';
+import { AuthWsMiddleware } from './middleware/auth-ws.middleware';
 
 export interface CallEvent {
   eventType: 'CHANNEL_CREATE' | 'CHANNEL_ANSWER' | 'CHANNEL_HANGUP' | 'CHANNEL_BRIDGE' | 'CHANNEL_UNBRIDGE';
@@ -43,7 +45,7 @@ export interface ActiveCall {
   },
   namespace: '/realtime',
 })
-export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit {
   @WebSocketServer()
   server: Server;
 
@@ -53,7 +55,14 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
   constructor(
     @Inject(forwardRef(() => EslService))
     private eslService: EslService,
+    private authWsMiddleware: AuthWsMiddleware,
   ) {}
+
+  afterInit(server: Server) {
+    // Apply authentication middleware to all connections
+    server.use(this.authWsMiddleware.createMiddleware());
+    this.logger.log('WebSocket Gateway initialized with authentication middleware');
+  }
 
   handleConnection(client: Socket) {
     this.logger.log(`Client connected: ${client.id}`);

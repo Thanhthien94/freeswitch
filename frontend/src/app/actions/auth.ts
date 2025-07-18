@@ -139,14 +139,17 @@ export async function signup(state: FormState, formData: FormData): Promise<Form
 export async function getSession() {
   const cookieStore = await cookies()
   const cookie = cookieStore.get('session')?.value
+  console.log('getSession - Cookie:', cookie ? 'exists' : 'not found');
 
   if (!cookie) {
     return null
   }
 
   const session = await decrypt(cookie)
+  console.log('getSession - Decrypted session:', session);
 
   if (!session?.userId) {
+    console.log('getSession - No userId in session');
     return null
   }
 

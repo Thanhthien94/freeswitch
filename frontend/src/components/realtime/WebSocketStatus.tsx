@@ -4,7 +4,17 @@ import { useWebSocket } from '@/hooks/useWebSocket';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Wifi, WifiOff, RefreshCw, Activity } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  Wifi,
+  WifiOff,
+  RefreshCw,
+  Activity,
+  AlertCircle,
+  CheckCircle,
+  Loader2,
+  X
+} from 'lucide-react';
 
 export const WebSocketStatus = () => {
   const {
@@ -13,21 +23,32 @@ export const WebSocketStatus = () => {
     systemStatus,
     refreshActiveCalls,
     refreshSystemStatus,
+    retryGetToken,
+    clearTokenError,
   } = useWebSocket();
 
+  const {
+    connected,
+    tokenError,
+    isRetryingToken,
+    error,
+    reconnectAttempts,
+    maxReconnectAttempts
+  } = connectionStatus;
+
   const getConnectionBadge = () => {
-    if (connectionStatus.connected) {
+    if (connected) {
       return (
         <Badge variant="default" className="bg-green-500">
           <Wifi className="w-3 h-3 mr-1" />
-          Connected
+          Đã kết nối
         </Badge>
       );
     } else {
       return (
         <Badge variant="destructive">
           <WifiOff className="w-3 h-3 mr-1" />
-          Disconnected
+          Mất kết nối
         </Badge>
       );
     }
@@ -50,33 +71,95 @@ export const WebSocketStatus = () => {
 
   return (
     <div className="space-y-4">
+      {/* Token Error Alert */}
+      {tokenError && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription className="flex items-center justify-between">
+            <div className="flex-1">
+              <div className="font-medium mb-1">Lỗi xác thực WebSocket</div>
+              <div className="text-sm">{tokenError}</div>
+            </div>
+            <div className="flex items-center gap-2 ml-4">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={retryGetToken}
+                disabled={isRetryingToken}
+                className="h-8"
+              >
+                {isRetryingToken ? (
+                  <>
+                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                    Đang thử lại...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="h-3 w-3 mr-1" />
+                    Thử lại
+                  </>
+                )}
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={clearTokenError}
+                className="h-8 w-8 p-0"
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Retry Token Loading State */}
+      {isRetryingToken && !tokenError && (
+        <Alert>
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <AlertDescription>
+            <div className="font-medium">Đang lấy token xác thực...</div>
+            <div className="text-sm text-muted-foreground">
+              Vui lòng đợi trong giây lát
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Connection Status */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-medium flex items-center justify-between">
             WebSocket Connection
-            {getConnectionBadge()}
+            <div className="flex items-center gap-2">
+              {getConnectionBadge()}
+              {reconnectAttempts > 0 && (
+                <Badge variant="outline" className="text-xs">
+                  Thử lại: {reconnectAttempts}/{maxReconnectAttempts}
+                </Badge>
+              )}
+            </div>
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-0">
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Status:</span>
-              <span>{connectionStatus.connected ? 'Connected' : 'Disconnected'}</span>
+              <span className="text-muted-foreground">Trạng thái:</span>
+              <span>{connected ? 'Đã kết nối' : 'Mất kết nối'}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Reconnect Attempts:</span>
-              <span>{connectionStatus.reconnectAttempts}/{connectionStatus.maxReconnectAttempts}</span>
+              <span className="text-muted-foreground">Lần thử lại:</span>
+              <span>{reconnectAttempts}/{maxReconnectAttempts}</span>
             </div>
-            {connectionStatus.error && (
+            {error && !tokenError && (
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Error:</span>
-                <span className="text-red-500 text-xs">{connectionStatus.error}</span>
+                <span className="text-muted-foreground">Lỗi:</span>
+                <span className="text-red-500 text-xs">{error}</span>
               </div>
             )}
             {connectionStatus.reason && (
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Reason:</span>
+                <span className="text-muted-foreground">Lý do:</span>
                 <span className="text-xs">{connectionStatus.reason}</span>
               </div>
             )}

@@ -8,37 +8,45 @@ interface ConnectionStatus {
   maxReconnectAttempts: number;
   error?: string;
   reason?: string;
+  tokenError?: string;
+  isRetryingToken?: boolean;
 }
 
 interface UseWebSocketReturn {
   // Connection status
   connectionStatus: ConnectionStatus;
-  
+
   // Real-time data
   activeCalls: ActiveCall[];
   systemStatus: SystemStatus | null;
-  
+
   // Call control methods
   hangupCall: (callId: string) => void;
   transferCall: (callId: string, destination: string) => void;
   holdCall: (callId: string) => void;
   unholdCall: (callId: string) => void;
-  
+
   // Data refresh methods
   refreshActiveCalls: () => void;
   refreshSystemStatus: () => void;
-  
+
+  // Token management
+  retryGetToken: () => void;
+  clearTokenError: () => void;
+
   // Event subscription
   onCallEvent: (callback: (event: CallEvent) => void) => () => void;
   onCallControlResponse: (callback: (response: CallControlResponse) => void) => () => void;
 }
 
 export const useWebSocket = (): UseWebSocketReturn => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, token, user } = useAuth();
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>({
     connected: false,
     reconnectAttempts: 0,
     maxReconnectAttempts: 5,
+    tokenError: undefined,
+    isRetryingToken: false,
   });
   const [wsToken, setWsToken] = useState<string | null>(null);
   const [activeCalls, setActiveCalls] = useState<ActiveCall[]>([]);
@@ -48,29 +56,48 @@ export const useWebSocket = (): UseWebSocketReturn => {
   const callEventCallbacks = useRef<Set<(event: CallEvent) => void>>(new Set());
   const callControlCallbacks = useRef<Set<(response: CallControlResponse) => void>>(new Set());
 
-  // Get WebSocket token when authenticated
-  useEffect(() => {
-    if (!isAuthenticated) {
+  // Get WebSocket token function
+  const getWebSocketToken = useCallback(async () => {
+    if (!isAuthenticated || !token) {
       setWsToken(null);
+      setConnectionStatus(prev => ({
+        ...prev,
+        tokenError: undefined,
+        isRetryingToken: false
+      }));
       return;
     }
 
-    const getWebSocketToken = async () => {
-      try {
-        const response = await fetch('/api/websocket-token');
-        if (response.ok) {
-          const data = await response.json();
-          setWsToken(data.token);
-        } else {
-          console.error('Failed to get WebSocket token');
-        }
-      } catch (error) {
-        console.error('Error getting WebSocket token:', error);
-      }
-    };
+    setConnectionStatus(prev => ({
+      ...prev,
+      isRetryingToken: true,
+      tokenError: undefined
+    }));
 
+    try {
+      // Use the existing JWT token directly for WebSocket authentication
+      // Backend now accepts both 'access' and 'websocket' token types
+      console.log('🔍 Using existing JWT token for WebSocket authentication');
+      setWsToken(token);
+      setConnectionStatus(prev => ({
+        ...prev,
+        tokenError: undefined,
+        isRetryingToken: false
+      }));
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Lỗi không xác định';
+      setConnectionStatus(prev => ({
+        ...prev,
+        tokenError: `Lỗi thiết lập WebSocket token: ${errorMessage}`,
+        isRetryingToken: false
+      }));
+    }
+  }, [isAuthenticated, token, user?.id]);
+
+  // Get WebSocket token when authenticated
+  useEffect(() => {
     getWebSocketToken();
-  }, [isAuthenticated]);
+  }, [getWebSocketToken]);
 
   // Initialize WebSocket connection
   useEffect(() => {
@@ -82,8 +109,17 @@ export const useWebSocket = (): UseWebSocketReturn => {
     const connect = async () => {
       try {
         await websocketService.connect(wsToken);
+        // Clear any previous token errors on successful connection
+        setConnectionStatus(prev => ({
+          ...prev,
+          tokenError: undefined
+        }));
       } catch (error) {
-        console.error('Failed to connect WebSocket:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Lỗi không xác định';
+        setConnectionStatus(prev => ({
+          ...prev,
+          error: `Không thể kết nối WebSocket: ${errorMessage}`
+        }));
       }
     };
 
@@ -245,6 +281,18 @@ export const useWebSocket = (): UseWebSocketReturn => {
     websocketService.requestSystemStatus();
   }, []);
 
+  // Token management methods
+  const retryGetToken = useCallback(() => {
+    getWebSocketToken();
+  }, [getWebSocketToken]);
+
+  const clearTokenError = useCallback(() => {
+    setConnectionStatus(prev => ({
+      ...prev,
+      tokenError: undefined
+    }));
+  }, []);
+
   // Event subscription methods
   const onCallEvent = useCallback((callback: (event: CallEvent) => void) => {
     callEventCallbacks.current.add(callback);
@@ -274,6 +322,8 @@ export const useWebSocket = (): UseWebSocketReturn => {
     unholdCall,
     refreshActiveCalls,
     refreshSystemStatus,
+    retryGetToken,
+    clearTokenError,
     onCallEvent,
     onCallControlResponse,
   };

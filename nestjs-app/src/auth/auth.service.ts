@@ -91,7 +91,9 @@ export class AuthService {
         domainId: user.domainId,
         roles,
         permissions,
+        primaryRole: user.getPrimaryRole()?.role?.name || 'User',
         sessionId,
+        tokenType: 'access', // Add tokenType for WebSocket authentication
         iat: Math.floor(Date.now() / 1000),
       };
 
@@ -306,5 +308,122 @@ export class AuthService {
     });
 
     await this.auditLogRepository.save(auditLog);
+  }
+
+  // Alias for createAuditLog for consistency
+  private async logAuditEvent(
+    userId: number,
+    action: AuditAction,
+    result: AuditResult,
+    description: string,
+    metadata?: Record<string, any>,
+  ): Promise<void> {
+    return this.createAuditLog(userId, action, result, description, metadata);
+  }
+
+  async generateWebSocketToken(user: any): Promise<{ token: string; expiresIn: number }> {
+    try {
+      // Create a short-lived token specifically for WebSocket connections
+      const payload: JwtPayload = {
+        sub: user.id,
+        username: user.username,
+        email: user.email,
+        domainId: user.domainId,
+        roles: user.roles?.map(role => role.name) || [],
+        permissions: user.permissions || [],
+        primaryRole: user.primaryRole,
+        iat: Math.floor(Date.now() / 1000),
+        tokenType: 'websocket', // Mark as WebSocket token
+      };
+
+      const expiresIn = 3600; // 1 hour
+      const token = this.jwtService.sign(payload, {
+        expiresIn: `${expiresIn}s`,
+        secret: this.configService.get<string>('JWT_SECRET'),
+      });
+
+      this.logger.log(`WebSocket token generated for user: ${user.username}`);
+
+      // Log audit trail
+      await this.logAuditEvent(
+        user.id,
+        AuditAction.WEBSOCKET_TOKEN_GENERATED,
+        AuditResult.SUCCESS,
+        'WebSocket token generated successfully',
+        {
+          expiresIn,
+          tokenType: 'websocket',
+        },
+      );
+
+      return {
+        token,
+        expiresIn,
+      };
+    } catch (error) {
+      this.logger.error(`Failed to generate WebSocket token for user ${user.username}:`, error);
+
+      // Log audit trail for failure
+      await this.logAuditEvent(
+        user.id,
+        AuditAction.WEBSOCKET_TOKEN_GENERATED,
+        AuditResult.FAILURE,
+        'Failed to generate WebSocket token',
+        {
+          error: error.message,
+        },
+      );
+
+      throw new BadRequestException('Failed to generate WebSocket token');
+    }
+  }
+
+  async validateWebSocketToken(token: string): Promise<any> {
+    try {
+      const payload = this.jwtService.verify(token, {
+        secret: this.configService.get<string>('JWT_SECRET'),
+      });
+
+      // Accept both access and websocket tokens for WebSocket connections
+      console.log('🔍 WebSocket token payload:', { tokenType: payload.tokenType, sub: payload.sub });
+      if (payload.tokenType !== 'websocket' && payload.tokenType !== 'access') {
+        console.log('❌ Invalid token type:', payload.tokenType);
+        throw new UnauthorizedException('Invalid token type for WebSocket');
+      }
+
+      // Get fresh user data - simplified query first
+      console.log('🔍 Looking for user with ID:', payload.sub);
+      try {
+        // First try simple query without relations
+        const user = await this.userRepository.findOne({
+          where: { id: payload.sub },
+        });
+
+        console.log('🔍 User found (simple):', user ? `${user.username} (ID: ${user.id})` : 'null');
+        if (!user) {
+          console.log('❌ User not found in database');
+          throw new UnauthorizedException('User not found');
+        }
+
+        console.log('✅ User validation successful');
+
+        // Return user data for WebSocket authentication
+        return {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          domainId: user.domainId,
+          roles: [], // Simplified for now - no relations loaded
+          permissions: [], // Simplified for now - no relations loaded
+          primaryRole: payload.primaryRole,
+        };
+      } catch (error) {
+        console.log('❌ Database query error:', error.message);
+        throw new UnauthorizedException('Database error during user lookup');
+      }
+    } catch (error) {
+      this.logger.error('WebSocket token validation failed:', error);
+      throw new UnauthorizedException('Invalid WebSocket token');
+    }
   }
 }

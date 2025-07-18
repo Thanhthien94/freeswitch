@@ -99,12 +99,8 @@ services:
     restart: unless-stopped
     ports:
       - "3002:3000"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-      - /app/.next
     environment:
-      - NODE_ENV=${NODE_ENV:-development}
+      - NODE_ENV=production
       # Client-side API URL (browser access from host machine)
       - NEXT_PUBLIC_API_URL=http://localhost:3000/api/v1
       # Server-side API URL (container-to-container communication)

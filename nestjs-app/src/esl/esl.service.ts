@@ -546,7 +546,7 @@ export class EslService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  async getActiveCalls(): Promise<any[]> {
+  async getActiveCallsFromFreeSWITCH(): Promise<any[]> {
     if (!this.isConnectionActive()) {
       throw new Error('ESL not connected to FreeSWITCH');
     }

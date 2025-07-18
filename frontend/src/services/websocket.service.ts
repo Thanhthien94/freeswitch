@@ -65,8 +65,9 @@ class WebSocketService {
   connect(token?: string): Promise<void> {
     return new Promise((resolve, reject) => {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-        const wsUrl = apiUrl.replace('/api/v1', '').replace('http', 'ws');
+        // Use dedicated WebSocket URL or fallback to API URL
+        const wsUrl = process.env.NEXT_PUBLIC_WS_URL ||
+                     (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000').replace('/api/v1', '').replace('http', 'ws');
 
         this.socket = io(`${wsUrl}/realtime`, {
           auth: token ? { token } : undefined,

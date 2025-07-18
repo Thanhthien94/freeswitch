@@ -81,7 +81,14 @@ export class User {
   @OneToMany(() => UserRoleEntity, (userRole) => userRole.user)
   userRoles: UserRoleEntity[];
 
-  // Computed properties
+  // Computed properties for compatibility
+  get roles(): any[] {
+    return this.getActiveRoles().map(ur => ({
+      name: ur.role?.name,
+      permissions: ur.role?.permissions || []
+    }));
+  }
+
   get fullName(): string {
     return `${this.firstName || ''} ${this.lastName || ''}`.trim();
   }

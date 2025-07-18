@@ -23,6 +23,7 @@ export enum AuditAction {
   MFA_ENABLED = 'mfa_enabled',
   MFA_DISABLED = 'mfa_disabled',
   SUSPICIOUS_ACTIVITY = 'suspicious_activity',
+  WEBSOCKET_TOKEN_GENERATED = 'websocket_token_generated',
 }
 
 export enum AuditResult {

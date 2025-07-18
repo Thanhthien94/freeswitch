@@ -13,9 +13,11 @@ export interface JwtPayload {
   domainId: string;
   roles: string[];
   permissions: string[];
+  primaryRole: string;
   iat: number;
   exp?: number; // Optional since JWT library will set this
   sessionId?: string;
+  tokenType?: string; // For WebSocket tokens
 }
 
 @Injectable()

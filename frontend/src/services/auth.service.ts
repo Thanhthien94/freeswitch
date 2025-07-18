@@ -76,7 +76,6 @@ export interface PolicyEvaluationResult {
 export const authService = {
   // Login
   login: async (credentials: LoginRequest): Promise<LoginResponse> => {
-    // Try real API first, fallback to mock for development
     try {
       const response = await api.post<LoginResponse>('/auth/login', credentials);
 
@@ -87,114 +86,40 @@ export const authService = {
           localStorage.setItem('refresh_token', response.data.refresh_token);
         }
         localStorage.setItem('user', JSON.stringify(response.data.user));
+
+        // Create session cookie for middleware protection
+        try {
+          await fetch('/api/auth/session', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              userId: response.data.user.id,
+              token: response.data.access_token,
+            }),
+          });
+        } catch (sessionError) {
+          console.warn('Failed to create session cookie:', sessionError);
+          // Don't fail login if session creation fails
+        }
       }
 
       return response.data;
-    } catch (error) {
-      console.warn('Real API login failed, using mock data for development:', error);
-    }
-
-    // MOCK LOGIN FOR DEVELOPMENT FALLBACK
-    const mockUsers = {
-      'admin@localhost': {
-        password: 'admin123',
-        user: {
-          id: 1,
-          username: 'admin',
-          email: 'admin@localhost',
-          displayName: 'System Administrator',
-          domainId: 'localhost',
-          roles: ['SuperAdmin', 'DomainAdmin'],
-          permissions: ['*:manage', 'system:*', 'domain:*', 'users:*', 'cdr:*', 'recordings:*', 'billing:*'],
-          primaryRole: 'SuperAdmin',
-          firstName: 'System',
-          lastName: 'Administrator',
-          extension: '1000',
-          isActive: true,
-          domain: {
-            id: 'localhost',
-            name: 'localhost',
-            displayName: 'Local Development Domain',
-          },
-          securityClearance: 'CRITICAL',
-          lastLogin: new Date().toISOString(),
-          accountAge: Date.now() - new Date('2023-01-01').getTime(),
-        }
-      },
-      'manager@localhost': {
-        password: 'manager123',
-        user: {
-          id: 2,
-          username: 'manager',
-          email: 'manager@localhost',
-          displayName: 'John Manager',
-          domainId: 'localhost',
-          roles: ['DepartmentManager'],
-          permissions: ['users:read', 'users:create', 'users:update', 'calls:read', 'calls:execute', 'cdr:read', 'reports:read', 'reports:execute'],
-          primaryRole: 'DepartmentManager',
-          firstName: 'John',
-          lastName: 'Manager',
-          extension: '1001',
-          isActive: true,
-          domain: {
-            id: 'localhost',
-            name: 'localhost',
-            displayName: 'Local Development Domain',
-          },
-          securityClearance: 'HIGH',
-          lastLogin: new Date().toISOString(),
-          accountAge: Date.now() - new Date('2023-06-01').getTime(),
-        }
-      },
-      'agent@localhost': {
-        password: 'agent123',
-        user: {
-          id: 3,
-          username: 'agent',
-          email: 'agent@localhost',
-          displayName: 'Bob Agent',
-          domainId: 'localhost',
-          roles: ['Agent'],
-          permissions: ['calls:read', 'calls:create', 'calls:execute'],
-          primaryRole: 'Agent',
-          firstName: 'Bob',
-          lastName: 'Agent',
-          extension: '1003',
-          isActive: true,
-          domain: {
-            id: 'localhost',
-            name: 'localhost',
-            displayName: 'Local Development Domain',
-          },
-          securityClearance: 'LOW',
-          lastLogin: new Date().toISOString(),
-          accountAge: Date.now() - new Date('2023-09-01').getTime(),
-        }
+    } catch (error: any) {
+      // Handle different types of errors
+      if (error.response?.status === 401) {
+        throw new Error('Email hoặc mật khẩu không đúng');
+      } else if (error.response?.status === 403) {
+        throw new Error('Tài khoản đã bị khóa hoặc không có quyền truy cập');
+      } else if (error.response?.status >= 500) {
+        throw new Error('Lỗi hệ thống, vui lòng thử lại sau');
+      } else if (error.code === 'NETWORK_ERROR' || !error.response) {
+        throw new Error('Không thể kết nối đến máy chủ, vui lòng kiểm tra kết nối mạng');
+      } else {
+        throw new Error(error.response?.data?.message || 'Đăng nhập thất bại');
       }
-    };
-
-    const mockUser = mockUsers[credentials.emailOrUsername as keyof typeof mockUsers];
-
-    if (mockUser && mockUser.password === credentials.password) {
-      const mockResponse: LoginResponse = {
-        access_token: 'mock-jwt-token-' + Date.now(),
-        refresh_token: credentials.rememberMe ? 'mock-refresh-token-' + Date.now() : undefined,
-        user: mockUser.user,
-        expiresIn: credentials.rememberMe ? 604800 : 3600,
-        tokenType: 'Bearer',
-      };
-
-      // Store token in localStorage
-      localStorage.setItem('auth_token', mockResponse.access_token);
-      if (mockResponse.refresh_token) {
-        localStorage.setItem('refresh_token', mockResponse.refresh_token);
-      }
-      localStorage.setItem('user', JSON.stringify(mockResponse.user));
-
-      return mockResponse;
     }
-
-    throw new Error('Invalid credentials');
   },
 
   // Register
@@ -214,6 +139,16 @@ export const authService = {
       localStorage.removeItem('auth_token');
       localStorage.removeItem('refresh_token');
       localStorage.removeItem('user');
+
+      // Clear session cookie
+      try {
+        await fetch('/api/auth/session', {
+          method: 'DELETE',
+        });
+      } catch (sessionError) {
+        console.warn('Failed to clear session cookie:', sessionError);
+        // Don't fail logout if session clearing fails
+      }
     }
   },
 
