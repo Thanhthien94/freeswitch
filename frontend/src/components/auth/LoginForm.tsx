@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,13 +18,16 @@ export const LoginForm: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const { login, isAuthenticated, isLoading, error, clearError } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
-  // Redirect if already authenticated
+  // Handle redirect after successful login
   useEffect(() => {
     if (isAuthenticated) {
-      router.push('/dashboard');
+      const redirectTo = searchParams.get('from') || '/dashboard';
+      console.log('✅ Login successful, redirecting to:', redirectTo);
+      router.push(redirectTo);
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, router, searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

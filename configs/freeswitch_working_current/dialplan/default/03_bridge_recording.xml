@@ -1,0 +1,118 @@
+<!--
+  Bridge-based Call Recording Configuration
+  Alternative method using bridge_pre_execute for recording
+  
+  OFFICIAL DOCUMENTATION METHOD: Uses bridge_pre_execute_bleg_app
+-->
+<include>
+  <!-- Bridge Recording Setup - Applied before bridge -->
+  <extension name="bridge_recording_setup" continue="true">
+    <condition field="${bridge_recording_enabled}" expression="^true$">
+      <!-- Set recording metadata -->
+      <action application="set" data="RECORD_TITLE=Bridge Recording: ${caller_id_number} to ${destination_number}"/>
+      <action application="set" data="RECORD_COPYRIGHT=(c) 2025 FreeSWITCH PBX System"/>
+      <action application="set" data="RECORD_SOFTWARE=FreeSWITCH"/>
+      <action application="set" data="RECORD_ARTIST=PBX System"/>
+      <action application="set" data="RECORD_COMMENT=Bridge-based automatic recording"/>
+      <action application="set" data="RECORD_DATE=${strftime(%Y-%m-%d %H:%M:%S)}"/>
+      <action application="set" data="RECORD_STEREO=true"/>
+      
+      <!-- Recording optimization settings -->
+      <action application="set" data="media_bug_answer_req=true"/>
+      <action application="set" data="recording_follow_transfer=true"/>
+      <action application="set" data="RECORD_BRIDGE_REQ=true"/>
+      <action application="set" data="record_waste_resources=false"/>
+      
+      <!-- Generate unique filename -->
+      <action application="set" data="bridge_recording_filename=bridge_${strftime(%Y%m%d-%H%M%S)}_${caller_id_number}_${destination_number}_${uuid}.wav"/>
+      
+      <!-- OFFICIAL METHOD: Use bridge_pre_execute for B-leg recording -->
+      <action application="set" data="bridge_pre_execute_bleg_app=record_session"/>
+      <action application="set" data="bridge_pre_execute_bleg_data=$${recordings_dir}/${bridge_recording_filename}"/>
+      
+      <!-- Alternative: A-leg recording -->
+      <action application="set" data="bridge_pre_execute_aleg_app=record_session"/>
+      <action application="set" data="bridge_pre_execute_aleg_data=$${recordings_dir}/aleg_${bridge_recording_filename}"/>
+      
+      <!-- Log recording setup -->
+      <action application="log" data="INFO Bridge Recording Setup: ${bridge_recording_filename}"/>
+      
+      <!-- Export recording info for CDR -->
+      <action application="export" data="recording_enabled=true"/>
+      <action application="export" data="recording_file_path=${bridge_recording_filename}"/>
+    </condition>
+  </extension>
+
+  <!-- Media Bug Answer Requirement Method -->
+  <extension name="media_bug_recording_setup" continue="true">
+    <condition field="${media_bug_recording_enabled}" expression="^true$">
+      <!-- Set recording metadata -->
+      <action application="set" data="RECORD_TITLE=Media Bug Recording: ${caller_id_number} to ${destination_number}"/>
+      <action application="set" data="RECORD_COPYRIGHT=(c) 2025 FreeSWITCH PBX System"/>
+      <action application="set" data="RECORD_SOFTWARE=FreeSWITCH"/>
+      <action application="set" data="RECORD_ARTIST=PBX System"/>
+      <action application="set" data="RECORD_COMMENT=Media bug based recording"/>
+      <action application="set" data="RECORD_DATE=${strftime(%Y-%m-%d %H:%M:%S)}"/>
+      <action application="set" data="RECORD_STEREO=true"/>
+      
+      <!-- OFFICIAL METHOD: Media bug answer requirement -->
+      <action application="set" data="media_bug_answer_req=true"/>
+      <action application="set" data="recording_follow_transfer=true"/>
+      <action application="set" data="RECORD_BRIDGE_REQ=true"/>
+      
+      <!-- Generate unique filename -->
+      <action application="set" data="media_bug_recording_filename=mediabug_${strftime(%Y%m%d-%H%M%S)}_${caller_id_number}_${destination_number}_${uuid}.wav"/>
+      
+      <!-- Start recording with media bug answer requirement -->
+      <action application="record_session" data="$${recordings_dir}/${media_bug_recording_filename}"/>
+      
+      <!-- Log recording setup -->
+      <action application="log" data="INFO Media Bug Recording Started: ${media_bug_recording_filename}"/>
+      
+      <!-- Export recording info for CDR -->
+      <action application="export" data="recording_enabled=true"/>
+      <action application="export" data="recording_file_path=${media_bug_recording_filename}"/>
+    </condition>
+  </extension>
+
+  <!-- UUID Recording Method (API-based) -->
+  <extension name="uuid_recording_setup" continue="true">
+    <condition field="${uuid_recording_enabled}" expression="^true$">
+      <!-- Generate unique filename -->
+      <action application="set" data="uuid_recording_filename=uuid_${strftime(%Y%m%d-%H%M%S)}_${caller_id_number}_${destination_number}_${uuid}.wav"/>
+      
+      <!-- OFFICIAL METHOD: Use execute_on_answer with uuid_record API -->
+      <action application="export" data="execute_on_answer=api uuid_record ${uuid} start $${recordings_dir}/${uuid_recording_filename}"/>
+      
+      <!-- Alternative: Stop recording on hangup -->
+      <action application="export" data="execute_on_hangup=api uuid_record ${uuid} stop $${recordings_dir}/${uuid_recording_filename}"/>
+      
+      <!-- Log recording setup -->
+      <action application="log" data="INFO UUID Recording Setup: ${uuid_recording_filename}"/>
+      
+      <!-- Export recording info for CDR -->
+      <action application="export" data="recording_enabled=true"/>
+      <action application="export" data="recording_file_path=${uuid_recording_filename}"/>
+    </condition>
+  </extension>
+
+  <!-- Recording Quality Control for Bridge Methods -->
+  <extension name="bridge_recording_quality" continue="true">
+    <condition field="${bridge_recording_enabled}" expression="^true$">
+      <!-- Set recording quality based on call direction -->
+      <condition field="${call_direction}" expression="^(inbound|outbound)$">
+        <action application="set" data="record_rate=16000"/>
+        <action application="set" data="record_channels=2"/>
+      </condition>
+      
+      <condition field="${call_direction}" expression="^internal$">
+        <action application="set" data="record_rate=8000"/>
+        <action application="set" data="record_channels=1"/>
+      </condition>
+      
+      <!-- Enable recording controls -->
+      <action application="bind_meta_app" data="7 ab s execute_extension::toggle_recording XML features"/>
+      <action application="bind_meta_app" data="8 ab s execute_extension::pause_recording XML features"/>
+    </condition>
+  </extension>
+</include>

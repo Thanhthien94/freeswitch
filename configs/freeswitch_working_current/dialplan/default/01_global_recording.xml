@@ -1,0 +1,52 @@
+<!--
+  Global Call Recording Configuration for Testing
+  This file enables automatic recording for all calls in testing environment
+  
+  PRODUCTION NOTE: Disable this file in production and use selective recording instead
+-->
+<include>
+  <!-- Global Recording Extension - Applied to ALL calls -->
+  <extension name="global_recording_setup" continue="true">
+    <condition field="${global_recording_enabled}" expression="^true$">
+      <!-- Set recording metadata -->
+      <action application="set" data="RECORD_TITLE=Call ${caller_id_number} to ${destination_number} ${strftime(%Y-%m-%d %H:%M:%S)}"/>
+      <action application="set" data="RECORD_COPYRIGHT=(c) 2025 FreeSWITCH PBX System"/>
+      <action application="set" data="RECORD_SOFTWARE=FreeSWITCH"/>
+      <action application="set" data="RECORD_ARTIST=PBX System"/>
+      <action application="set" data="RECORD_COMMENT=Automatic call recording"/>
+      <action application="set" data="RECORD_DATE=${strftime(%Y-%m-%d %H:%M:%S)}"/>
+      <action application="set" data="RECORD_STEREO=true"/>
+      
+      <!-- Recording optimization settings -->
+      <action application="set" data="media_bug_answer_req=true"/>
+      <action application="set" data="recording_follow_transfer=true"/>
+      <action application="set" data="RECORD_BRIDGE_REQ=true"/>
+      <action application="set" data="record_waste_resources=false"/>
+      
+      <!-- Generate unique filename with call details -->
+      <action application="set" data="recording_filename=${strftime(%Y%m%d-%H%M%S)}_${caller_id_number}_${destination_number}_${uuid}.wav"/>
+      
+      <!-- OFFICIAL METHOD: Use execute_on_answer for automatic recording -->
+      <action application="export" data="execute_on_answer=record_session $${recordings_dir}/${recording_filename}"/>
+
+      <!-- Log recording setup -->
+      <action application="log" data="INFO Global Recording Setup: ${recording_filename}"/>
+
+      <!-- Export recording info for CDR -->
+      <action application="export" data="recording_enabled=true"/>
+      <action application="export" data="recording_file_path=${recording_filename}"/>
+    </condition>
+  </extension>
+
+  <!-- Recording Control Extension - Manual start/stop during call -->
+  <extension name="recording_control" continue="true">
+    <condition field="${global_recording_enabled}" expression="^true$">
+      <!-- Bind recording control keys -->
+      <!-- *7 = Start/Stop recording manually -->
+      <action application="bind_meta_app" data="7 ab s execute_extension::toggle_recording XML features"/>
+      
+      <!-- *8 = Pause/Resume recording -->
+      <action application="bind_meta_app" data="8 ab s execute_extension::pause_recording XML features"/>
+    </condition>
+  </extension>
+</include>

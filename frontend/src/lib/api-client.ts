@@ -2,7 +2,8 @@
 
 // API Client Configuration
 // For Docker: Frontend runs on :3002, Backend on :3000
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
+// Hardcode for now since env vars not working in production build
+const API_BASE_URL = 'http://localhost:3000/api/v1';
 
 // Request configuration type
 interface RequestConfig {

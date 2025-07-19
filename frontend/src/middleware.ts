@@ -18,35 +18,21 @@ export default async function middleware(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  // 5. For protected routes, redirect to login if no session cookie
+  // 5. For protected routes - let client-side handle authentication
   const isProtectedRoute = protectedRoutes.some(route => path.startsWith(route))
   const isPublicRoute = publicRoutes.some(route => path === route || path.startsWith(route))
 
   if (isProtectedRoute) {
     console.log('🔒 Protected route detected:', path)
-    // Check for session cookie (server-side auth)
-    const sessionCookie = req.cookies.get('session')?.value
-    console.log('🍪 Session cookie:', sessionCookie ? 'exists' : 'missing')
-
-    // If no session cookie, redirect to login
-    if (!sessionCookie) {
-      console.log('🚫 No session cookie, redirecting to login')
-      const loginUrl = new URL('/login', req.url)
-      loginUrl.searchParams.set('redirect', path)
-      return NextResponse.redirect(loginUrl)
-    }
-
-    console.log('✅ Session cookie found, allowing access')
-    // TODO: Verify session cookie validity here if needed
-    // For now, we trust the presence of the cookie
+    console.log('✅ Allowing access - client-side will handle authentication')
+    // Let the request proceed - ProtectedRoute component will handle auth check
+    // This prevents server-side redirect loops with localStorage tokens
   }
 
-  // 6. If user is authenticated and tries to access login page, redirect to dashboard
+  // 6. For login page - let client-side handle redirect logic
   if (path === '/login') {
-    const sessionCookie = req.cookies.get('session')?.value
-    if (sessionCookie) {
-      return NextResponse.redirect(new URL('/dashboard', req.url))
-    }
+    console.log('🔑 Login page accessed - client-side will handle redirect if authenticated')
+    // Let the request proceed - client-side will redirect if already authenticated
   }
 
   return NextResponse.next()

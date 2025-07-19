@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+  This file is auto-generated from database configuration.
+  Do not edit manually - use the web interface to modify settings.
+  Generated at: 2025-07-19T01:51:24.763Z
+-->
+<include>
+  <!-- Global Variables -->
+  <X-PRE-PROCESS cmd="set" data="default_password=FreeSWITCH@2025!"/>
+  <X-PRE-PROCESS cmd="set" data="domain=localhost"/>
+  <X-PRE-PROCESS cmd="set" data="domain_name=$${domain}"/>
+  <X-PRE-PROCESS cmd="set" data="hold_music=local_stream://moh"/>
+  <X-PRE-PROCESS cmd="set" data="use_profile=internal"/>
+  <X-PRE-PROCESS cmd="set" data="rtp_sdes_suites=AEAD_AES_256_GCM_8|AEAD_AES_128_GCM_8|AES_256_CM_HMAC_SHA1_80|AES_192_CM_HMAC_SHA1_80|AES_CM_128_HMAC_SHA1_80"/>
+  <X-PRE-PROCESS cmd="set" data="zrtp_secure_media=true"/>
+  <X-PRE-PROCESS cmd="set" data="bind_server_ip=auto"/>
+
+  <!-- External IP Configuration -->
+  <X-PRE-PROCESS cmd="stun-set" data="external_rtp_ip=stun:stun.freeswitch.org"/>
+  <X-PRE-PROCESS cmd="stun-set" data="external_sip_ip=stun:stun.freeswitch.org"/>
+
+  <!-- RTP Configuration -->
+  <X-PRE-PROCESS cmd="set" data="rtp_start_port=16384"/>
+  <X-PRE-PROCESS cmd="set" data="rtp_end_port=32768"/>
+
+  <!-- SIP Configuration -->
+  <X-PRE-PROCESS cmd="set" data="internal_sip_port=5060"/>
+  <X-PRE-PROCESS cmd="set" data="internal_tls_port=5061"/>
+
+  <!-- Additional Variables -->
+  <X-PRE-PROCESS cmd="set" data="unroll_loops=true"/>
+  <X-PRE-PROCESS cmd="set" data="outbound_caller_id_name=FreeSWITCH"/>
+  <X-PRE-PROCESS cmd="set" data="outbound_caller_id_number=0000000000"/>
+</include>

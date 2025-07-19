@@ -17,6 +17,7 @@ import { EslModule } from './esl/esl.module';
 import { HealthModule } from './health/health.module';
 import { MetricsModule } from './metrics/metrics.module';
 import { WebSocketModule } from './websocket/websocket.module';
+import { ConfigModule as FreeSwitchConfigModule } from './config/config.module';
 
 // Controllers
 import { AppController } from './app.controller';
@@ -150,6 +151,7 @@ import { AppService } from './app.service';
     HealthModule,
     MetricsModule,
     WebSocketModule,
+    FreeSwitchConfigModule,
   ],
   controllers: [AppController],
   providers: [AppService],

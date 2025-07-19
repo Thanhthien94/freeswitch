@@ -1,0 +1,105 @@
+<!--
+  Selective Call Recording Configuration for Production
+  This file enables recording based on specific conditions and rules
+  
+  PRODUCTION READY: Use this instead of global recording in production
+-->
+<include>
+  <!-- Selective Recording Based on Extension Patterns -->
+  <extension name="selective_recording_extensions" continue="true">
+    <condition field="${selective_recording_enabled}" expression="^true$">
+      <!-- Record calls TO specific extensions (e.g., support, sales) -->
+      <condition field="destination_number" expression="^(1001|1002|1010|1020)$">
+        <action application="set" data="record_this_call=true"/>
+        <action application="set" data="recording_reason=extension_based"/>
+        <action application="log" data="INFO Selective Recording: Extension ${destination_number} marked for recording"/>
+      </condition>
+      
+      <!-- Record calls FROM specific extensions (e.g., managers) -->
+      <condition field="caller_id_number" expression="^(1000|1001|1010)$">
+        <action application="set" data="record_this_call=true"/>
+        <action application="set" data="recording_reason=caller_based"/>
+        <action application="log" data="INFO Selective Recording: Caller ${caller_id_number} marked for recording"/>
+      </condition>
+      
+      <!-- Record external calls (calls to/from outside) -->
+      <condition field="destination_number" expression="^(\+?[1-9]\d{7,14})$">
+        <action application="set" data="record_this_call=true"/>
+        <action application="set" data="recording_reason=external_call"/>
+        <action application="log" data="INFO Selective Recording: External call marked for recording"/>
+      </condition>
+      
+      <!-- Record calls during business hours only -->
+      <condition field="${strftime(%H)}" expression="^(0[8-9]|1[0-7])$" break="never">
+        <condition field="${strftime(%w)}" expression="^[1-5]$">
+          <action application="set" data="business_hours=true"/>
+        </condition>
+      </condition>
+      
+      <!-- Record calls longer than X seconds (quality control) -->
+      <condition field="${call_timeout}" expression="^([3-9]\d|[1-9]\d{2,})$">
+        <action application="set" data="record_long_calls=true"/>
+      </condition>
+    </condition>
+  </extension>
+
+  <!-- Apply Selective Recording -->
+  <extension name="apply_selective_recording" continue="true">
+    <condition field="${selective_recording_enabled}" expression="^true$">
+      <condition field="${record_this_call}" expression="^true$">
+        <!-- Set recording metadata -->
+        <action application="set" data="RECORD_TITLE=Selective Recording: ${recording_reason} - ${caller_id_number} to ${destination_number}"/>
+        <action application="set" data="RECORD_COPYRIGHT=(c) 2025 FreeSWITCH PBX System"/>
+        <action application="set" data="RECORD_SOFTWARE=FreeSWITCH"/>
+        <action application="set" data="RECORD_ARTIST=PBX System"/>
+        <action application="set" data="RECORD_COMMENT=Selective recording: ${recording_reason}"/>
+        <action application="set" data="RECORD_DATE=${strftime(%Y-%m-%d %H:%M:%S)}"/>
+        <action application="set" data="RECORD_STEREO=true"/>
+        
+        <!-- Recording optimization settings -->
+        <action application="set" data="media_bug_answer_req=true"/>
+        <action application="set" data="recording_follow_transfer=true"/>
+        <action application="set" data="RECORD_BRIDGE_REQ=true"/>
+        <action application="set" data="record_waste_resources=false"/>
+        
+        <!-- Generate filename with reason -->
+        <action application="set" data="recording_filename=${strftime(%Y%m%d-%H%M%S)}_${recording_reason}_${caller_id_number}_${destination_number}_${uuid}.wav"/>
+        
+        <!-- OFFICIAL METHOD: Use execute_on_answer for automatic recording -->
+        <action application="export" data="execute_on_answer=record_session $${recordings_dir}/${recording_filename}"/>
+
+        <!-- Log recording setup -->
+        <action application="log" data="INFO Selective Recording Setup: ${recording_filename} (Reason: ${recording_reason})"/>
+
+        <!-- Export recording info for CDR -->
+        <action application="export" data="recording_enabled=true"/>
+        <action application="export" data="recording_file_path=${recording_filename}"/>
+        <action application="export" data="recording_reason=${recording_reason}"/>
+      </condition>
+    </condition>
+  </extension>
+
+  <!-- Recording Quality Control -->
+  <extension name="recording_quality_control" continue="true">
+    <condition field="${selective_recording_enabled}" expression="^true$">
+      <condition field="${record_this_call}" expression="^true$">
+        <!-- Set recording quality based on call type -->
+        <condition field="${recording_reason}" expression="^external_call$">
+          <action application="set" data="record_rate=16000"/>
+          <action application="set" data="record_channels=2"/>
+        </condition>
+        
+        <condition field="${recording_reason}" expression="^(extension_based|caller_based)$">
+          <action application="set" data="record_rate=8000"/>
+          <action application="set" data="record_channels=1"/>
+        </condition>
+        
+        <!-- Enable recording controls for specific users -->
+        <condition field="caller_id_number" expression="^(1000|1001)$">
+          <action application="bind_meta_app" data="7 ab s execute_extension::toggle_recording XML features"/>
+          <action application="bind_meta_app" data="8 ab s execute_extension::pause_recording XML features"/>
+        </condition>
+      </condition>
+    </condition>
+  </extension>
+</include>

@@ -59,6 +59,8 @@ WORKDIR /usr/src/app
 # Copy the bundled code from the build stage to the production image
 COPY --chown=node:node --from=build /usr/src/app/node_modules ./node_modules
 COPY --chown=node:node --from=build /usr/src/app/dist ./dist
+# Create configs directory (will be mounted as volume)
+RUN mkdir -p ./configs
 
 # Expose port
 EXPOSE 3000
