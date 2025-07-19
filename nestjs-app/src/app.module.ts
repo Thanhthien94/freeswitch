@@ -1,9 +1,10 @@
-import { Module } from '@nestjs/common';
+import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { WinstonModule } from 'nest-winston';
+import { APP_INTERCEPTOR } from '@nestjs/core';
 import * as winston from 'winston';
 
 // Modules
@@ -24,6 +25,13 @@ import { AppController } from './app.controller';
 
 // Services
 import { AppService } from './app.service';
+
+// Interceptors and Middleware
+import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
+import { PerformanceInterceptor } from './common/interceptors/performance.interceptor';
+import { ErrorLoggingInterceptor } from './common/interceptors/error-logging.interceptor';
+import { HttpLoggingMiddleware } from './common/middleware/http-logging.middleware';
+import { CustomTypeOrmLogger } from './common/interceptors/database-logging.interceptor';
 
 @Module({
   imports: [
@@ -52,6 +60,7 @@ import { AppService } from './app.service';
         ],
         synchronize: false, // Disable to prevent schema conflicts
         logging: configService.get('NODE_ENV') === 'development',
+        logger: new CustomTypeOrmLogger(),
         retryAttempts: 3,
         retryDelay: 3000,
         maxQueryExecutionTime: 5000,
@@ -154,6 +163,27 @@ import { AppService } from './app.service';
     FreeSwitchConfigModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    // Global interceptors
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: LoggingInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: PerformanceInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ErrorLoggingInterceptor,
+    },
+  ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(HttpLoggingMiddleware)
+      .forRoutes('*');
+  }
+}

@@ -92,6 +92,55 @@ export interface VertoConfig {
   enable3pcc: boolean;
 }
 
+// SIP Profiles Types
+export interface SipProfileConfig {
+  // Basic Settings
+  name: string;
+  enabled: boolean;
+  description: string;
+
+  // Network Settings
+  sip_ip: string;
+  sip_port: number;
+  sip_port_tls: number;
+  rtp_ip: string;
+  ext_rtp_ip: string;
+  ext_sip_ip: string;
+
+  // RTP Settings
+  rtp_start_port: number;
+  rtp_end_port: number;
+  rtp_timer_name: string;
+  rtp_timeout_sec: number;
+  rtp_hold_timeout_sec: number;
+
+  // Security Settings
+  auth_calls: boolean;
+  accept_blind_reg: boolean;
+  accept_blind_auth: boolean;
+  apply_inbound_acl: string;
+  apply_register_acl: string;
+
+  // Advanced Settings
+  context: string;
+  dialplan: string;
+  dtmf_duration: number;
+  codec_prefs: string;
+  inbound_codec_prefs: string;
+  outbound_codec_prefs: string;
+
+  // NAT Settings
+  nat_options_ping: boolean;
+  aggressive_nat_detection: boolean;
+  stun_enabled: boolean;
+  stun_auto_disable: boolean;
+}
+
+export interface SipProfilesConfig {
+  internal: SipProfileConfig;
+  external: SipProfileConfig;
+}
+
 class FreeSwitchConfigService {
   // Get all configurations
   async getConfigurations(category?: string): Promise<FreeSwitchConfig[]> {
@@ -139,7 +188,16 @@ class FreeSwitchConfigService {
     await api.put('/freeswitch-config/sip', config);
   }
 
+  // Get SIP profiles configuration
+  async getSipProfiles(): Promise<SipProfilesConfig> {
+    const response = await api.get<SipProfilesConfig>('/freeswitch-config/sip-profiles');
+    return response.data;
+  }
 
+  // Update SIP profiles configuration
+  async updateSipProfiles(config: SipProfilesConfig): Promise<void> {
+    await api.put('/freeswitch-config/sip-profiles', config);
+  }
 
   // Apply configuration (restart FreeSWITCH)
   async applyConfiguration(): Promise<void> {

@@ -57,6 +57,103 @@ export class AclConfigDto {
   sip_profiles: AclRuleDto[];
 }
 
+export class SipProfileConfigDto {
+  @ApiProperty({ description: 'Profile name' })
+  name: string;
+
+  @ApiProperty({ description: 'Profile enabled status' })
+  enabled: boolean;
+
+  @ApiProperty({ description: 'Profile description' })
+  description: string;
+
+  @ApiProperty({ description: 'SIP IP address' })
+  sip_ip: string;
+
+  @ApiProperty({ description: 'SIP port' })
+  sip_port: number;
+
+  @ApiProperty({ description: 'SIP TLS port' })
+  sip_port_tls: number;
+
+  @ApiProperty({ description: 'RTP IP address' })
+  rtp_ip: string;
+
+  @ApiProperty({ description: 'External RTP IP' })
+  ext_rtp_ip: string;
+
+  @ApiProperty({ description: 'External SIP IP' })
+  ext_sip_ip: string;
+
+  @ApiProperty({ description: 'RTP start port' })
+  rtp_start_port: number;
+
+  @ApiProperty({ description: 'RTP end port' })
+  rtp_end_port: number;
+
+  @ApiProperty({ description: 'RTP timer name' })
+  rtp_timer_name: string;
+
+  @ApiProperty({ description: 'RTP timeout in seconds' })
+  rtp_timeout_sec: number;
+
+  @ApiProperty({ description: 'RTP hold timeout in seconds' })
+  rtp_hold_timeout_sec: number;
+
+  @ApiProperty({ description: 'Authenticate calls' })
+  auth_calls: boolean;
+
+  @ApiProperty({ description: 'Accept blind registration' })
+  accept_blind_reg: boolean;
+
+  @ApiProperty({ description: 'Accept blind authentication' })
+  accept_blind_auth: boolean;
+
+  @ApiProperty({ description: 'Apply inbound ACL' })
+  apply_inbound_acl: string;
+
+  @ApiProperty({ description: 'Apply register ACL' })
+  apply_register_acl: string;
+
+  @ApiProperty({ description: 'Dialplan context' })
+  context: string;
+
+  @ApiProperty({ description: 'Dialplan type' })
+  dialplan: string;
+
+  @ApiProperty({ description: 'DTMF duration' })
+  dtmf_duration: number;
+
+  @ApiProperty({ description: 'Codec preferences' })
+  codec_prefs: string;
+
+  @ApiProperty({ description: 'Inbound codec preferences' })
+  inbound_codec_prefs: string;
+
+  @ApiProperty({ description: 'Outbound codec preferences' })
+  outbound_codec_prefs: string;
+
+  @ApiProperty({ description: 'NAT options ping' })
+  nat_options_ping: boolean;
+
+  @ApiProperty({ description: 'Aggressive NAT detection' })
+  aggressive_nat_detection: boolean;
+
+  @ApiProperty({ description: 'STUN enabled' })
+  stun_enabled: boolean;
+
+  @ApiProperty({ description: 'STUN auto disable' })
+  stun_auto_disable: boolean;
+}
+
+export class SipProfilesConfigDto {
+  @ApiProperty({ description: 'Internal SIP profile configuration', type: SipProfileConfigDto })
+  internal: SipProfileConfigDto;
+
+  @ApiProperty({ description: 'External SIP profile configuration', type: SipProfileConfigDto })
+  external: SipProfileConfigDto;
+}
+
 export class EventMulticastConfigDto {
   @ApiProperty({ description: 'Multicast address', default: '225.1.1.1' })
   @IsString()
@@ -463,6 +560,113 @@ export class FreeSwitchConfigController {
     }
   }
 
+  @Get('sip-profiles')
+  @ApiOperation({ summary: 'Get SIP profiles configuration' })
+  @ApiResponse({ status: 200, description: 'SIP profiles configuration retrieved successfully' })
+  async getSipProfiles(): Promise<SipProfilesConfigDto> {
+    try {
+      // Get internal profile configuration
+      const internalConfigs = await this.configService.getConfigsByCategory('sip_profile_internal');
+      const externalConfigs = await this.configService.getConfigsByCategory('sip_profile_external');
+
+      const internal: SipProfileConfigDto = {
+        name: 'internal',
+        enabled: this.getConfigValueFromArray(internalConfigs, 'enabled', 'true') === 'true',
+        description: this.getConfigValueFromArray(internalConfigs, 'description', 'Internal SIP profile for local extensions'),
+        sip_ip: this.getConfigValueFromArray(internalConfigs, 'sip_ip', '0.0.0.0'),
+        sip_port: parseInt(this.getConfigValueFromArray(internalConfigs, 'sip_port', '5060')),
+        sip_port_tls: parseInt(this.getConfigValueFromArray(internalConfigs, 'sip_port_tls', '5061')),
+        rtp_ip: this.getConfigValueFromArray(internalConfigs, 'rtp_ip', '0.0.0.0'),
+        ext_rtp_ip: this.getConfigValueFromArray(internalConfigs, 'ext_rtp_ip', 'auto-nat'),
+        ext_sip_ip: this.getConfigValueFromArray(internalConfigs, 'ext_sip_ip', 'auto-nat'),
+        rtp_start_port: parseInt(this.getConfigValueFromArray(internalConfigs, 'rtp_start_port', '16384')),
+        rtp_end_port: parseInt(this.getConfigValueFromArray(internalConfigs, 'rtp_end_port', '16484')),
+        rtp_timer_name: this.getConfigValueFromArray(internalConfigs, 'rtp_timer_name', 'soft'),
+        rtp_timeout_sec: parseInt(this.getConfigValueFromArray(internalConfigs, 'rtp_timeout_sec', '300')),
+        rtp_hold_timeout_sec: parseInt(this.getConfigValueFromArray(internalConfigs, 'rtp_hold_timeout_sec', '1800')),
+        auth_calls: this.getConfigValueFromArray(internalConfigs, 'auth_calls', 'true') === 'true',
+        accept_blind_reg: this.getConfigValueFromArray(internalConfigs, 'accept_blind_reg', 'false') === 'true',
+        accept_blind_auth: this.getConfigValueFromArray(internalConfigs, 'accept_blind_auth', 'false') === 'true',
+        apply_inbound_acl: this.getConfigValueFromArray(internalConfigs, 'apply_inbound_acl', 'domains'),
+        apply_register_acl: this.getConfigValueFromArray(internalConfigs, 'apply_register_acl', 'domains'),
+        context: this.getConfigValueFromArray(internalConfigs, 'context', 'default'),
+        dialplan: this.getConfigValueFromArray(internalConfigs, 'dialplan', 'XML'),
+        dtmf_duration: parseInt(this.getConfigValueFromArray(internalConfigs, 'dtmf_duration', '2000')),
+        codec_prefs: this.getConfigValueFromArray(internalConfigs, 'codec_prefs', 'OPUS,G722,PCMU,PCMA'),
+        inbound_codec_prefs: this.getConfigValueFromArray(internalConfigs, 'inbound_codec_prefs', 'OPUS,G722,PCMU,PCMA'),
+        outbound_codec_prefs: this.getConfigValueFromArray(internalConfigs, 'outbound_codec_prefs', 'OPUS,G722,PCMU,PCMA'),
+        nat_options_ping: this.getConfigValueFromArray(internalConfigs, 'nat_options_ping', 'true') === 'true',
+        aggressive_nat_detection: this.getConfigValueFromArray(internalConfigs, 'aggressive_nat_detection', 'true') === 'true',
+        stun_enabled: this.getConfigValueFromArray(internalConfigs, 'stun_enabled', 'true') === 'true',
+        stun_auto_disable: this.getConfigValueFromArray(internalConfigs, 'stun_auto_disable', 'false') === 'true',
+      };
+
+      const external: SipProfileConfigDto = {
+        name: 'external',
+        enabled: this.getConfigValueFromArray(externalConfigs, 'enabled', 'true') === 'true',
+        description: this.getConfigValueFromArray(externalConfigs, 'description', 'External SIP profile for outbound calls and providers'),
+        sip_ip: this.getConfigValueFromArray(externalConfigs, 'sip_ip', '0.0.0.0'),
+        sip_port: parseInt(this.getConfigValueFromArray(externalConfigs, 'sip_port', '5080')),
+        sip_port_tls: parseInt(this.getConfigValueFromArray(externalConfigs, 'sip_port_tls', '5081')),
+        rtp_ip: this.getConfigValueFromArray(externalConfigs, 'rtp_ip', '0.0.0.0'),
+        ext_rtp_ip: this.getConfigValueFromArray(externalConfigs, 'ext_rtp_ip', 'auto-nat'),
+        ext_sip_ip: this.getConfigValueFromArray(externalConfigs, 'ext_sip_ip', 'auto-nat'),
+        rtp_start_port: parseInt(this.getConfigValueFromArray(externalConfigs, 'rtp_start_port', '16384')),
+        rtp_end_port: parseInt(this.getConfigValueFromArray(externalConfigs, 'rtp_end_port', '16484')),
+        rtp_timer_name: this.getConfigValueFromArray(externalConfigs, 'rtp_timer_name', 'soft'),
+        rtp_timeout_sec: parseInt(this.getConfigValueFromArray(externalConfigs, 'rtp_timeout_sec', '300')),
+        rtp_hold_timeout_sec: parseInt(this.getConfigValueFromArray(externalConfigs, 'rtp_hold_timeout_sec', '1800')),
+        auth_calls: this.getConfigValueFromArray(externalConfigs, 'auth_calls', 'false') === 'true',
+        accept_blind_reg: this.getConfigValueFromArray(externalConfigs, 'accept_blind_reg', 'false') === 'true',
+        accept_blind_auth: this.getConfigValueFromArray(externalConfigs, 'accept_blind_auth', 'false') === 'true',
+        apply_inbound_acl: this.getConfigValueFromArray(externalConfigs, 'apply_inbound_acl', 'providers'),
+        apply_register_acl: this.getConfigValueFromArray(externalConfigs, 'apply_register_acl', 'providers'),
+        context: this.getConfigValueFromArray(externalConfigs, 'context', 'public'),
+        dialplan: this.getConfigValueFromArray(externalConfigs, 'dialplan', 'XML'),
+        dtmf_duration: parseInt(this.getConfigValueFromArray(externalConfigs, 'dtmf_duration', '2000')),
+        codec_prefs: this.getConfigValueFromArray(externalConfigs, 'codec_prefs', 'OPUS,G722,PCMU,PCMA'),
+        inbound_codec_prefs: this.getConfigValueFromArray(externalConfigs, 'inbound_codec_prefs', 'OPUS,G722,PCMU,PCMA'),
+        outbound_codec_prefs: this.getConfigValueFromArray(externalConfigs, 'outbound_codec_prefs', 'OPUS,G722,PCMU,PCMA'),
+        nat_options_ping: this.getConfigValueFromArray(externalConfigs, 'nat_options_ping', 'true') === 'true',
+        aggressive_nat_detection: this.getConfigValueFromArray(externalConfigs, 'aggressive_nat_detection', 'true') === 'true',
+        stun_enabled: this.getConfigValueFromArray(externalConfigs, 'stun_enabled', 'true') === 'true',
+        stun_auto_disable: this.getConfigValueFromArray(externalConfigs, 'stun_auto_disable', 'false') === 'true',
+      };
+
+      return { internal, external };
+    } catch (error) {
+      throw new HttpException(
+        `Failed to get SIP profiles configuration: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Put('sip-profiles')
+  @ApiOperation({ summary: 'Update SIP profiles configuration' })
+  @ApiResponse({ status: 200, description: 'SIP profiles configuration updated successfully' })
+  async updateSipProfiles(@Body() sipProfilesConfig: SipProfilesConfigDto): Promise<{ success: boolean; message: string }> {
+    try {
+      // Update internal profile
+      const internalProfile = sipProfilesConfig.internal;
+      await this.updateProfileConfig('sip_profile_internal', internalProfile);
+
+      // Update external profile
+      const externalProfile = sipProfilesConfig.external;
+      await this.updateProfileConfig('sip_profile_external', externalProfile);
+
+      return {
+        success: true,
+        message: 'SIP profiles configuration updated successfully'
+      };
+    } catch (error) {
+      throw new HttpException(
+        `Failed to update SIP profiles configuration: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
   @Post('apply')
   @ApiOperation({ summary: 'Apply configuration changes to FreeSWITCH' })
   @ApiResponse({ status: 200, description: 'Configuration applied successfully' })
@@ -842,6 +1046,49 @@ export class FreeSwitchConfigController {
     validateRules(aclConfig.domains, 'domains');
     validateRules(aclConfig.esl_access, 'esl_access');
     validateRules(aclConfig.sip_profiles, 'sip_profiles');
+  }
+
+  // Helper methods
+  private getConfigValueFromArray(configs: any[], name: string, defaultValue: string): string {
+    const config = configs.find(c => c.name === name);
+    return config?.value || defaultValue;
+  }
+
+  private async updateProfileConfig(category: string, profile: SipProfileConfigDto): Promise<void> {
+    const configUpdates = [
+      { name: 'enabled', value: profile.enabled.toString() },
+      { name: 'description', value: profile.description },
+      { name: 'sip_ip', value: profile.sip_ip },
+      { name: 'sip_port', value: profile.sip_port.toString() },
+      { name: 'sip_port_tls', value: profile.sip_port_tls.toString() },
+      { name: 'rtp_ip', value: profile.rtp_ip },
+      { name: 'ext_rtp_ip', value: profile.ext_rtp_ip },
+      { name: 'ext_sip_ip', value: profile.ext_sip_ip },
+      { name: 'rtp_start_port', value: profile.rtp_start_port.toString() },
+      { name: 'rtp_end_port', value: profile.rtp_end_port.toString() },
+      { name: 'rtp_timer_name', value: profile.rtp_timer_name },
+      { name: 'rtp_timeout_sec', value: profile.rtp_timeout_sec.toString() },
+      { name: 'rtp_hold_timeout_sec', value: profile.rtp_hold_timeout_sec.toString() },
+      { name: 'auth_calls', value: profile.auth_calls.toString() },
+      { name: 'accept_blind_reg', value: profile.accept_blind_reg.toString() },
+      { name: 'accept_blind_auth', value: profile.accept_blind_auth.toString() },
+      { name: 'apply_inbound_acl', value: profile.apply_inbound_acl },
+      { name: 'apply_register_acl', value: profile.apply_register_acl },
+      { name: 'context', value: profile.context },
+      { name: 'dialplan', value: profile.dialplan },
+      { name: 'dtmf_duration', value: profile.dtmf_duration.toString() },
+      { name: 'codec_prefs', value: profile.codec_prefs },
+      { name: 'inbound_codec_prefs', value: profile.inbound_codec_prefs },
+      { name: 'outbound_codec_prefs', value: profile.outbound_codec_prefs },
+      { name: 'nat_options_ping', value: profile.nat_options_ping.toString() },
+      { name: 'aggressive_nat_detection', value: profile.aggressive_nat_detection.toString() },
+      { name: 'stun_enabled', value: profile.stun_enabled.toString() },
+      { name: 'stun_auto_disable', value: profile.stun_auto_disable.toString() },
+    ];
+
+    for (const update of configUpdates) {
+      await this.configService.setConfigValue(category, update.name, update.value);
+    }
   }
 
   // Generic routes MUST come LAST to avoid conflicts with specific routes

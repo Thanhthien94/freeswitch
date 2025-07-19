@@ -1,19 +1,31 @@
 <profile name="external">
-  <!-- http://wiki.freeswitch.org/wiki/Sofia_Configuration_Files -->
-  <!-- This profile is only for outbound registrations to providers -->
-  <gateways>
-    <X-PRE-PROCESS cmd="include" data="external/*.xml"/>
-  </gateways>
+  <!--
+      This is a sofia sip profile/user agent.  This will service exactly one ip and port.
+      In FreeSWITCH you can run multiple sip user agents on their own ip and port.
 
+      When you hear someone say "sofia profile" this is what they are talking about.
+
+      Auto-generated from database configuration.
+      Generated at: 2025-07-19T06:36:40.989Z
+  -->
+
+  <!-- http://wiki.freeswitch.org/wiki/Sofia_Configuration_Files -->
+  <!--aliases are other names that will work as a valid profile name for this profile-->
   <aliases>
     <!--
-        <alias name="outbound"/>
-        <alias name="nat"/>
+        <alias name="default"/>
     -->
   </aliases>
+  <!-- Outbound Registrations -->
+  <gateways>
+  </gateways>
 
   <domains>
-    <domain name="all" alias="false" parse="true"/>
+    <!-- indicator to parse the directory for domains with parse="true" to get gateways-->
+    <!--<domain name="$${domain}" parse="true"/>-->
+    <!-- indicator to parse the directory for domains with parse="true" to get gateways and alias every domain to this profile -->
+    <!--<domain name="all" alias="true" parse="true"/>-->
+    <domain name="all" alias="true" parse="false"/>
   </domains>
 
   <settings>
@@ -22,76 +34,81 @@
     <!-- <param name="shutdown-on-fail" value="true"/> -->
     <param name="sip-trace" value="no"/>
     <param name="sip-capture" value="no"/>
-    <param name="rfc2833-pt" value="101"/>
-    <!-- RFC 5626 : Send reg-id and sip.instance -->
-    <!--<param name="enable-rfc-5626" value="true"/> -->
-    <param name="sip-port" value="$${external_sip_port}"/>
-    <param name="dialplan" value="XML"/>
+
+    <!-- Basic Configuration -->
     <param name="context" value="public"/>
+    <param name="rfc2833-pt" value="101"/>
+    <param name="sip-port" value="5080"/>
+    <param name="dialplan" value="XML"/>
     <param name="dtmf-duration" value="2000"/>
-    <param name="inbound-codec-prefs" value="$${global_codec_prefs}"/>
-    <param name="outbound-codec-prefs" value="$${outbound_codec_prefs}"/>
-    <param name="hold-music" value="$${hold_music}"/>
+
+    <!-- Codec Configuration -->
+    <param name="inbound-codec-prefs" value="OPUS,G722,PCMU,PCMA"/>
+    <param name="outbound-codec-prefs" value="OPUS,G722,PCMU,PCMA"/>
+
+    <!-- RTP Configuration -->
     <param name="rtp-timer-name" value="soft"/>
-    <!--<param name="enable-100rel" value="true"/>-->
-    <!--<param name="disable-srv503" value="true"/>-->
-    <!-- This could be set to "passive" -->
-    <param name="local-network-acl" value="localnet.auto"/>
-    <param name="manage-presence" value="false"/>
+    <param name="rtp-ip" value="0.0.0.0"/>
+    <param name="sip-ip" value="0.0.0.0"/>
+    <param name="rtp-start-port" value="16384"/>
+    <param name="rtp-end-port" value="16484"/>
 
-    <!-- used to share presence info across sofia profiles
-         manage-presence needs to be set to passive on this profile
-         if you want it to behave as if it were the internal profile
-         for presence.
-    -->
-    <!-- Name of the db to use for this profile -->
-    <!--<param name="dbname" value="share_presence"/>-->
-    <!--<param name="presence-hosts" value="$${domain}"/>-->
-    <!--<param name="force-register-domain" value="$${domain}"/>-->
-    <!--all inbound reg will stored in the db using this domain -->
-    <!--<param name="force-register-db-domain" value="$${domain}"/>-->
-    <!-- ************************************************* -->
-
-    <!--<param name="aggressive-nat-detection" value="true"/>-->
-    <param name="inbound-codec-negotiation" value="generous"/>
-    <param name="nonce-ttl" value="60"/>
-    <param name="auth-calls" value="false"/>
-    <param name="inbound-late-negotiation" value="true"/>
-    <!--
-        DO NOT USE HOSTNAMES, ONLY IP ADDRESSES IN THESE SETTINGS!
-    -->
-    <param name="rtp-ip" value="$${local_ip_v4}"/>
-    <param name="sip-ip" value="$${local_ip_v4}"/>
+    <!-- External IP Configuration -->
     <param name="ext-rtp-ip" value="$${external_rtp_ip}"/>
     <param name="ext-sip-ip" value="$${external_sip_ip}"/>
+
+    <!-- Media Timeouts -->
     <param name="media_timeout" value="300"/>
     <param name="media_hold_timeout" value="1800"/>
-    <!--<param name="enable-3pcc" value="true"/>-->
 
-    <!-- TLS: disabled by default, set to "true" to enable -->
-    <param name="tls" value="$${external_ssl_enable}"/>
-    <!-- Set to true to not bind on the normal sip-port but only on the TLS port -->
+    <!-- Security Configuration -->
+    <param name="auth-calls" value="true"/>
+    <param name="accept-blind-reg" value="false"/>
+    <param name="accept-blind-auth" value="false"/>
+    <param name="apply-inbound-acl" value="providers"/>
+    <param name="apply-register-acl" value="providers"/>
+
+    <!-- NAT Configuration -->
+    <param name="nat-options-ping" value="true"/>
+    <param name="aggressive-nat-detection" value="true"/>
+    <param name="NDLB-force-rport" value="true"/>
+    <param name="NDLB-received-in-nat-reg-contact" value="true"/>
+
+    <!-- TLS Configuration -->
+    <param name="tls" value="false"/>
     <param name="tls-only" value="false"/>
-    <!-- additional bind parameters for TLS -->
     <param name="tls-bind-params" value="transport=tls"/>
-    <!-- Port to listen on for TLS requests. (5081 will be used if unspecified) -->
-    <param name="tls-sip-port" value="$${external_tls_port}"/>
-    <!-- Location of the agent.pem and cafile.pem ssl certificates (needed for TLS server) -->
-    <!--<param name="tls-cert-dir" value=""/>-->
-    <!-- Optionally set the passphrase password used by openSSL to encrypt/decrypt TLS private key files -->
+    <param name="tls-sip-port" value="5081"/>
     <param name="tls-passphrase" value=""/>
-    <!-- Verify the date on TLS certificates -->
     <param name="tls-verify-date" value="true"/>
-    <!-- TLS verify policy, when registering/inviting gateways with other servers (outbound) or handling inbound registration/invite requests how should we verify their certificate -->
-    <!-- set to 'in' to only verify incoming connections, 'out' to only verify outgoing connections, 'all' to verify all connections, also 'subjects_in', 'subjects_out' and 'subjects_all' for subject validation. Multiple policies can be split with a '|' pipe -->
     <param name="tls-verify-policy" value="none"/>
-    <!-- Certificate max verify depth to use for validating peer TLS certificates when the verify policy is not none -->
     <param name="tls-verify-depth" value="2"/>
-    <!-- If the tls-verify-policy is set to subjects_all or subjects_in this sets which subjects are allowed, multiple subjects can be split with a '|' pipe -->
     <param name="tls-verify-in-subjects" value=""/>
-    <!-- TLS version ("sslv23" (default), "tlsv1"). NOTE: Phones may not work with TLSv1 -->
-    <param name="tls-version" value="$${sip_tls_version}"/>
-    <!-- TLS ciphers default: ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH -->
-    <param name="tls-ciphers" value="$${sip_tls_ciphers}"/>
+    <param name="tls-version" value="tlsv1,tlsv1.1,tlsv1.2"/>
+
+    <!-- Additional Settings -->
+    <param name="hold-music" value="$${hold_music}"/>
+    <param name="inbound-late-negotiation" value="true"/>
+    <param name="nonce-ttl" value="60"/>
+    <param name="challenge-realm" value="auto_from"/>
+    <param name="multiple-registrations" value="false"/>
+    <param name="inbound-codec-negotiation" value="generous"/>
+    <param name="all-reg-options-ping" value="true"/>
+    <param name="unregister-on-options-fail" value="false"/>
+    <param name="session-timeout" value="1800"/>
+    <param name="minimum-session-expires" value="120"/>
+    <param name="enable-timer" value="false"/>
+    <param name="rtp-autofix-timing" value="true"/>
+    <param name="rtp-rewrite-timestamps" value="true"/>
+    <param name="rtp-autoflush-during-bridge" value="true"/>
+    <param name="rtp-autoflush" value="false"/>
+    <param name="enable-100rel" value="false"/>
+    <param name="ignore-183nosdp" value="true"/>
+    <param name="manual-rtp-bugs" value="SEND_LINEAR_TIMESTAMPS|START_SEQ_AT_ZERO"/>
+    <param name="send_silence_when_idle" value="400"/>
+
+    <!-- WebSocket Support -->
+    
+    
   </settings>
 </profile>

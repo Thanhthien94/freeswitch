@@ -376,6 +376,195 @@ export class FreeSwitchConfigService {
   }
 
   /**
+   * Generate SIP profile XML files from database configuration
+   */
+  private async generateSipProfileXmlFiles(): Promise<void> {
+    this.logger.log('Generating SIP profile XML files...');
+
+    // Generate internal profile
+    const internalXml = await this.generateSipProfileXml('internal');
+    const internalPath = path.join(this.configPath, 'sip_profiles', 'internal.xml');
+    await fs.writeFile(internalPath, internalXml, 'utf8');
+
+    // Generate external profile
+    const externalXml = await this.generateSipProfileXml('external');
+    const externalPath = path.join(this.configPath, 'sip_profiles', 'external.xml');
+    await fs.writeFile(externalPath, externalXml, 'utf8');
+
+    this.logger.log('SIP profile XML files generated successfully');
+  }
+
+  /**
+   * Generate SIP profile XML content
+   */
+  private async generateSipProfileXml(profileType: 'internal' | 'external'): Promise<string> {
+    const category = `sip_profile_${profileType}`;
+
+    // Get profile configuration from database
+    const configs = await this.getConfigsByCategory(category);
+    const config: any = {};
+
+    configs.forEach(c => {
+      config[c.name] = c.value;
+    });
+
+    // Set defaults if not configured
+    const profileConfig = {
+      enabled: config.enabled === 'true',
+      description: config.description || `${profileType.charAt(0).toUpperCase() + profileType.slice(1)} SIP profile`,
+      sip_ip: config.sip_ip || '0.0.0.0',
+      sip_port: parseInt(config.sip_port) || (profileType === 'internal' ? 5060 : 5080),
+      sip_port_tls: parseInt(config.sip_port_tls) || (profileType === 'internal' ? 5061 : 5081),
+      rtp_ip: config.rtp_ip || '0.0.0.0',
+      ext_rtp_ip: config.ext_rtp_ip || '$${external_rtp_ip}',
+      ext_sip_ip: config.ext_sip_ip || '$${external_sip_ip}',
+      rtp_start_port: parseInt(config.rtp_start_port) || 16384,
+      rtp_end_port: parseInt(config.rtp_end_port) || 16484,
+      rtp_timer_name: config.rtp_timer_name || 'soft',
+      rtp_timeout_sec: parseInt(config.rtp_timeout_sec) || 300,
+      rtp_hold_timeout_sec: parseInt(config.rtp_hold_timeout_sec) || 1800,
+      auth_calls: config.auth_calls !== 'false',
+      accept_blind_reg: config.accept_blind_reg === 'true',
+      accept_blind_auth: config.accept_blind_auth === 'true',
+      apply_inbound_acl: config.apply_inbound_acl || (profileType === 'internal' ? 'domains' : 'providers'),
+      apply_register_acl: config.apply_register_acl || (profileType === 'internal' ? 'domains' : 'providers'),
+      context: config.context || (profileType === 'internal' ? 'default' : 'public'),
+      dialplan: config.dialplan || 'XML',
+      dtmf_duration: parseInt(config.dtmf_duration) || 2000,
+      codec_prefs: config.codec_prefs || 'OPUS,G722,PCMU,PCMA',
+      inbound_codec_prefs: config.inbound_codec_prefs || 'OPUS,G722,PCMU,PCMA',
+      outbound_codec_prefs: config.outbound_codec_prefs || 'OPUS,G722,PCMU,PCMA',
+      nat_options_ping: config.nat_options_ping !== 'false',
+      aggressive_nat_detection: config.aggressive_nat_detection !== 'false',
+    };
+
+    return this.generateSipProfileXmlTemplate(profileType, profileConfig);
+  }
+
+  /**
+   * Generate SIP profile XML template
+   */
+  private generateSipProfileXmlTemplate(profileType: 'internal' | 'external', config: any): string {
+    const profileName = profileType;
+    const isInternal = profileType === 'internal';
+
+    return `<profile name="${profileName}">
+  <!--
+      This is a sofia sip profile/user agent.  This will service exactly one ip and port.
+      In FreeSWITCH you can run multiple sip user agents on their own ip and port.
+
+      When you hear someone say "sofia profile" this is what they are talking about.
+
+      Auto-generated from database configuration.
+      Generated at: ${new Date().toISOString()}
+  -->
+
+  <!-- http://wiki.freeswitch.org/wiki/Sofia_Configuration_Files -->
+  <!--aliases are other names that will work as a valid profile name for this profile-->
+  <aliases>
+    <!--
+        <alias name="default"/>
+    -->
+  </aliases>
+  <!-- Outbound Registrations -->
+  <gateways>
+  </gateways>
+
+  <domains>
+    <!-- indicator to parse the directory for domains with parse="true" to get gateways-->
+    <!--<domain name="$\${domain}" parse="true"/>-->
+    <!-- indicator to parse the directory for domains with parse="true" to get gateways and alias every domain to this profile -->
+    <!--<domain name="all" alias="true" parse="true"/>-->
+    <domain name="all" alias="true" parse="false"/>
+  </domains>
+
+  <settings>
+    <param name="debug" value="0"/>
+    <!-- If you want FreeSWITCH to shutdown if this profile fails to load, uncomment the next line. -->
+    <!-- <param name="shutdown-on-fail" value="true"/> -->
+    <param name="sip-trace" value="no"/>
+    <param name="sip-capture" value="no"/>
+
+    <!-- Basic Configuration -->
+    <param name="context" value="${config.context}"/>
+    <param name="rfc2833-pt" value="101"/>
+    <param name="sip-port" value="${config.sip_port}"/>
+    <param name="dialplan" value="${config.dialplan}"/>
+    <param name="dtmf-duration" value="${config.dtmf_duration}"/>
+
+    <!-- Codec Configuration -->
+    <param name="inbound-codec-prefs" value="${config.inbound_codec_prefs}"/>
+    <param name="outbound-codec-prefs" value="${config.outbound_codec_prefs}"/>
+
+    <!-- RTP Configuration -->
+    <param name="rtp-timer-name" value="${config.rtp_timer_name}"/>
+    <param name="rtp-ip" value="${config.rtp_ip}"/>
+    <param name="sip-ip" value="${config.sip_ip}"/>
+    <param name="rtp-start-port" value="${config.rtp_start_port}"/>
+    <param name="rtp-end-port" value="${config.rtp_end_port}"/>
+
+    <!-- External IP Configuration -->
+    <param name="ext-rtp-ip" value="${config.ext_rtp_ip}"/>
+    <param name="ext-sip-ip" value="${config.ext_sip_ip}"/>
+
+    <!-- Media Timeouts -->
+    <param name="media_timeout" value="${config.rtp_timeout_sec}"/>
+    <param name="media_hold_timeout" value="${config.rtp_hold_timeout_sec}"/>
+
+    <!-- Security Configuration -->
+    <param name="auth-calls" value="${config.auth_calls}"/>
+    <param name="accept-blind-reg" value="${config.accept_blind_reg}"/>
+    <param name="accept-blind-auth" value="${config.accept_blind_auth}"/>
+    <param name="apply-inbound-acl" value="${config.apply_inbound_acl}"/>
+    <param name="apply-register-acl" value="${config.apply_register_acl}"/>
+
+    <!-- NAT Configuration -->
+    <param name="nat-options-ping" value="${config.nat_options_ping}"/>
+    <param name="aggressive-nat-detection" value="${config.aggressive_nat_detection}"/>
+    <param name="NDLB-force-rport" value="true"/>
+    <param name="NDLB-received-in-nat-reg-contact" value="true"/>
+
+    <!-- TLS Configuration -->
+    <param name="tls" value="false"/>
+    <param name="tls-only" value="false"/>
+    <param name="tls-bind-params" value="transport=tls"/>
+    <param name="tls-sip-port" value="${config.sip_port_tls}"/>
+    <param name="tls-passphrase" value=""/>
+    <param name="tls-verify-date" value="true"/>
+    <param name="tls-verify-policy" value="none"/>
+    <param name="tls-verify-depth" value="2"/>
+    <param name="tls-verify-in-subjects" value=""/>
+    <param name="tls-version" value="tlsv1,tlsv1.1,tlsv1.2"/>
+
+    <!-- Additional Settings -->
+    <param name="hold-music" value="$\${hold_music}"/>
+    <param name="inbound-late-negotiation" value="true"/>
+    <param name="nonce-ttl" value="60"/>
+    <param name="challenge-realm" value="auto_from"/>
+    <param name="multiple-registrations" value="false"/>
+    <param name="inbound-codec-negotiation" value="generous"/>
+    <param name="all-reg-options-ping" value="true"/>
+    <param name="unregister-on-options-fail" value="false"/>
+    <param name="session-timeout" value="1800"/>
+    <param name="minimum-session-expires" value="120"/>
+    <param name="enable-timer" value="false"/>
+    <param name="rtp-autofix-timing" value="true"/>
+    <param name="rtp-rewrite-timestamps" value="true"/>
+    <param name="rtp-autoflush-during-bridge" value="true"/>
+    <param name="rtp-autoflush" value="false"/>
+    <param name="enable-100rel" value="false"/>
+    <param name="ignore-183nosdp" value="true"/>
+    <param name="manual-rtp-bugs" value="SEND_LINEAR_TIMESTAMPS|START_SEQ_AT_ZERO"/>
+    <param name="send_silence_when_idle" value="400"/>
+
+    <!-- WebSocket Support -->
+    ${isInternal ? '<param name="ws-binding" value=":5066"/>' : ''}
+    ${isInternal ? '<param name="wss-binding" value=":7443"/>' : ''}
+  </settings>
+</profile>`;
+  }
+
+  /**
    * Apply configuration changes to FreeSWITCH
    */
   async applyConfiguration(): Promise<void> {
@@ -395,6 +584,9 @@ export class FreeSwitchConfigService {
       // Write to FreeSWITCH autoload_configs directory
       const switchConfPath = path.join(this.configPath, 'autoload_configs', 'switch.conf.xml');
       await fs.writeFile(switchConfPath, switchConfXml, 'utf8');
+
+      // Generate SIP profile XML files
+      await this.generateSipProfileXmlFiles();
 
       // Generate and write additional config files
       await this.generateAndWriteAdditionalConfigs();

@@ -9,16 +9,30 @@ import * as compression from 'compression';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  // Create Winston logger
+  // Create Enhanced Winston logger
   const logger = WinstonModule.createLogger({
+    level: process.env.LOG_LEVEL || 'info',
+    format: winston.format.combine(
+      winston.format.timestamp(),
+      winston.format.errors({ stack: true }),
+      winston.format.json(),
+    ),
+    defaultMeta: { service: 'freeswitch-api' },
     transports: [
+      // Console transport with colors for development
       new winston.transports.Console({
+        level: process.env.NODE_ENV === 'development' ? 'debug' : 'info',
         format: winston.format.combine(
-          winston.format.timestamp(),
+          winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
           winston.format.colorize(),
-          winston.format.simple(),
+          winston.format.printf(({ timestamp, level, message, context, ...meta }) => {
+            const contextStr = context ? `[${context}]` : '';
+            const metaStr = Object.keys(meta).length ? `\n${JSON.stringify(meta, null, 2)}` : '';
+            return `${timestamp} ${level} ${contextStr} ${message}${metaStr}`;
+          }),
         ),
       }),
+      // Error log file
       new winston.transports.File({
         filename: 'logs/error.log',
         level: 'error',
@@ -26,13 +40,46 @@ async function bootstrap() {
           winston.format.timestamp(),
           winston.format.json(),
         ),
+        maxsize: 5242880, // 5MB
+        maxFiles: 5,
       }),
+      // Combined log file
       new winston.transports.File({
         filename: 'logs/combined.log',
         format: winston.format.combine(
           winston.format.timestamp(),
           winston.format.json(),
         ),
+        maxsize: 5242880, // 5MB
+        maxFiles: 10,
+      }),
+      // HTTP requests log file
+      new winston.transports.File({
+        filename: 'logs/http.log',
+        level: 'info',
+        format: winston.format.combine(
+          winston.format.timestamp(),
+          winston.format.json(),
+          winston.format((info) => {
+            return (typeof info.message === 'string' && info.message.includes('HTTP')) ? info : false;
+          })(),
+        ),
+        maxsize: 5242880, // 5MB
+        maxFiles: 5,
+      }),
+      // Performance log file
+      new winston.transports.File({
+        filename: 'logs/performance.log',
+        level: 'debug',
+        format: winston.format.combine(
+          winston.format.timestamp(),
+          winston.format.json(),
+          winston.format((info) => {
+            return (typeof info.message === 'string' && (info.message.includes('PERFORMANCE') || info.message.includes('SLOW'))) ? info : false;
+          })(),
+        ),
+        maxsize: 5242880, // 5MB
+        maxFiles: 3,
       }),
     ],
   });

@@ -37,6 +37,7 @@ import {
   MulticastConfig,
   VertoConfig
 } from '@/services/freeswitch-config.service';
+import SipProfilesPanel from './SipProfilesPanel';
 
 // Types are now imported from service
 
@@ -44,6 +45,7 @@ export default function FreeSwitchConfigPanel() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [detecting, setDetecting] = useState(false);
+  const [sipProfilesConfig, setSipProfilesConfig] = useState<any>(null);
   const [networkConfig, setNetworkConfig] = useState<NetworkConfig>({
     external_ip_mode: 'stun',
     external_ip: '',
@@ -106,6 +108,14 @@ export default function FreeSwitchConfigPanel() {
       // Load SIP configuration using service
       const sipData = await freeswitchConfigService.getSipConfig();
       setSipConfig(prev => ({ ...prev, ...sipData }));
+
+      // Load SIP profiles configuration
+      try {
+        const sipProfilesData = await freeswitchConfigService.getSipProfiles();
+        setSipProfilesConfig(sipProfilesData);
+      } catch (error) {
+        console.warn('SIP profiles config not found, using defaults');
+      }
 
       // Load ACL configuration
       try {
@@ -231,8 +241,19 @@ export default function FreeSwitchConfigPanel() {
       // Update network configuration
       await freeswitchConfigService.updateNetworkConfig(networkConfig);
 
-      // Update SIP configuration
-      await freeswitchConfigService.updateSipConfig(sipConfig);
+      // Update SIP profiles configuration if changed
+      if (sipProfilesConfig) {
+        console.log('Sending SIP profiles config:', sipProfilesConfig);
+        try {
+          await freeswitchConfigService.updateSipProfiles(sipProfilesConfig);
+          console.log('SIP profiles config sent successfully');
+        } catch (error) {
+          console.error('Failed to send SIP profiles config:', error);
+          throw error;
+        }
+      } else {
+        console.log('No SIP profiles config to send');
+      }
 
       // Update ACL configuration
       await freeswitchConfigService.updateAclConfig(aclConfig);
@@ -294,6 +315,10 @@ export default function FreeSwitchConfigPanel() {
           <TabsTrigger value="sip" className="flex items-center gap-2">
             <Globe className="h-4 w-4" />
             SIP
+          </TabsTrigger>
+          <TabsTrigger value="profiles" className="flex items-center gap-2">
+            <Wifi className="h-4 w-4" />
+            SIP Profiles
           </TabsTrigger>
           <TabsTrigger value="security" className="flex items-center gap-2">
             <Shield className="h-4 w-4" />
@@ -520,6 +545,13 @@ export default function FreeSwitchConfigPanel() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="profiles">
+          <SipProfilesPanel onConfigChange={(config) => {
+            setSipProfilesConfig(config);
+            console.log('SIP Profiles config changed:', config);
+          }} />
         </TabsContent>
 
         <TabsContent value="security">
