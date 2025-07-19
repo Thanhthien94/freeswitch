@@ -21,7 +21,12 @@ import {
   Wifi,
   Server,
   CheckCircle,
-  RefreshCw
+  RefreshCw,
+  TestTube,
+  Play,
+  Square,
+  Save,
+  RotateCcw
 } from 'lucide-react';
 import { freeswitchConfigService, SipProfileConfig as ServiceSipProfileConfig } from '@/services/freeswitch-config.service';
 
@@ -141,10 +146,19 @@ export default function SipProfilesPanel({ onConfigChange }: SipProfilesPanelPro
   const [externalProfile, setExternalProfile] = useState<SipProfileConfig>(defaultExternalProfile);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [profileStatus, setProfileStatus] = useState<{
+    internal: 'unknown' | 'running' | 'stopped' | 'error';
+    external: 'unknown' | 'running' | 'stopped' | 'error';
+  }>({
+    internal: 'unknown',
+    external: 'unknown'
+  });
 
   // Load current configuration
   useEffect(() => {
     loadConfiguration();
+    checkProfileStatus();
   }, []);
 
   const loadConfiguration = async () => {
@@ -185,6 +199,61 @@ export default function SipProfilesPanel({ onConfigChange }: SipProfilesPanelPro
       toast.error('Failed to save SIP profiles configuration');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const checkProfileStatus = async () => {
+    try {
+      const status = await freeswitchConfigService.getProfileStatus();
+      setProfileStatus({
+        internal: status.internal as 'unknown' | 'running' | 'stopped' | 'error',
+        external: status.external as 'unknown' | 'running' | 'stopped' | 'error'
+      });
+    } catch (error) {
+      console.error('Error checking profile status:', error);
+      setProfileStatus({
+        internal: 'error',
+        external: 'error'
+      });
+    }
+  };
+
+  const testProfile = async (profileType: 'internal' | 'external') => {
+    setTesting(true);
+    try {
+      const result = await freeswitchConfigService.testProfile(profileType);
+      if (result.success) {
+        toast.success(`${profileType} profile test successful: ${result.message}`);
+      } else {
+        toast.error(`${profileType} profile test failed: ${result.message}`);
+      }
+    } catch (error) {
+      toast.error(`${profileType} profile test failed`);
+      console.error('Error testing profile:', error);
+    } finally {
+      setTesting(false);
+    }
+  };
+
+  const restartProfile = async (profileType: 'internal' | 'external') => {
+    try {
+      await freeswitchConfigService.restartProfile(profileType);
+      toast.success(`${profileType} profile restarted successfully`);
+      await checkProfileStatus();
+    } catch (error) {
+      toast.error(`Failed to restart ${profileType} profile`);
+      console.error('Error restarting profile:', error);
+    }
+  };
+
+  const toggleProfile = async (profileType: 'internal' | 'external', enabled: boolean) => {
+    try {
+      await freeswitchConfigService.toggleProfile(profileType, enabled);
+      toast.success(`${profileType} profile ${enabled ? 'started' : 'stopped'} successfully`);
+      await checkProfileStatus();
+    } catch (error) {
+      toast.error(`Failed to ${enabled ? 'start' : 'stop'} ${profileType} profile`);
+      console.error('Error toggling profile:', error);
     }
   };
 
@@ -564,25 +633,197 @@ export default function SipProfilesPanel({ onConfigChange }: SipProfilesPanelPro
       </div>
 
       <Tabs defaultValue="internal" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="internal" className="flex items-center gap-2">
-            <Wifi className="h-4 w-4" />
-            Internal Profile
-          </TabsTrigger>
-          <TabsTrigger value="external" className="flex items-center gap-2">
-            <Globe className="h-4 w-4" />
-            External Profile
-          </TabsTrigger>
-        </TabsList>
+        <div className="flex items-center justify-between">
+          <TabsList className="grid w-full max-w-md grid-cols-2">
+            <TabsTrigger value="internal" className="flex items-center gap-2">
+              <Wifi className="h-4 w-4" />
+              Internal Profile
+              <Badge
+                variant={profileStatus.internal === 'running' ? 'default' :
+                        profileStatus.internal === 'error' ? 'destructive' : 'secondary'}
+                className="ml-2"
+              >
+                {profileStatus.internal}
+              </Badge>
+            </TabsTrigger>
+            <TabsTrigger value="external" className="flex items-center gap-2">
+              <Globe className="h-4 w-4" />
+              External Profile
+              <Badge
+                variant={profileStatus.external === 'running' ? 'default' :
+                        profileStatus.external === 'error' ? 'destructive' : 'secondary'}
+                className="ml-2"
+              >
+                {profileStatus.external}
+              </Badge>
+            </TabsTrigger>
+          </TabsList>
+
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={checkProfileStatus}
+              disabled={loading}
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh Status
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => testProfile('internal')}
+              disabled={testing}
+            >
+              <TestTube className="h-4 w-4 mr-2" />
+              Test Internal
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => testProfile('external')}
+              disabled={testing}
+            >
+              <TestTube className="h-4 w-4 mr-2" />
+              Test External
+            </Button>
+          </div>
+        </div>
 
         <TabsContent value="internal">
-          {renderProfileSettings(internalProfile, updateInternalProfile, 'internal')}
+          <div className="space-y-4">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <Wifi className="h-5 w-5" />
+                      Internal Profile Control
+                    </CardTitle>
+                    <CardDescription>
+                      Manage internal SIP profile operations
+                    </CardDescription>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => restartProfile('internal')}
+                      disabled={loading}
+                    >
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                      Restart
+                    </Button>
+                    <Button
+                      variant={internalProfile.enabled ? "destructive" : "default"}
+                      size="sm"
+                      onClick={() => {
+                        const newEnabled = !internalProfile.enabled;
+                        updateInternalProfile('enabled', newEnabled);
+                        toggleProfile('internal', newEnabled);
+                      }}
+                    >
+                      {internalProfile.enabled ? (
+                        <>
+                          <Square className="h-4 w-4 mr-2" />
+                          Stop
+                        </>
+                      ) : (
+                        <>
+                          <Play className="h-4 w-4 mr-2" />
+                          Start
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+            </Card>
+            {renderProfileSettings(internalProfile, updateInternalProfile, 'internal')}
+          </div>
         </TabsContent>
 
         <TabsContent value="external">
-          {renderProfileSettings(externalProfile, updateExternalProfile, 'external')}
+          <div className="space-y-4">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <Globe className="h-5 w-5" />
+                      External Profile Control
+                    </CardTitle>
+                    <CardDescription>
+                      Manage external SIP profile operations
+                    </CardDescription>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => restartProfile('external')}
+                      disabled={loading}
+                    >
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                      Restart
+                    </Button>
+                    <Button
+                      variant={externalProfile.enabled ? "destructive" : "default"}
+                      size="sm"
+                      onClick={() => {
+                        const newEnabled = !externalProfile.enabled;
+                        updateExternalProfile('enabled', newEnabled);
+                        toggleProfile('external', newEnabled);
+                      }}
+                    >
+                      {externalProfile.enabled ? (
+                        <>
+                          <Square className="h-4 w-4 mr-2" />
+                          Stop
+                        </>
+                      ) : (
+                        <>
+                          <Play className="h-4 w-4 mr-2" />
+                          Start
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+            </Card>
+            {renderProfileSettings(externalProfile, updateExternalProfile, 'external')}
+          </div>
         </TabsContent>
       </Tabs>
+
+      {/* Save and Reset Actions */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-muted-foreground">
+              Changes will be applied to FreeSWITCH configuration files and require a restart to take effect.
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={loadConfiguration}
+                disabled={loading || saving}
+              >
+                <RotateCcw className="h-4 w-4 mr-2" />
+                Reset
+              </Button>
+              <Button
+                onClick={saveConfiguration}
+                disabled={loading || saving}
+              >
+                <Save className="h-4 w-4 mr-2" />
+                {saving ? 'Saving...' : 'Save Configuration'}
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

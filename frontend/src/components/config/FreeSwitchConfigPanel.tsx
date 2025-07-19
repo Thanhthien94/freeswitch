@@ -24,7 +24,8 @@ import {
   CheckCircle,
   AlertTriangle,
   Wifi,
-  Radio
+  Radio,
+  Phone
 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -38,6 +39,7 @@ import {
   VertoConfig
 } from '@/services/freeswitch-config.service';
 import SipProfilesPanel from './SipProfilesPanel';
+import AdvancedSipPanel from './AdvancedSipPanel';
 
 // Types are now imported from service
 
@@ -307,7 +309,7 @@ export default function FreeSwitchConfigPanel() {
       </div>
 
       <Tabs defaultValue="network" className="space-y-4">
-        <TabsList>
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="network" className="flex items-center gap-2">
             <Network className="h-4 w-4" />
             Network
@@ -319,6 +321,10 @@ export default function FreeSwitchConfigPanel() {
           <TabsTrigger value="profiles" className="flex items-center gap-2">
             <Wifi className="h-4 w-4" />
             SIP Profiles
+          </TabsTrigger>
+          <TabsTrigger value="advanced-sip" className="flex items-center gap-2">
+            <Phone className="h-4 w-4" />
+            Advanced SIP
           </TabsTrigger>
           <TabsTrigger value="security" className="flex items-center gap-2">
             <Shield className="h-4 w-4" />
@@ -551,6 +557,12 @@ export default function FreeSwitchConfigPanel() {
           <SipProfilesPanel onConfigChange={(config) => {
             setSipProfilesConfig(config);
             console.log('SIP Profiles config changed:', config);
+          }} />
+        </TabsContent>
+
+        <TabsContent value="advanced-sip">
+          <AdvancedSipPanel onConfigChange={(config) => {
+            console.log('Advanced SIP config changed:', config);
           }} />
         </TabsContent>
 

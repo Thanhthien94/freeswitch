@@ -199,6 +199,28 @@ class FreeSwitchConfigService {
     await api.put('/freeswitch-config/sip-profiles', config);
   }
 
+  // Get SIP profile status
+  async getProfileStatus(): Promise<{ internal: string; external: string }> {
+    const response = await api.get<{ internal: string; external: string }>('/freeswitch-config/sip-profiles/status');
+    return response.data;
+  }
+
+  // Test SIP profile connectivity
+  async testProfile(profileType: 'internal' | 'external'): Promise<{ success: boolean; message: string }> {
+    const response = await api.post<{ success: boolean; message: string }>(`/freeswitch-config/sip-profiles/${profileType}/test`);
+    return response.data;
+  }
+
+  // Restart SIP profile
+  async restartProfile(profileType: 'internal' | 'external'): Promise<void> {
+    await api.post(`/freeswitch-config/sip-profiles/${profileType}/restart`);
+  }
+
+  // Start/Stop SIP profile
+  async toggleProfile(profileType: 'internal' | 'external', enabled: boolean): Promise<void> {
+    await api.post(`/freeswitch-config/sip-profiles/${profileType}/${enabled ? 'start' : 'stop'}`);
+  }
+
   // Apply configuration (restart FreeSWITCH)
   async applyConfiguration(): Promise<void> {
     await api.post('/freeswitch-config/apply');
