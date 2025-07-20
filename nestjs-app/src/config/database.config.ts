@@ -17,6 +17,7 @@ import { UserAttribute } from '../auth/entities/user-attribute.entity';
 import { Policy } from '../auth/entities/policy.entity';
 import { AuditLog } from '../auth/entities/audit-log.entity';
 import { CallDetailRecord } from '../cdr/cdr.entity';
+import { Extension } from '../extensions/extension.entity';
 
 // Import all migrations - disabled for now
 // import { CreateDomains1700000001 } from '../migrations/1700000001-CreateDomains';
@@ -47,6 +48,7 @@ export const AppDataSource = new DataSource({
     Policy,
     AuditLog,
     CallDetailRecord,
+    Extension,
   ],
   migrations: [
     // Migrations temporarily disabled
@@ -77,6 +79,7 @@ export const databaseConfig = {
     Policy,
     AuditLog,
     CallDetailRecord,
+    Extension,
   ],
   migrations: [],
   migrationsTableName: 'migrations',

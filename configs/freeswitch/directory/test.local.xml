@@ -1,0 +1,43 @@
+<!--
+  Domain: test.local
+  Display Name: Test Domain
+  Auto-generated from database at: 2025-07-19T13:44:40.587Z
+  Do not edit manually - use the web interface to modify settings.
+-->
+
+<include>
+  <domain name="test.local">
+    <params>
+      <param name="dial-string" value="{^^:sip_invite_domain=${dialed_domain}:presence_id=${dialed_user}@${dialed_domain}}${sofia_contact(*/${dialed_user}@${dialed_domain})},${verto_contact(${dialed_user}@${dialed_domain})}"/>
+      <!-- Verto support -->
+      <param name="jsonrpc-allowed-methods" value="verto"/>
+      <!-- Security settings -->
+      <param name="allow-empty-password" value="false"/>
+      <!-- Domain specific settings -->
+      <param name="max-registrations-per-extension" value="1"/>
+      <param name="force-subscription-expires" value="60"/>
+    </params>
+
+    <variables>
+      <!-- Domain variables -->
+      <variable name="domain_name" value="test.local"/>
+      <variable name="domain_display_name" value="Test Domain"/>
+      <variable name="max_users" value="100"/>
+      <variable name="max_extensions" value="200"/>
+      <variable name="billing_plan" value="basic"/>
+      <!-- Custom domain settings -->
+
+    </variables>
+
+    <groups>
+      <group name="default">
+        <users>
+          <X-PRE-PROCESS cmd="include" data="test.local/*.xml"/>
+        </users>
+      </group>
+
+      <!-- Additional groups based on domain settings -->
+      
+    </groups>
+  </domain>
+</include>

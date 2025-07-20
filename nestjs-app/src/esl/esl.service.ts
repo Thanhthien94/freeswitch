@@ -794,4 +794,30 @@ export class EslService implements OnModuleInit, OnModuleDestroy {
       }, 10000);
     });
   }
+
+  /**
+   * Execute FreeSWITCH API command
+   */
+  async executeCommand(command: string, args?: string): Promise<string> {
+    if (!this.isConnectionActive()) {
+      throw new Error('ESL not connected to FreeSWITCH');
+    }
+
+    return new Promise((resolve, reject) => {
+      this.connection.api(command, args || '', (result) => {
+        try {
+          if (!result || typeof result.getBody !== 'function') {
+            reject(new Error(`Invalid response from ${command} command`));
+            return;
+          }
+
+          const response = result.getBody();
+          resolve(response);
+        } catch (error) {
+          this.logger.error(`Failed to execute command ${command}:`, error);
+          reject(error);
+        }
+      });
+    });
+  }
 }

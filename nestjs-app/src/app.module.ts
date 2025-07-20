@@ -8,6 +8,7 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
 import * as winston from 'winston';
 
 // Modules
+import { SharedModule } from './shared/shared.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { CallsModule } from './calls/calls.module';
@@ -19,6 +20,8 @@ import { HealthModule } from './health/health.module';
 import { MetricsModule } from './metrics/metrics.module';
 import { WebSocketModule } from './websocket/websocket.module';
 import { ConfigModule as FreeSwitchConfigModule } from './config/config.module';
+import { DomainModule } from './domains/domain.module';
+import { ExtensionModule } from './extensions/extension.module';
 
 // Controllers
 import { AppController } from './app.controller';
@@ -151,6 +154,7 @@ import { CustomTypeOrmLogger } from './common/interceptors/database-logging.inte
     }),
 
     // Application modules
+    SharedModule,
     AuthModule,
     UsersModule,
     CallsModule,
@@ -161,11 +165,12 @@ import { CustomTypeOrmLogger } from './common/interceptors/database-logging.inte
     MetricsModule,
     WebSocketModule,
     FreeSwitchConfigModule,
+    DomainModule,
+    ExtensionModule,
   ],
   controllers: [AppController],
   providers: [
     AppService,
-    // Global interceptors
     {
       provide: APP_INTERCEPTOR,
       useClass: LoggingInterceptor,

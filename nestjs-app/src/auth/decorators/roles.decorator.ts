@@ -13,6 +13,11 @@ export const RESOURCE_KEY = 'resource';
 export const RequireRoles = (...roles: string[]) => SetMetadata(ROLES_KEY, roles);
 
 /**
+ * Alias for RequireRoles for backward compatibility
+ */
+export const Roles = RequireRoles;
+
+/**
  * Decorator to require specific permissions for accessing an endpoint
  * @param permissions - Array of permissions in format "resource:action"
  */

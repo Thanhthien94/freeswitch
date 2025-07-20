@@ -1,6 +1,7 @@
 import {
   Entity,
   PrimaryGeneratedColumn,
+  PrimaryColumn,
   Column,
   CreateDateColumn,
   UpdateDateColumn,
@@ -8,12 +9,13 @@ import {
   OneToMany,
 } from 'typeorm';
 import { User } from '../../users/user.entity';
+import { Extension } from '../../extensions/extension.entity';
 
 @Entity('domains')
 @Index(['name'])
 @Index(['isActive'])
 export class Domain {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryColumn()
   id: string;
 
   @Column({ unique: true, length: 100 })
@@ -65,6 +67,9 @@ export class Domain {
   // Relations
   @OneToMany(() => User, (user) => user.domain)
   users: User[];
+
+  @OneToMany(() => Extension, (extension) => extension.domain)
+  extensions: Extension[];
 
   // Computed properties
   get isOverUserLimit(): boolean {

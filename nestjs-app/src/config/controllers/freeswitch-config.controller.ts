@@ -11,11 +11,15 @@ import {
   HttpStatus,
   HttpException,
 } from '@nestjs/common';
-import { IsEnum, IsOptional, IsNumber, IsString, Min, Max, Matches, ValidateIf } from 'class-validator';
+import { IsEnum, IsOptional, IsNumber, IsString, Min, Max, Matches, ValidateIf, IsArray, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiProperty } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { FreeSwitchConfigService } from '../services/freeswitch-config.service';
+import { FreeSwitchDirectoryService } from '../services/freeswitch-directory.service';
+import { FreeSwitchImportService } from '../services/freeswitch-import.service';
 import { FreeSwitchConfig, ExternalIpMode } from '../entities/freeswitch-config.entity';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 // DTOs
 export class UpdateConfigDto {
@@ -48,12 +52,21 @@ export class AclRuleDto {
 
 export class AclConfigDto {
   @ApiProperty({ description: 'Domain access rules', type: [AclRuleDto] })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => AclRuleDto)
   domains: AclRuleDto[];
 
   @ApiProperty({ description: 'ESL access rules', type: [AclRuleDto] })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => AclRuleDto)
   esl_access: AclRuleDto[];
 
   @ApiProperty({ description: 'SIP profiles access rules', type: [AclRuleDto] })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => AclRuleDto)
   sip_profiles: AclRuleDto[];
 }
 
@@ -280,7 +293,12 @@ export class NetworkConfigDto {
 @UseGuards(JwtAuthGuard)
 @Controller('freeswitch-config')
 export class FreeSwitchConfigController {
-  constructor(private readonly configService: FreeSwitchConfigService) {}
+  constructor(
+    private readonly configService: FreeSwitchConfigService,
+    private readonly directoryService: FreeSwitchDirectoryService,
+    private readonly importService: FreeSwitchImportService,
+    private readonly eventEmitter: EventEmitter2,
+  ) {}
 
   @Get()
   @ApiOperation({ summary: 'Get all FreeSWITCH configurations' })
@@ -1088,6 +1106,70 @@ export class FreeSwitchConfigController {
 
     for (const update of configUpdates) {
       await this.configService.setConfigValue(category, update.name, update.value);
+    }
+  }
+
+  @Post('directory/sync')
+  @ApiOperation({ summary: 'Sync FreeSWITCH directory from database' })
+  @ApiResponse({ status: 200, description: 'Directory synchronized successfully' })
+  async syncDirectory(): Promise<{ message: string }> {
+    try {
+      await this.directoryService.generateDirectoryStructure();
+      return { message: 'FreeSWITCH directory synchronized successfully' };
+    } catch (error) {
+      throw new HttpException(
+        `Failed to sync directory: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
+  @Post('directory/regenerate')
+  @ApiOperation({ summary: 'Force regenerate entire FreeSWITCH directory structure' })
+  @ApiResponse({ status: 200, description: 'Directory regenerated successfully' })
+  async regenerateDirectory(): Promise<{ message: string }> {
+    try {
+      // Emit event to trigger full regeneration
+      this.eventEmitter.emit('freeswitch.directory.regenerate');
+      return { message: 'FreeSWITCH directory regeneration initiated' };
+    } catch (error) {
+      throw new HttpException(
+        `Failed to regenerate directory: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
+  @Post('extensions/import')
+  @ApiOperation({ summary: 'Import extensions from FreeSWITCH to database' })
+  @ApiResponse({ status: 200, description: 'Extensions imported successfully' })
+  async importExtensions(): Promise<{ imported: number; skipped: number; errors: string[] }> {
+    try {
+      const result = await this.importService.importExtensionsFromFreeSWITCH();
+      return result;
+    } catch (error) {
+      throw new HttpException(
+        `Failed to import extensions: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
+  @Post('extensions/import-range')
+  @ApiOperation({ summary: 'Import extension range to database' })
+  @ApiResponse({ status: 200, description: 'Extension range imported successfully' })
+  async importExtensionRange(
+    @Body() body: { startExt: number; endExt: number; domain?: string }
+  ): Promise<{ imported: number; skipped: number; errors: string[] }> {
+    try {
+      const { startExt, endExt, domain = 'localhost' } = body;
+      const result = await this.importService.importExtensionRange(startExt, endExt, domain);
+      return result;
+    } catch (error) {
+      throw new HttpException(
+        `Failed to import extension range: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
     }
   }
 

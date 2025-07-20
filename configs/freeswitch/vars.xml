@@ -2,7 +2,7 @@
 <!-- 
   This file is auto-generated from database configuration.
   Do not edit manually - use the web interface to modify settings.
-  Generated at: 2025-07-19T06:36:40.980Z
+  Generated at: 2025-07-20T01:42:40.584Z
 -->
 <include>
   <!-- Global Variables -->
@@ -21,7 +21,7 @@
 
   <!-- RTP Configuration -->
   <X-PRE-PROCESS cmd="set" data="rtp_start_port=16384"/>
-  <X-PRE-PROCESS cmd="set" data="rtp_end_port=16484"/>
+  <X-PRE-PROCESS cmd="set" data="rtp_end_port=17484"/>
 
   <!-- SIP Configuration -->
   <X-PRE-PROCESS cmd="set" data="internal_sip_port=5060"/>

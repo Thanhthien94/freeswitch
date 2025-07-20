@@ -57,6 +57,7 @@ services:
       - ./nestjs-app:/app
       - ./recordings:/var/lib/freeswitch/recordings:ro
       - ./configs:/usr/src/app/configs
+      - ./configs/freeswitch:/etc/freeswitch
       - /app/node_modules
     environment:
       - NODE_ENV=${NODE_ENV:-development}
@@ -71,6 +72,7 @@ services:
       - FREESWITCH_HOST=freeswitch
       - FREESWITCH_ESL_PORT=8021
       - FREESWITCH_ESL_PASSWORD=${FREESWITCH_ESL_PASSWORD:-ClueCon}
+      - FREESWITCH_CONFIG_PATH=/etc/freeswitch
       - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key}
       - RECORDINGS_PATH=/var/lib/freeswitch/recordings
       - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:3002}

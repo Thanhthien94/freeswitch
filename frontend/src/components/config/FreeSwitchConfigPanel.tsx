@@ -237,6 +237,28 @@ export default function FreeSwitchConfigPanel() {
     }
   };
 
+  const applyAclOnly = async () => {
+    setSaving(true);
+    try {
+      // Update ACL configuration - filter out empty rules
+      const filteredAclConfig = {
+        domains: aclConfig.domains.filter(rule => rule.cidr && rule.cidr.trim() !== ''),
+        esl_access: aclConfig.esl_access.filter(rule => rule.cidr && rule.cidr.trim() !== ''),
+        sip_profiles: aclConfig.sip_profiles.filter(rule => rule.cidr && rule.cidr.trim() !== '')
+      };
+
+      console.log('Applying ACL config only:', filteredAclConfig);
+      await freeswitchConfigService.updateAclConfig(filteredAclConfig);
+
+      toast.success('ACL configuration applied to FreeSWITCH successfully');
+    } catch (error) {
+      console.error('Failed to apply ACL configuration:', error);
+      toast.error('Failed to apply ACL configuration');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const applyConfiguration = async () => {
     setSaving(true);
     try {
@@ -257,8 +279,13 @@ export default function FreeSwitchConfigPanel() {
         console.log('No SIP profiles config to send');
       }
 
-      // Update ACL configuration
-      await freeswitchConfigService.updateAclConfig(aclConfig);
+      // Update ACL configuration - filter out empty rules
+      const filteredAclConfig = {
+        domains: aclConfig.domains.filter(rule => rule.cidr && rule.cidr.trim() !== ''),
+        esl_access: aclConfig.esl_access.filter(rule => rule.cidr && rule.cidr.trim() !== ''),
+        sip_profiles: aclConfig.sip_profiles.filter(rule => rule.cidr && rule.cidr.trim() !== '')
+      };
+      await freeswitchConfigService.updateAclConfig(filteredAclConfig);
 
       // Update Multicast configuration
       await freeswitchConfigService.updateMulticastConfig(multicastConfig);
@@ -300,6 +327,10 @@ export default function FreeSwitchConfigPanel() {
           <Button variant="outline" onClick={loadConfiguration} disabled={loading}>
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
+          </Button>
+          <Button onClick={applyAclOnly} disabled={saving} variant="outline">
+            {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Shield className="h-4 w-4 mr-2" />}
+            Apply ACL Only
           </Button>
           <Button onClick={applyConfiguration} disabled={saving}>
             {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}

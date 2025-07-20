@@ -188,13 +188,38 @@ export const authService = {
 
   // Check if user is authenticated
   isAuthenticated: (): boolean => {
-    return !!localStorage.getItem('auth_token');
+    try {
+      return !!localStorage.getItem('auth_token');
+    } catch {
+      return false;
+    }
   },
 
   // Get stored user
   getStoredUser: (): User | null => {
-    const userStr = localStorage.getItem('user');
-    return userStr ? JSON.parse(userStr) : null;
+    try {
+      const userStr = localStorage.getItem('user');
+      return userStr ? JSON.parse(userStr) : null;
+    } catch {
+      return null;
+    }
+  },
+
+  // Force clear all auth data (for fixing auth loops)
+  forceClearAuth: (): void => {
+    try {
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('refresh_token');
+      localStorage.removeItem('user');
+      // Also clear any other auth-related items
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('auth_') || key === 'user' || key === 'token') {
+          localStorage.removeItem(key);
+        }
+      });
+    } catch (error) {
+      console.warn('Failed to clear localStorage:', error);
+    }
   },
 
   // Get stored token
