@@ -4,6 +4,8 @@ export class CreateFreeSwitchConfigTables1737200000000 implements MigrationInter
   name = 'CreateFreeSwitchConfigTables1737200000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
+    console.log('🚀 Creating Enterprise FreeSWITCH Configuration Tables...');
+
     // Create enum types
     await queryRunner.query(`
       CREATE TYPE "freeswitch_profile_type_enum" AS ENUM('internal', 'external', 'custom')
@@ -13,9 +15,9 @@ export class CreateFreeSwitchConfigTables1737200000000 implements MigrationInter
       CREATE TYPE "freeswitch_config_type_enum" AS ENUM('sip_profile', 'gateway', 'dialplan', 'extension', 'conference', 'ivr')
     `);
 
-    // Create Domains Table
+    // ⚠️ SAFE: Create NEW Domains Table (only if not exists)
     await queryRunner.query(`
-      CREATE TABLE "domains" (
+      CREATE TABLE IF NOT EXISTS "freeswitch_domains" (
         "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
         "name" character varying(100) NOT NULL,
         "display_name" character varying(200),
@@ -32,12 +34,13 @@ export class CreateFreeSwitchConfigTables1737200000000 implements MigrationInter
         "language" character varying(10) NOT NULL DEFAULT 'en',
         "created_at" TIMESTAMP NOT NULL DEFAULT now(),
         "updated_at" TIMESTAMP NOT NULL DEFAULT now(),
-        "created_by" uuid,
-        "updated_by" uuid,
-        CONSTRAINT "PK_domains" PRIMARY KEY ("id"),
-        CONSTRAINT "UQ_domains_name" UNIQUE ("name")
+        "created_by" integer,
+        "updated_by" integer,
+        CONSTRAINT "PK_freeswitch_domains" PRIMARY KEY ("id"),
+        CONSTRAINT "UQ_freeswitch_domains_name" UNIQUE ("name")
       )
     `);
+    console.log('✅ FreeSWITCH Domains table created safely');
 
     // FreeSWITCH SIP Profiles Table
     await queryRunner.query(`
@@ -64,8 +67,8 @@ export class CreateFreeSwitchConfigTables1737200000000 implements MigrationInter
         "order" integer NOT NULL DEFAULT 0,
         "created_at" TIMESTAMP NOT NULL DEFAULT now(),
         "updated_at" TIMESTAMP NOT NULL DEFAULT now(),
-        "created_by" uuid,
-        "updated_by" uuid,
+        "created_by" integer,
+        "updated_by" integer,
         CONSTRAINT "PK_freeswitch_sip_profiles" PRIMARY KEY ("id"),
         CONSTRAINT "UQ_freeswitch_sip_profiles_name" UNIQUE ("name"),
         CONSTRAINT "UQ_freeswitch_sip_profiles_bind_port" UNIQUE ("bind_ip", "bind_port")
@@ -102,8 +105,8 @@ export class CreateFreeSwitchConfigTables1737200000000 implements MigrationInter
         "order" integer NOT NULL DEFAULT 0,
         "created_at" TIMESTAMP NOT NULL DEFAULT now(),
         "updated_at" TIMESTAMP NOT NULL DEFAULT now(),
-        "created_by" uuid,
-        "updated_by" uuid,
+        "created_by" integer,
+        "updated_by" integer,
         CONSTRAINT "PK_freeswitch_gateways" PRIMARY KEY ("id"),
         CONSTRAINT "UQ_freeswitch_gateways_name" UNIQUE ("name")
       )
@@ -130,8 +133,8 @@ export class CreateFreeSwitchConfigTables1737200000000 implements MigrationInter
         "is_template" boolean NOT NULL DEFAULT false,
         "created_at" TIMESTAMP NOT NULL DEFAULT now(),
         "updated_at" TIMESTAMP NOT NULL DEFAULT now(),
-        "created_by" uuid,
-        "updated_by" uuid,
+        "created_by" integer,
+        "updated_by" integer,
         CONSTRAINT "PK_freeswitch_dialplans" PRIMARY KEY ("id"),
         CONSTRAINT "UQ_freeswitch_dialplans_name_context" UNIQUE ("name", "context")
       )
@@ -145,7 +148,7 @@ export class CreateFreeSwitchConfigTables1737200000000 implements MigrationInter
         "display_name" character varying(200),
         "description" text,
         "domain_id" uuid,
-        "user_id" uuid,
+        "user_id" integer,
         "profile_id" uuid,
         "password" character varying(255),
         "effective_caller_id_name" character varying(100),
@@ -158,8 +161,8 @@ export class CreateFreeSwitchConfigTables1737200000000 implements MigrationInter
         "is_active" boolean NOT NULL DEFAULT true,
         "created_at" TIMESTAMP NOT NULL DEFAULT now(),
         "updated_at" TIMESTAMP NOT NULL DEFAULT now(),
-        "created_by" uuid,
-        "updated_by" uuid,
+        "created_by" integer,
+        "updated_by" integer,
         CONSTRAINT "PK_freeswitch_extensions" PRIMARY KEY ("id"),
         CONSTRAINT "UQ_freeswitch_extensions_number_domain" UNIQUE ("extension_number", "domain_id")
       )
@@ -177,7 +180,7 @@ export class CreateFreeSwitchConfigTables1737200000000 implements MigrationInter
         "change_summary" text,
         "is_active" boolean NOT NULL DEFAULT false,
         "created_at" TIMESTAMP NOT NULL DEFAULT now(),
-        "created_by" uuid,
+        "created_by" integer,
         CONSTRAINT "PK_freeswitch_config_versions" PRIMARY KEY ("id"),
         CONSTRAINT "UQ_freeswitch_config_versions" UNIQUE ("config_type", "config_id", "version")
       )
@@ -195,17 +198,17 @@ export class CreateFreeSwitchConfigTables1737200000000 implements MigrationInter
         "deployed_at" TIMESTAMP,
         "rollback_data" jsonb,
         "created_at" TIMESTAMP NOT NULL DEFAULT now(),
-        "created_by" uuid,
-        "deployed_by" uuid,
+        "created_by" integer,
+        "deployed_by" integer,
         CONSTRAINT "PK_freeswitch_config_deployments" PRIMARY KEY ("id")
       )
     `);
 
     // Add Foreign Key Constraints
     await queryRunner.query(`
-      ALTER TABLE "freeswitch_sip_profiles" 
-      ADD CONSTRAINT "FK_freeswitch_sip_profiles_domain" 
-      FOREIGN KEY ("domain_id") REFERENCES "domains"("id") ON DELETE CASCADE
+      ALTER TABLE "freeswitch_sip_profiles"
+      ADD CONSTRAINT "FK_freeswitch_sip_profiles_domain"
+      FOREIGN KEY ("domain_id") REFERENCES "freeswitch_domains"("id") ON DELETE CASCADE
     `);
 
     await queryRunner.query(`
@@ -221,21 +224,21 @@ export class CreateFreeSwitchConfigTables1737200000000 implements MigrationInter
     `);
 
     await queryRunner.query(`
-      ALTER TABLE "freeswitch_gateways" 
-      ADD CONSTRAINT "FK_freeswitch_gateways_domain" 
-      FOREIGN KEY ("domain_id") REFERENCES "domains"("id") ON DELETE CASCADE
+      ALTER TABLE "freeswitch_gateways"
+      ADD CONSTRAINT "FK_freeswitch_gateways_domain"
+      FOREIGN KEY ("domain_id") REFERENCES "freeswitch_domains"("id") ON DELETE CASCADE
     `);
 
     await queryRunner.query(`
-      ALTER TABLE "freeswitch_dialplans" 
-      ADD CONSTRAINT "FK_freeswitch_dialplans_domain" 
-      FOREIGN KEY ("domain_id") REFERENCES "domains"("id") ON DELETE CASCADE
+      ALTER TABLE "freeswitch_dialplans"
+      ADD CONSTRAINT "FK_freeswitch_dialplans_domain"
+      FOREIGN KEY ("domain_id") REFERENCES "freeswitch_domains"("id") ON DELETE CASCADE
     `);
 
     await queryRunner.query(`
-      ALTER TABLE "freeswitch_extensions" 
-      ADD CONSTRAINT "FK_freeswitch_extensions_domain" 
-      FOREIGN KEY ("domain_id") REFERENCES "domains"("id") ON DELETE CASCADE
+      ALTER TABLE "freeswitch_extensions"
+      ADD CONSTRAINT "FK_freeswitch_extensions_domain"
+      FOREIGN KEY ("domain_id") REFERENCES "freeswitch_domains"("id") ON DELETE CASCADE
     `);
 
     await queryRunner.query(`
@@ -251,9 +254,9 @@ export class CreateFreeSwitchConfigTables1737200000000 implements MigrationInter
     `);
 
     // Create Indexes for Performance
-    await queryRunner.query(`CREATE INDEX "IDX_domains_name" ON "domains" ("name")`);
-    await queryRunner.query(`CREATE INDEX "IDX_domains_active" ON "domains" ("is_active")`);
-    await queryRunner.query(`CREATE INDEX "IDX_domains_created_by" ON "domains" ("created_by")`);
+    await queryRunner.query(`CREATE INDEX "IDX_freeswitch_domains_name" ON "freeswitch_domains" ("name")`);
+    await queryRunner.query(`CREATE INDEX "IDX_freeswitch_domains_active" ON "freeswitch_domains" ("is_active")`);
+    await queryRunner.query(`CREATE INDEX "IDX_freeswitch_domains_created_by" ON "freeswitch_domains" ("created_by")`);
 
     await queryRunner.query(`CREATE INDEX "IDX_freeswitch_sip_profiles_domain" ON "freeswitch_sip_profiles" ("domain_id")`);
     await queryRunner.query(`CREATE INDEX "IDX_freeswitch_sip_profiles_type" ON "freeswitch_sip_profiles" ("type")`);
@@ -276,17 +279,21 @@ export class CreateFreeSwitchConfigTables1737200000000 implements MigrationInter
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    // Drop tables in reverse order
-    await queryRunner.query(`DROP TABLE "freeswitch_config_deployments"`);
-    await queryRunner.query(`DROP TABLE "freeswitch_config_versions"`);
-    await queryRunner.query(`DROP TABLE "freeswitch_extensions"`);
-    await queryRunner.query(`DROP TABLE "freeswitch_dialplans"`);
-    await queryRunner.query(`DROP TABLE "freeswitch_gateways"`);
-    await queryRunner.query(`DROP TABLE "freeswitch_sip_profiles"`);
-    await queryRunner.query(`DROP TABLE "domains"`);
+    console.log('🗑️ Dropping Enterprise FreeSWITCH Configuration Tables...');
+
+    // Drop tables in reverse order (SAFE: Only FreeSWITCH tables)
+    await queryRunner.query(`DROP TABLE IF EXISTS "freeswitch_config_deployments" CASCADE`);
+    await queryRunner.query(`DROP TABLE IF EXISTS "freeswitch_config_versions" CASCADE`);
+    await queryRunner.query(`DROP TABLE IF EXISTS "freeswitch_extensions" CASCADE`);
+    await queryRunner.query(`DROP TABLE IF EXISTS "freeswitch_dialplans" CASCADE`);
+    await queryRunner.query(`DROP TABLE IF EXISTS "freeswitch_gateways" CASCADE`);
+    await queryRunner.query(`DROP TABLE IF EXISTS "freeswitch_sip_profiles" CASCADE`);
+    await queryRunner.query(`DROP TABLE IF EXISTS "freeswitch_domains" CASCADE`);
 
     // Drop enum types
-    await queryRunner.query(`DROP TYPE "freeswitch_config_type_enum"`);
-    await queryRunner.query(`DROP TYPE "freeswitch_profile_type_enum"`);
+    await queryRunner.query(`DROP TYPE IF EXISTS "freeswitch_config_type_enum"`);
+    await queryRunner.query(`DROP TYPE IF EXISTS "freeswitch_profile_type_enum"`);
+
+    console.log('✅ FreeSWITCH tables dropped safely (stable tables preserved)');
   }
 }

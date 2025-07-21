@@ -53,7 +53,7 @@ export interface BillingSettings {
   [key: string]: any;
 }
 
-@Entity('domains')
+@Entity('freeswitch_domains')
 @Index(['name'], { unique: true })
 @Index(['isActive'])
 @Index(['createdBy'])
@@ -106,11 +106,11 @@ export class Domain {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 
-  @Column({ name: 'created_by', type: 'uuid', nullable: true })
-  createdBy?: string;
+  @Column({ name: 'created_by', type: 'int', nullable: true })
+  createdBy?: number;
 
-  @Column({ name: 'updated_by', type: 'uuid', nullable: true })
-  updatedBy?: string;
+  @Column({ name: 'updated_by', type: 'int', nullable: true })
+  updatedBy?: number;
 
   // Relations
   @ManyToOne(() => User, { onDelete: 'SET NULL' })
@@ -243,7 +243,7 @@ export class Domain {
     name: string,
     displayName: string,
     adminEmail: string,
-    createdBy?: string
+    createdBy?: number
   ): Partial<Domain> {
     return {
       name,
