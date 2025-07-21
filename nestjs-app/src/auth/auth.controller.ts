@@ -3,14 +3,17 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Request as ExpressRequest } from 'express';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { ProfessionalAuthGuard } from './guards/professional-auth.guard';
+import { Public } from './decorators/auth.decorators';
 
 @ApiTags('Authentication')
 @Controller('auth')
+@UseGuards(ProfessionalAuthGuard)
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('login')
+  @Public()
   @ApiOperation({ summary: 'User login' })
   @ApiResponse({ status: 200, description: 'Login successful' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -23,7 +26,7 @@ export class AuthController {
     return this.authService.login(loginDto, clientIp, userAgent);
   }
 
-  @UseGuards(JwtAuthGuard)
+  // Already protected by controller-level guard
   @Post('websocket-token')
   @ApiOperation({ summary: 'Generate WebSocket token' })
   @ApiResponse({ status: 200, description: 'WebSocket token generated' })

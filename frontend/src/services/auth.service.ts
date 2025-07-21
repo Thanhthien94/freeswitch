@@ -80,12 +80,13 @@ export const authService = {
       const response = await api.post<LoginResponse>('/auth/login', credentials);
 
       // Store token in localStorage
-      if (response.data.access_token) {
-        localStorage.setItem('auth_token', response.data.access_token);
-        if (response.data.refresh_token) {
-          localStorage.setItem('refresh_token', response.data.refresh_token);
+      const loginData = response as any;
+      if (loginData.access_token) {
+        localStorage.setItem('auth_token', loginData.access_token);
+        if (loginData.refresh_token) {
+          localStorage.setItem('refresh_token', loginData.refresh_token);
         }
-        localStorage.setItem('user', JSON.stringify(response.data.user));
+        localStorage.setItem('user', JSON.stringify(loginData.user));
 
         // Create session cookie for middleware protection
         try {
@@ -95,8 +96,8 @@ export const authService = {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              userId: response.data.user.id,
-              token: response.data.access_token,
+              userId: loginData.user.id,
+              token: loginData.access_token,
             }),
           });
         } catch (sessionError) {
@@ -105,7 +106,7 @@ export const authService = {
         }
       }
 
-      return response.data;
+      return loginData;
     } catch (error: any) {
       // Handle different types of errors
       if (error.response?.status === 401) {
@@ -125,7 +126,7 @@ export const authService = {
   // Register
   register: async (userData: RegisterRequest): Promise<User> => {
     const response = await api.post<User>('/auth/register', userData);
-    return response.data;
+    return response as any;
   },
 
   // Logout
@@ -156,7 +157,7 @@ export const authService = {
   getCurrentUser: async (): Promise<User> => {
     try {
       const response = await api.get<User>('/auth/me');
-      return response.data;
+      return response as any;
     } catch (error) {
       console.warn('Get current user failed:', error);
       throw error;
@@ -172,14 +173,15 @@ export const authService = {
       });
 
       // Update tokens
-      if (response.data.access_token) {
-        localStorage.setItem('auth_token', response.data.access_token);
-        if (response.data.refresh_token) {
-          localStorage.setItem('refresh_token', response.data.refresh_token);
+      const tokenData = response as any;
+      if (tokenData.access_token) {
+        localStorage.setItem('auth_token', tokenData.access_token);
+        if (tokenData.refresh_token) {
+          localStorage.setItem('refresh_token', tokenData.refresh_token);
         }
       }
 
-      return response.data;
+      return tokenData;
     } catch (error) {
       console.warn('Refresh token failed:', error);
       throw error;

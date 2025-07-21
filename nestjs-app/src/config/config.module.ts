@@ -1,42 +1,74 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RedisModule } from '@nestjs-modules/ioredis';
-import { FreeSwitchConfig } from './entities/freeswitch-config.entity';
-import { FreeSwitchConfigService } from './services/freeswitch-config.service';
-import { FreeSwitchDirectoryService } from './services/freeswitch-directory.service';
-import { FreeSwitchImportService } from './services/freeswitch-import.service';
-import { ConfigAuditService } from './services/config-audit.service';
-import { ConfigCacheService } from './services/config-cache.service';
-import { FreeSwitchConfigController } from './controllers/freeswitch-config.controller';
-import { FreeSwitchSyncListener } from './listeners/freeswitch-sync.listener';
-import { EslModule } from '../esl/esl.module';
-import { Domain } from '../auth/entities/domain.entity';
-import { Extension } from '../extensions/extension.entity';
+import { JwtModule } from '@nestjs/jwt';
+import { ConfigModule as NestConfigModule, ConfigService } from '@nestjs/config';
 
+// Entities
+import { ConfigItem, ConfigCategory } from './entities/config-item.entity';
+
+// Services
+import { ConfigProfessionalService } from './services/config-professional.service';
+
+// Controllers
+import { ConfigProfessionalController } from './controllers/config-professional.controller';
+
+/**
+ * Professional Configuration Management Module
+ * 
+ * Clean, modern config system with:
+ * - Professional authentication integration
+ * - Clean entity structure matching database
+ * - Comprehensive API with Swagger documentation
+ * - Proper validation and error handling
+ * - Audit logging and security
+ */
 @Module({
   imports: [
-    TypeOrmModule.forFeature([FreeSwitchConfig, Domain, Extension]),
-    RedisModule.forRoot({
-      type: 'single',
-      url: process.env.REDIS_URL || 'redis://redis:6379',
+    // TypeORM for database entities
+    TypeOrmModule.forFeature([
+      ConfigItem,
+      ConfigCategory,
+    ]),
+
+    // JWT for authentication (inherited from auth module)
+    JwtModule.registerAsync({
+      imports: [NestConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        secret: configService.get<string>('JWT_SECRET'),
+        signOptions: {
+          expiresIn: configService.get<string>('JWT_EXPIRES_IN', '24h'),
+        },
+      }),
+      inject: [ConfigService],
     }),
-    EslModule,
+
+    // Config module for environment variables
+    NestConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: ['.env.local', '.env'],
+    }),
   ],
-  controllers: [FreeSwitchConfigController],
+
   providers: [
-    FreeSwitchConfigService,
-    FreeSwitchDirectoryService,
-    FreeSwitchImportService,
-    FreeSwitchSyncListener,
-    ConfigAuditService,
-    // ConfigCacheService, // Temporarily disabled
+    // Professional Config Service
+    ConfigProfessionalService,
   ],
+
+  controllers: [
+    // Professional Config Controller
+    ConfigProfessionalController,
+  ],
+
   exports: [
-    FreeSwitchConfigService,
-    FreeSwitchDirectoryService,
-    FreeSwitchImportService,
-    ConfigAuditService,
-    // ConfigCacheService, // Temporarily disabled
+    // Export TypeORM module for other modules to use entities
+    TypeOrmModule,
+    
+    // Export Professional Config Service
+    ConfigProfessionalService,
   ],
 })
-export class ConfigModule {}
+export class ConfigModule {
+  constructor() {
+    console.log('🚀 Professional Configuration Module initialized');
+  }
+}

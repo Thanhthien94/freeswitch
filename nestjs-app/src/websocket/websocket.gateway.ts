@@ -10,7 +10,7 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { Logger, UseGuards, Inject, forwardRef } from '@nestjs/common';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { ProfessionalAuthGuard } from '../auth/guards/professional-auth.guard';
 import { EslService } from '../esl/esl.service';
 import { AuthWsMiddleware } from './middleware/auth-ws.middleware';
 
@@ -114,7 +114,7 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
 
   // Handle call control commands from clients
   @SubscribeMessage('call-control')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(ProfessionalAuthGuard)
   async handleCallControl(
     @MessageBody() data: { action: string; callId: string; params?: any },
     @ConnectedSocket() client: Socket,

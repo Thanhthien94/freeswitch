@@ -53,6 +53,9 @@ USER node
 
 FROM node:18-alpine As production
 
+# Install curl for health checks
+RUN apk add --no-cache curl
+
 # Set working directory
 WORKDIR /usr/src/app
 

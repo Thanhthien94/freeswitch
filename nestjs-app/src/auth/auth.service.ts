@@ -8,7 +8,7 @@ import { RBACService } from './services/rbac.service';
 import { ABACService } from './services/abac.service';
 import { AuditLog, AuditAction, AuditResult, RiskLevel } from './entities/audit-log.entity';
 import { LoginDto, RegisterDto } from './dto/login.dto';
-import { JwtPayload } from './strategies/jwt.strategy';
+import { JwtPayload } from './interfaces/jwt-payload.interface';
 import * as bcrypt from 'bcrypt';
 
 export interface LoginResponse {
@@ -85,7 +85,7 @@ export class AuthService {
 
       // Create JWT payload
       const payload: JwtPayload = {
-        sub: user.id,
+        sub: user.id.toString(),
         username: user.username,
         email: user.email,
         domainId: user.domainId,

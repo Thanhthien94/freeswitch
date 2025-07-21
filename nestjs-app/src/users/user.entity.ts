@@ -68,6 +68,47 @@ export class User {
   @Column({ name: 'manager_id', nullable: true })
   managerId: number;
 
+  // Enhanced authentication fields
+  @Column({ name: 'currentSessionId', nullable: true })
+  currentSessionId: string;
+
+  @Column({ name: 'lastActivityAt', type: 'timestamptz', nullable: true })
+  lastActivityAt: Date;
+
+  @Column({ name: 'lastActivityIp', nullable: true })
+  lastActivityIp: string;
+
+  @Column({ name: 'lastActivityUserAgent', type: 'text', nullable: true })
+  lastActivityUserAgent: string;
+
+  @Column({ name: 'requirePasswordChange', type: 'boolean', default: false })
+  requirePasswordChange: boolean;
+
+  @Column({ name: 'mfaEnabled', type: 'boolean', default: false })
+  mfaEnabled: boolean;
+
+  @Column({ name: 'mfaSecret', nullable: true })
+  mfaSecret: string;
+
+  @Column({ name: 'language', default: 'en' })
+  language: string;
+
+  @Column({ name: 'timezone', default: 'UTC' })
+  timezone: string;
+
+  @Column({ name: 'loginAttempts', type: 'int', default: 0 })
+  loginAttempts: number;
+
+  @Column({ name: 'lockedUntil', type: 'timestamptz', nullable: true })
+  lockedUntil: Date;
+
+  // Additional fields for compatibility
+  @Column({ name: 'emailVerified', type: 'boolean', default: false })
+  emailVerified: boolean;
+
+  @Column({ name: 'lastLoginAt', type: 'timestamptz', nullable: true })
+  lastLoginAt: Date;
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
 
@@ -137,5 +178,130 @@ export class User {
   // Check if user belongs to domain
   belongsToDomain(domainId: string): boolean {
     return this.domainId === domainId;
+  }
+
+  // Enhanced authentication helper methods
+  isAccountLocked(): boolean {
+    return this.lockedUntil && this.lockedUntil > new Date();
+  }
+
+  shouldRequirePasswordChange(): boolean {
+    return this.requirePasswordChange;
+  }
+
+  isMfaEnabled(): boolean {
+    return this.mfaEnabled;
+  }
+
+  incrementLoginAttempts(): void {
+    this.loginAttempts = (this.loginAttempts || 0) + 1;
+  }
+
+  resetLoginAttempts(): void {
+    this.loginAttempts = 0;
+    this.lockedUntil = null;
+  }
+
+  lockAccount(durationMinutes: number = 15): void {
+    this.lockedUntil = new Date(Date.now() + durationMinutes * 60 * 1000);
+  }
+
+  updateLastActivity(ip: string, userAgent: string): void {
+    this.lastActivityAt = new Date();
+    this.lastActivityIp = ip;
+    this.lastActivityUserAgent = userAgent;
+  }
+
+  setCurrentSession(sessionId: string): void {
+    this.currentSessionId = sessionId;
+  }
+
+  clearCurrentSession(): void {
+    this.currentSessionId = null;
+  }
+
+  isSessionValid(sessionId: string): boolean {
+    return this.currentSessionId === sessionId;
+  }
+
+  getPreferences(): { language: string; timezone: string } {
+    return {
+      language: this.language || 'en',
+      timezone: this.timezone || 'UTC',
+    };
+  }
+
+  updatePreferences(language?: string, timezone?: string): void {
+    if (language) this.language = language;
+    if (timezone) this.timezone = timezone;
+  }
+
+  // Security status methods
+  getSecurityStatus(): {
+    isLocked: boolean;
+    requiresPasswordChange: boolean;
+    mfaEnabled: boolean;
+    loginAttempts: number;
+    lastActivity: Date | null;
+  } {
+    return {
+      isLocked: this.isAccountLocked(),
+      requiresPasswordChange: this.shouldRequirePasswordChange(),
+      mfaEnabled: this.isMfaEnabled(),
+      loginAttempts: this.loginAttempts || 0,
+      lastActivity: this.lastActivityAt,
+    };
+  }
+
+  // Permission helper methods
+  hasPermission(permission: string): boolean {
+    const activeRoles = this.getActiveRoles();
+    return activeRoles.some(ur =>
+      ur.role?.permissions?.some(p => p.isActive && p.fullPermission === permission)
+    );
+  }
+
+  hasAnyPermission(permissions: string[]): boolean {
+    return permissions.some(permission => this.hasPermission(permission));
+  }
+
+  getAllPermissions(): string[] {
+    const activeRoles = this.getActiveRoles();
+    const permissions = new Set<string>();
+
+    activeRoles.forEach(ur => {
+      ur.role?.permissions?.forEach(p => {
+        if (p.isActive) {
+          permissions.add(p.fullPermission);
+        }
+      });
+    });
+
+    return Array.from(permissions);
+  }
+
+  // Role hierarchy helper methods
+  isSuperAdmin(): boolean {
+    return this.hasRole('superadmin');
+  }
+
+  isAdmin(): boolean {
+    return this.hasRole('admin') || this.isSuperAdmin();
+  }
+
+  isOperator(): boolean {
+    return this.hasRole('operator') || this.isAdmin();
+  }
+
+  isViewer(): boolean {
+    return this.hasRole('viewer') || this.isOperator();
+  }
+
+  getHighestRole(): string {
+    if (this.isSuperAdmin()) return 'superadmin';
+    if (this.isAdmin()) return 'admin';
+    if (this.isOperator()) return 'operator';
+    if (this.isViewer()) return 'viewer';
+    return 'none';
   }
 }

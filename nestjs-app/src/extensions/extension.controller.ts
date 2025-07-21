@@ -13,7 +13,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { ProfessionalAuthGuard } from '../auth/guards/professional-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { ExtensionService } from './extension.service';
@@ -23,7 +23,7 @@ import { ExtensionQueryDto } from './dto/extension-query.dto';
 
 @ApiTags('extensions')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(ProfessionalAuthGuard)
 @Controller('extensions')
 export class ExtensionController {
   private readonly logger = new Logger(ExtensionController.name);

@@ -19,8 +19,9 @@ import { EslModule } from './esl/esl.module';
 import { HealthModule } from './health/health.module';
 import { MetricsModule } from './metrics/metrics.module';
 import { WebSocketModule } from './websocket/websocket.module';
-import { ConfigModule as FreeSwitchConfigModule } from './config/config.module';
+
 import { DomainModule } from './domains/domain.module';
+import { ConfigModule as ProfessionalConfigModule } from './config/config.module';
 import { ExtensionModule } from './extensions/extension.module';
 
 // Controllers
@@ -164,8 +165,9 @@ import { CustomTypeOrmLogger } from './common/interceptors/database-logging.inte
     HealthModule,
     MetricsModule,
     WebSocketModule,
-    FreeSwitchConfigModule,
     DomainModule,
+    // EnterpriseConfigModule, // TEMPORARILY DISABLED - Has conflicts
+    ProfessionalConfigModule, // Professional Config Module
     ExtensionModule,
   ],
   controllers: [AppController],

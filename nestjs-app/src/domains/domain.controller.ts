@@ -12,7 +12,8 @@ import {
   HttpCode,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { ProfessionalAuthGuard } from '../auth/guards/professional-auth.guard';
+import { RequirePermissions, PERMISSIONS } from '../auth/decorators/auth.decorators';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { DomainService } from './domain.service';
@@ -22,7 +23,7 @@ import { DomainQueryDto } from './dto/domain-query.dto';
 
 @ApiTags('domains')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(ProfessionalAuthGuard)
 @Controller('domains')
 export class DomainController {
   constructor(private readonly domainService: DomainService) {}

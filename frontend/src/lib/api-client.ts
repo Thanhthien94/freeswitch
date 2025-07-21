@@ -2,8 +2,10 @@
 
 // API Client Configuration
 // For Docker: Frontend runs on :3002, Backend on :3000
-// Hardcode for now since env vars not working in production build
-const API_BASE_URL = 'http://localhost:3000/api/v1';
+// Browser always uses localhost (Docker port mapping), Server uses container name
+const API_BASE_URL = typeof window !== 'undefined'
+  ? 'http://localhost:3000/api/v1'  // Browser: use localhost (Docker port mapping)
+  : 'http://nestjs-api:3000/api/v1'; // Server-side: use container name
 
 // Request configuration type
 interface RequestConfig {
@@ -74,8 +76,8 @@ export const api = {
     }
 
     const data = await response.json();
-    // Backend returns direct data, wrap it in ApiResponse format
-    return { success: true, data };
+    // Backend already returns ApiResponse format
+    return data;
   },
 
   // POST request
@@ -91,8 +93,8 @@ export const api = {
     }
 
     const responseData = await response.json();
-    // Backend returns direct data, wrap it in ApiResponse format
-    return { success: true, data: responseData };
+    // Backend already returns ApiResponse format
+    return responseData;
   },
 
   // PUT request

@@ -1,15 +1,13 @@
 import { Metadata } from 'next';
-import FreeSwitchConfigPanel from '@/components/config/FreeSwitchConfigPanel';
+import ProfessionalConfigPanel from '@/components/config/ProfessionalConfigPanel';
 
 export const metadata: Metadata = {
-  title: 'FreeSWITCH Configuration | PBX Management',
-  description: 'Configure FreeSWITCH network, SIP, and security settings',
+  title: 'Configuration Management | Professional PBX',
+  description: 'Manage system configurations with professional controls, audit trails, and security',
 };
 
 export default function ConfigPage() {
   return (
-    <div className="container mx-auto py-6">
-      <FreeSwitchConfigPanel />
-    </div>
+    <ProfessionalConfigPanel />
   );
 }
