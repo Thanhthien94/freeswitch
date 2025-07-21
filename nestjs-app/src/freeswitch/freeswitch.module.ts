@@ -28,6 +28,7 @@ import { FreeSwitchConfigService } from './services/freeswitch-config.service';
 
 // Shared modules
 import { SharedModule } from '../shared/shared.module';
+import { EslModule } from '../esl/esl.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { SharedModule } from '../shared/shared.module';
       FreeSwitchConfigDeployment,
     ]),
     SharedModule,
+    EslModule,
   ],
   controllers: [
     FreeSwitchSipProfileController,

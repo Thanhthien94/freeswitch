@@ -3,6 +3,7 @@ import { FreeSwitchSipProfile } from '../entities/freeswitch-sip-profile.entity'
 import { FreeSwitchGateway } from '../entities/freeswitch-gateway.entity';
 import { FreeSwitchDialplan } from '../entities/freeswitch-dialplan.entity';
 import { FreeSwitchExtension } from '../entities/freeswitch-extension.entity';
+import { Domain } from '../entities/domain.entity';
 
 export interface XmlValidationResult {
   isValid: boolean;
