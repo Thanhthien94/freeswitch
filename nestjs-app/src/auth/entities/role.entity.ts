@@ -12,7 +12,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { Permission } from './permission.entity';
-import { Domain } from './domain.entity';
+import { Domain } from '../../freeswitch/entities/domain.entity';
 import { UserRole } from './user-role.entity';
 
 export enum RoleType {

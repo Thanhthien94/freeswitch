@@ -20,9 +20,8 @@ import { HealthModule } from './health/health.module';
 import { MetricsModule } from './metrics/metrics.module';
 import { WebSocketModule } from './websocket/websocket.module';
 
-import { DomainModule } from './domains/domain.module';
 import { ConfigModule as ProfessionalConfigModule } from './config/config.module';
-import { ExtensionModule } from './extensions/extension.module';
+import { FreeSwitchModule } from './freeswitch/freeswitch.module';
 
 // Controllers
 import { AppController } from './app.controller';
@@ -165,10 +164,9 @@ import { CustomTypeOrmLogger } from './common/interceptors/database-logging.inte
     HealthModule,
     MetricsModule,
     WebSocketModule,
-    DomainModule,
     // EnterpriseConfigModule, // TEMPORARILY DISABLED - Has conflicts
     ProfessionalConfigModule, // Professional Config Module
-    ExtensionModule,
+    FreeSwitchModule, // Enterprise FreeSWITCH Config Module
   ],
   controllers: [AppController],
   providers: [

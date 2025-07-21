@@ -13,7 +13,7 @@ import {
 } from 'typeorm';
 import { Exclude } from 'class-transformer';
 import * as bcrypt from 'bcrypt';
-import { Domain } from '../auth/entities/domain.entity';
+import { Domain } from '../freeswitch/entities/domain.entity';
 import { UserRole as UserRoleEntity } from '../auth/entities/user-role.entity';
 
 // Legacy enum removed - now using RBAC system
