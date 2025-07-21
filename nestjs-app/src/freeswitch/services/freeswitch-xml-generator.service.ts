@@ -70,11 +70,11 @@ export class FreeSwitchXmlGeneratorService {
     }
 
     // Media settings
-    settings.push(`<param name="hold-music" value="$${hold_music}"/>`);
+    settings.push(`<param name="hold-music" value="\${hold_music}"/>`);
     settings.push(`<param name="apply-nat-acl" value="nat.auto"/>`);
     settings.push(`<param name="manage-presence" value="true"/>`);
     settings.push(`<param name="presence-hosts" value="${profile.bindIp || '$${domain}'}"/>`);
-    settings.push(`<param name="presence-privacy" value="$${presence_privacy}"/>`);
+    settings.push(`<param name="presence-privacy" value="\${presence_privacy}"/>`);
 
     // Codec settings
     const inboundCodecs = profile.codecSettings.inbound_codec_prefs?.join(',') || '$${global_codec_prefs}';
@@ -154,14 +154,14 @@ export class FreeSwitchXmlGeneratorService {
     return `
   <domain name="${domainName}">
     <params>
-      <param name="dial-string" value="{^^:sip_invite_domain=$${domain_name}:presence_id=$${dialed_user}@$${dialed_domain}}user/$${dialed_user}@$${dialed_domain}"/>
+      <param name="dial-string" value="{^^:sip_invite_domain=\${domain_name}:presence_id=\${dialed_user}@\${dialed_domain}}user/\${dialed_user}@\${dialed_domain}"/>
       <param name="jsonrpc-allowed-methods" value="verto"/>
       <param name="jsonrpc-allowed-event-channels" value="demo,conference,presence"/>
     </params>
     <variables>
       <variable name="record_stereo" value="true"/>
-      <variable name="default_gateway" value="$${default_provider}"/>
-      <variable name="default_areacode" value="$${default_areacode}"/>
+      <variable name="default_gateway" value="\${default_provider}"/>
+      <variable name="default_areacode" value="\${default_areacode}"/>
       <variable name="transfer_fallback_extension" value="operator"/>
     </variables>
     <groups>

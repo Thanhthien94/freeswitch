@@ -113,7 +113,7 @@ export class FreeSwitchConfigVersion {
     configData: Record<string, any>,
     xmlContent?: string,
     changeSummary?: string,
-    createdBy?: string
+    createdBy?: number
   ): Partial<FreeSwitchConfigVersion> {
     return {
       configType,
@@ -165,11 +165,11 @@ export class FreeSwitchConfigDeployment {
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @Column({ name: 'created_by', type: 'uuid', nullable: true })
-  createdBy?: string;
+  @Column({ name: 'created_by', type: 'int', nullable: true })
+  createdBy?: number;
 
-  @Column({ name: 'deployed_by', type: 'uuid', nullable: true })
-  deployedBy?: string;
+  @Column({ name: 'deployed_by', type: 'int', nullable: true })
+  deployedBy?: number;
 
   // Relations
   @ManyToOne(() => User, { onDelete: 'SET NULL' })

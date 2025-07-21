@@ -26,6 +26,8 @@ import { FreeSwitchEslService } from './services/freeswitch-esl.service';
 import { FreeSwitchVersionService } from './services/freeswitch-version.service';
 import { FreeSwitchConfigService } from './services/freeswitch-config.service';
 
+import { FreeSwitchDomainController } from './controllers/freeswitch-domain.controller';
+
 // Shared modules
 import { SharedModule } from '../shared/shared.module';
 import { EslModule } from '../esl/esl.module';
@@ -50,6 +52,7 @@ import { EslModule } from '../esl/esl.module';
     FreeSwitchDialplanController,
     FreeSwitchExtensionController,
     FreeSwitchConfigController,
+    FreeSwitchDomainController,
   ],
   providers: [
     FreeSwitchSipProfileService,

@@ -30,7 +30,7 @@ export class FreeSwitchVersionService {
     configData: Record<string, any>,
     xmlContent?: string,
     changeSummary?: string,
-    createdBy?: string
+    createdBy?: number
   ): Promise<FreeSwitchConfigVersion> {
     this.logger.log(`Creating version for ${configType}:${configId}`);
 
@@ -217,7 +217,7 @@ export class FreeSwitchVersionService {
     }>,
     description?: string,
     domainId?: string,
-    createdBy?: string
+    createdBy?: number
   ): Promise<FreeSwitchConfigDeployment> {
     this.logger.log(`Creating deployment: ${deploymentName}`);
 
@@ -261,7 +261,7 @@ export class FreeSwitchVersionService {
 
   async markDeploymentAsDeployed(
     id: string,
-    deployedBy?: string
+    deployedBy?: number
   ): Promise<FreeSwitchConfigDeployment> {
     const deployment = await this.getDeployment(id);
 

@@ -12,7 +12,7 @@ import { PolicyGuard } from '../auth/guards/policy.guard';
 
 // Entities
 import { User } from '../users/user.entity';
-import { Domain } from '../auth/entities/domain.entity';
+import { Domain } from '../freeswitch/entities/domain.entity';
 import { Role } from '../auth/entities/role.entity';
 import { Permission } from '../auth/entities/permission.entity';
 import { UserRole } from '../auth/entities/user-role.entity';
