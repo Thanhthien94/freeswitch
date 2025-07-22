@@ -22,6 +22,7 @@ export class AuthController {
     @Req() request: ExpressRequest,
     @Ip() clientIp: string,
   ) {
+    console.log(`🎯 AUTH CONTROLLER LOGIN CALLED for: ${loginDto.emailOrUsername}`);
     const userAgent = request.headers['user-agent'];
     return this.authService.login(loginDto, clientIp, userAgent);
   }
@@ -46,5 +47,21 @@ export class AuthController {
   async logout(@Body() body: { userId: number; sessionId?: string }) {
     await this.authService.logout(body.userId, body.sessionId);
     return { message: 'Logout successful' };
+  }
+
+  @Post('test')
+  @Public()
+  @ApiOperation({ summary: 'Test endpoint' })
+  async test() {
+    console.log('🧪 TEST ENDPOINT CALLED');
+    return { message: 'Test successful', timestamp: new Date().toISOString() };
+  }
+
+  @Post('test-service')
+  @Public()
+  @ApiOperation({ summary: 'Test auth service' })
+  async testService() {
+    console.log('🧪 TEST SERVICE ENDPOINT CALLED');
+    return this.authService.testMethod();
   }
 }

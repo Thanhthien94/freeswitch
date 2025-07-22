@@ -119,7 +119,9 @@ export class ProfessionalAuthGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<Request>();
     const startTime = Date.now();
-    
+
+    console.log(`🛡️ GUARD CALLED for: ${request.method} ${request.path}`);
+
     try {
       // 1. Check if endpoint is public
       const isPublic = this.reflector.getAllAndOverride<boolean>('isPublic', [
@@ -127,7 +129,10 @@ export class ProfessionalAuthGuard implements CanActivate {
         context.getClass(),
       ]);
 
+      console.log(`🔓 isPublic check result: ${isPublic}`);
+
       if (isPublic) {
+        console.log(`✅ Public endpoint accessed: ${request.method} ${request.path}`);
         this.logger.debug(`Public endpoint accessed: ${request.method} ${request.path}`);
         return true;
       }
