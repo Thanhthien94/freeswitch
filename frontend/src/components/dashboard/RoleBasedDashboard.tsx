@@ -17,6 +17,7 @@ import {
   BillingGate,
   SystemGate
 } from '@/components/auth/PermissionGate';
+import { FreeSwitchDashboard } from '@/components/freeswitch/FreeSwitchDashboard';
 import {
   Shield,
   Users,
@@ -305,6 +306,24 @@ export const RoleBasedDashboard: React.FC = () => {
           </Card>
         </HighSecurityGate>
       </div>
+
+      {/* FreeSWITCH Management Section */}
+      <SystemGate action="read">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Phone className="h-5 w-5 text-indigo-600" />
+              <span>FreeSWITCH Management</span>
+            </CardTitle>
+            <CardDescription>
+              Enterprise PBX system management and configuration
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <FreeSwitchDashboard />
+          </CardContent>
+        </Card>
+      </SystemGate>
 
       {/* Current Permissions Summary */}
       <Card>
