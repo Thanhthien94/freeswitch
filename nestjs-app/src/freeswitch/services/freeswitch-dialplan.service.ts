@@ -10,7 +10,7 @@ export interface CreateDialplanDto {
   displayName?: string;
   description?: string;
   context?: string;
-  domainId?: string;
+  domainId?: any;
   extensionPattern?: string;
   conditionField?: string;
   conditionExpression?: string;
@@ -29,7 +29,7 @@ export interface DialplanQueryDto {
   limit?: number;
   search?: string;
   context?: string;
-  domainId?: string;
+  domainId?: any;
   isActive?: boolean;
   isTemplate?: boolean;
   sortBy?: string;
@@ -176,7 +176,7 @@ export class FreeSwitchDialplanService {
     });
   }
 
-  async update(id: string, updateDto: UpdateDialplanDto, updatedBy?: number): Promise<FreeSwitchDialplan> {
+  async update(id: string, updateDto: any, updatedBy?: number): Promise<FreeSwitchDialplan> {
     this.logger.log(`Updating dialplan: ${id}`);
 
     const dialplan = await this.findOne(id);
@@ -278,12 +278,12 @@ export class FreeSwitchDialplanService {
       throw new ConflictException('Source dialplan is not a template');
     }
 
-    const dialplanData: CreateDialplanDto = {
-      ...template,
+    const { id, ...templateData } = template;
+    const dialplanData: any = {
+      ...templateData,
       ...data,
       name: data.name || `${template.name}_copy`,
       isTemplate: false,
-      id: undefined, // Remove ID to create new record
     };
 
     return this.create(dialplanData, createdBy);

@@ -88,8 +88,8 @@ export class FreeSwitchExtension {
   @Column({ name: 'domain_id', type: 'uuid', nullable: true })
   domainId?: string;
 
-  @Column({ name: 'user_id', type: 'uuid', nullable: true })
-  userId?: string;
+  @Column({ name: 'user_id', type: 'int', nullable: true })
+  userId?: number;
 
   @Column({ name: 'profile_id', type: 'uuid', nullable: true })
   profileId?: string;
@@ -127,11 +127,11 @@ export class FreeSwitchExtension {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 
-  @Column({ name: 'created_by', type: 'uuid', nullable: true })
-  createdBy?: string;
+  @Column({ name: 'created_by', type: 'int', nullable: true })
+  createdBy?: number;
 
-  @Column({ name: 'updated_by', type: 'uuid', nullable: true })
-  updatedBy?: string;
+  @Column({ name: 'updated_by', type: 'int', nullable: true })
+  updatedBy?: number;
 
   // Relations
   @ManyToOne(() => Domain, { onDelete: 'CASCADE' })

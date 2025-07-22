@@ -143,11 +143,11 @@ export class FreeSwitchGateway {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 
-  @Column({ name: 'created_by', type: 'uuid', nullable: true })
-  createdBy?: string;
+  @Column({ name: 'created_by', type: 'int', nullable: true })
+  createdBy?: number;
 
-  @Column({ name: 'updated_by', type: 'uuid', nullable: true })
-  updatedBy?: string;
+  @Column({ name: 'updated_by', type: 'int', nullable: true })
+  updatedBy?: number;
 
   // Relations
   @ManyToOne(() => FreeSwitchSipProfile, profile => profile.gateways, { onDelete: 'CASCADE' })

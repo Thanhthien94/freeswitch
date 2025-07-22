@@ -90,8 +90,8 @@ export class FreeSwitchSipProfile {
   })
   type: FreeSwitchProfileType;
 
-  @Column({ name: 'domain_id', type: 'uuid', nullable: true })
-  domainId?: string;
+  @Column({ name: 'domain_id', type: 'int', nullable: true })
+  domainId?: number;
 
   @Column({ name: 'bind_ip', type: 'inet', nullable: true })
   bindIp?: string;
@@ -141,11 +141,11 @@ export class FreeSwitchSipProfile {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 
-  @Column({ name: 'created_by', type: 'uuid', nullable: true })
-  createdBy?: string;
+  @Column({ name: 'created_by', type: 'int', nullable: true })
+  createdBy?: number;
 
-  @Column({ name: 'updated_by', type: 'uuid', nullable: true })
-  updatedBy?: string;
+  @Column({ name: 'updated_by', type: 'int', nullable: true })
+  updatedBy?: number;
 
   // Relations
   @ManyToOne(() => Domain, { onDelete: 'CASCADE' })

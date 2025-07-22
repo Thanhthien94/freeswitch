@@ -33,7 +33,7 @@ export class FreeSwitchConfigVersion {
   })
   configType: FreeSwitchConfigType;
 
-  @Column({ name: 'config_id', type: 'uuid' })
+  @Column({ name: 'config_id', type: 'int' })
   configId: string;
 
   @Column({ type: 'int', default: 1 })
@@ -54,8 +54,8 @@ export class FreeSwitchConfigVersion {
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @Column({ name: 'created_by', type: 'uuid', nullable: true })
-  createdBy?: string;
+  @Column({ name: 'created_by', type: 'int', nullable: true })
+  createdBy?: number;
 
   // Relations
   @ManyToOne(() => User, { onDelete: 'SET NULL' })
@@ -142,8 +142,8 @@ export class FreeSwitchConfigDeployment {
   @Column({ type: 'text', nullable: true })
   description?: string;
 
-  @Column({ name: 'domain_id', type: 'uuid', nullable: true })
-  domainId?: string;
+  @Column({ name: 'domain_id', type: 'int', nullable: true })
+  domainId?: number;
 
   @Column({ name: 'config_versions', type: 'jsonb', default: [] })
   configVersions: Array<{

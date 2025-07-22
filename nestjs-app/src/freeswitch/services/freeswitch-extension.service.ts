@@ -9,7 +9,7 @@ export interface CreateExtensionDto {
   extensionNumber: string;
   displayName?: string;
   description?: string;
-  domainId?: string;
+  domainId?: any;
   userId?: number;
   profileId?: string;
   password?: string;
@@ -29,7 +29,7 @@ export interface ExtensionQueryDto {
   page?: number;
   limit?: number;
   search?: string;
-  domainId?: string;
+  domainId?: any;
   userId?: number;
   profileId?: string;
   isActive?: boolean;
@@ -47,7 +47,7 @@ export class FreeSwitchExtensionService {
     private readonly versionService: FreeSwitchVersionService,
   ) {}
 
-  async create(createDto: CreateExtensionDto, createdBy?: number): Promise<FreeSwitchExtension> {
+  async create(createDto: any, createdBy?: number): Promise<FreeSwitchExtension> {
     this.logger.log(`Creating extension: ${createDto.extensionNumber}`);
 
     // Check if extension number already exists in the same domain
@@ -74,7 +74,7 @@ export class FreeSwitchExtensionService {
       updatedBy: createdBy,
     });
 
-    const savedExtension = await this.extensionRepository.save(extension);
+    const savedExtension = await this.extensionRepository.save(extension) as FreeSwitchExtension;
 
     // Create version record
     await this.versionService.createVersion(
@@ -170,7 +170,7 @@ export class FreeSwitchExtensionService {
     return extension;
   }
 
-  async findByNumber(extensionNumber: string, domainId?: string): Promise<FreeSwitchExtension> {
+  async findByNumber(extensionNumber: string, domainId?: any): Promise<FreeSwitchExtension> {
     const where: any = { extensionNumber };
     if (domainId) {
       where.domainId = domainId;
@@ -204,7 +204,7 @@ export class FreeSwitchExtensionService {
     });
   }
 
-  async update(id: string, updateDto: UpdateExtensionDto, updatedBy?: number): Promise<FreeSwitchExtension> {
+  async update(id: string, updateDto: any, updatedBy?: number): Promise<FreeSwitchExtension> {
     this.logger.log(`Updating extension: ${id}`);
 
     const extension = await this.findOne(id);
@@ -331,7 +331,7 @@ export class FreeSwitchExtensionService {
     extensionNumber: string,
     displayName: string,
     password: string,
-    domainId?: string,
+    domainId?: any,
     createdBy?: number
   ): Promise<FreeSwitchExtension> {
     const extensionData = FreeSwitchExtension.createBasicExtension(
@@ -341,7 +341,7 @@ export class FreeSwitchExtensionService {
       domainId
     );
 
-    return this.create(extensionData as CreateExtensionDto, createdBy);
+    return this.create(extensionData, createdBy);
   }
 
   private validateExtension(data: Partial<CreateExtensionDto>): { isValid: boolean; errors: string[] } {

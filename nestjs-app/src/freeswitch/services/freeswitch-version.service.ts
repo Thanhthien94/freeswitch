@@ -60,7 +60,7 @@ export class FreeSwitchVersionService {
       createdBy,
     });
 
-    const savedVersion = await this.versionRepository.save(version);
+    const savedVersion = await this.versionRepository.save(version) as FreeSwitchConfigVersion;
     this.logger.log(`Version ${nextVersion} created for ${configType}:${configId}`);
 
     return savedVersion;
@@ -118,7 +118,7 @@ export class FreeSwitchVersionService {
     configType: FreeSwitchConfigType,
     configId: string,
     targetVersion: number,
-    createdBy?: string
+    createdBy?: number
   ): Promise<FreeSwitchConfigVersion> {
     this.logger.log(`Rolling back ${configType}:${configId} to version ${targetVersion}`);
 
@@ -192,7 +192,7 @@ export class FreeSwitchVersionService {
     ]);
 
     // Count by config type
-    const byConfigType: Record<FreeSwitchConfigType, number> = {} as any;
+    const byConfigType = {} as Record<FreeSwitchConfigType, number>;
     for (const configType of Object.values(FreeSwitchConfigType)) {
       byConfigType[configType] = await this.versionRepository.count({
         where: { configType }
@@ -216,7 +216,7 @@ export class FreeSwitchVersionService {
       version: number;
     }>,
     description?: string,
-    domainId?: string,
+    domainId?: any,
     createdBy?: number
   ): Promise<FreeSwitchConfigDeployment> {
     this.logger.log(`Creating deployment: ${deploymentName}`);
@@ -236,7 +236,7 @@ export class FreeSwitchVersionService {
     return savedDeployment;
   }
 
-  async getDeployments(domainId?: string): Promise<FreeSwitchConfigDeployment[]> {
+  async getDeployments(domainId?: any): Promise<FreeSwitchConfigDeployment[]> {
     const where = domainId ? { domainId } : {};
     
     return this.deploymentRepository.find({

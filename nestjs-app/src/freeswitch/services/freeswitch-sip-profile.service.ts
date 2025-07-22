@@ -10,7 +10,7 @@ export interface CreateSipProfileDto {
   displayName?: string;
   description?: string;
   type: FreeSwitchProfileType;
-  domainId?: string;
+  domainId?: any;
   bindIp?: string;
   bindPort: number;
   tlsPort?: number;
@@ -34,7 +34,7 @@ export interface SipProfileQueryDto {
   limit?: number;
   search?: string;
   type?: FreeSwitchProfileType;
-  domainId?: string;
+  domainId?: any;
   isActive?: boolean;
   sortBy?: string;
   sortOrder?: 'ASC' | 'DESC';
@@ -50,7 +50,7 @@ export class FreeSwitchSipProfileService {
     private readonly versionService: FreeSwitchVersionService,
   ) {}
 
-  async create(createDto: CreateSipProfileDto, createdBy?: string): Promise<FreeSwitchSipProfile> {
+  async create(createDto: CreateSipProfileDto, createdBy?: number): Promise<FreeSwitchSipProfile> {
     this.logger.log(`Creating SIP profile: ${createDto.name}`);
 
     // Check if name already exists
@@ -193,7 +193,7 @@ export class FreeSwitchSipProfileService {
     return sipProfile;
   }
 
-  async update(id: string, updateDto: UpdateSipProfileDto, updatedBy?: string): Promise<FreeSwitchSipProfile> {
+  async update(id: string, updateDto: any, updatedBy?: number): Promise<FreeSwitchSipProfile> {
     this.logger.log(`Updating SIP profile: ${id}`);
 
     const sipProfile = await this.findOne(id);

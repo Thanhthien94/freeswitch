@@ -37,7 +37,7 @@ export class FreeSwitchConfigService {
     private readonly versionService: FreeSwitchVersionService,
   ) {}
 
-  async generateCompleteConfiguration(domainId?: string): Promise<CompleteConfigResult> {
+  async generateCompleteConfiguration(domainId?: any): Promise<CompleteConfigResult> {
     try {
       this.logger.log(`Generating complete FreeSWITCH configuration${domainId ? ` for domain: ${domainId}` : ''}`);
 
@@ -125,7 +125,7 @@ export class FreeSwitchConfigService {
     }
   }
 
-  async deployConfiguration(domainId?: string, deployedBy?: number): Promise<DeploymentResult> {
+  async deployConfiguration(domainId?: any, deployedBy?: number): Promise<DeploymentResult> {
     try {
       this.logger.log(`Deploying FreeSWITCH configuration${domainId ? ` for domain: ${domainId}` : ''}`);
 
@@ -207,7 +207,7 @@ export class FreeSwitchConfigService {
     }
   }
 
-  async validateConfiguration(domainId?: string): Promise<{
+  async validateConfiguration(domainId?: any): Promise<{
     success: boolean;
     errors: string[];
     warnings: string[];

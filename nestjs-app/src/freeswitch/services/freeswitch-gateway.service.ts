@@ -10,7 +10,7 @@ export interface CreateGatewayDto {
   displayName?: string;
   description?: string;
   profileId: string;
-  domainId?: string;
+  domainId?: any;
   gatewayHost: string;
   gatewayPort?: number;
   username?: string;
@@ -39,7 +39,7 @@ export interface GatewayQueryDto {
   limit?: number;
   search?: string;
   profileId?: string;
-  domainId?: string;
+  domainId?: any;
   isActive?: boolean;
   sortBy?: string;
   sortOrder?: 'ASC' | 'DESC';
@@ -184,7 +184,7 @@ export class FreeSwitchGatewayService {
     });
   }
 
-  async update(id: string, updateDto: UpdateGatewayDto, updatedBy?: number): Promise<FreeSwitchGateway> {
+  async update(id: string, updateDto: any, updatedBy?: number): Promise<FreeSwitchGateway> {
     this.logger.log(`Updating gateway: ${id}`);
 
     const gateway = await this.findOne(id);
