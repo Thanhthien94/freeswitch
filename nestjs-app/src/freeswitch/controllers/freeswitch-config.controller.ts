@@ -10,17 +10,17 @@ import {
   ParseUUIDPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { ProfessionalAuthGuard } from '../../auth/guards/professional-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
-import { CurrentUser } from '../../auth/decorators/current-user.decorator';
+import { CurrentUser } from '../../auth/decorators/auth.decorators';
 import { FreeSwitchConfigService } from '../services/freeswitch-config.service';
 import { FreeSwitchEslService } from '../services/freeswitch-esl.service';
 import { FreeSwitchVersionService } from '../services/freeswitch-version.service';
 
 @ApiTags('FreeSWITCH Configuration')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(ProfessionalAuthGuard, RolesGuard)
 @Controller('api/v1/freeswitch/config')
 export class FreeSwitchConfigController {
   constructor(

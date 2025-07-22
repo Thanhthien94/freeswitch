@@ -13,16 +13,16 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { ProfessionalAuthGuard } from '../../auth/guards/professional-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
-import { CurrentUser } from '../../auth/decorators/current-user.decorator';
+import { CurrentUser } from '../../auth/decorators/auth.decorators';
 import { FreeSwitchSipProfileService, CreateSipProfileDto, UpdateSipProfileDto, SipProfileQueryDto } from '../services/freeswitch-sip-profile.service';
 import { FreeSwitchSipProfile } from '../entities/freeswitch-sip-profile.entity';
 
 @ApiTags('FreeSWITCH SIP Profiles')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(ProfessionalAuthGuard, RolesGuard)
 @Controller('api/v1/freeswitch/sip-profiles')
 export class FreeSwitchSipProfileController {
   constructor(
