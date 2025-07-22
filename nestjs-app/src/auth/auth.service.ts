@@ -98,13 +98,22 @@ export class AuthService {
           roles = activeRoles.map(ur => ur.role.name);
           primaryRole = activeRoles.find(ur => ur.isPrimary)?.role?.name || roles[0] || 'user';
 
-          // For now, assign basic permissions based on roles
+          // Assign permissions based on roles - compatible with frontend logic
           if (roles.includes('superadmin')) {
-            permissions = ['*'];
+            permissions = [
+              '*:manage', // Wildcard manage permission
+              'users:manage', 'cdr:manage', 'recordings:manage', 'billing:manage',
+              'reports:manage', 'analytics:manage', 'system:manage', 'config:manage',
+              'security:manage', 'monitoring:manage', 'extensions:manage', 'calls:manage'
+            ];
           } else if (roles.includes('admin')) {
-            permissions = ['read', 'create', 'update', 'delete'];
+            permissions = [
+              'users:read', 'users:create', 'users:update', 'users:delete',
+              'cdr:read', 'cdr:execute', 'recordings:read', 'recordings:download',
+              'config:read', 'config:update', 'monitoring:read'
+            ];
           } else {
-            permissions = ['read'];
+            permissions = ['cdr:read', 'recordings:read', 'users:read'];
           }
         }
       } catch (roleError) {
