@@ -41,14 +41,10 @@ export class AuthService {
     private readonly configService: ConfigService,
     private readonly rbacService: RBACService,
     private readonly abacService: ABACService,
-  ) {
-    console.log('🏗️ AUTH SERVICE CONSTRUCTOR CALLED');
-  }
+  ) {}
 
   async login(loginDto: LoginDto, clientIp?: string, userAgent?: string): Promise<LoginResponse> {
-    console.log(`🚀 AUTH SERVICE LOGIN CALLED for: ${loginDto.emailOrUsername}`);
     try {
-      console.log(`🔐 Login attempt for: ${loginDto.emailOrUsername}`);
 
       // Find user by email or username - step by step to avoid complex query error
       const user = await this.userRepository.findOne({
@@ -57,8 +53,6 @@ export class AuthService {
           { username: loginDto.emailOrUsername },
         ],
       });
-
-      console.log(`👤 User found: ${user ? `${user.username} (ID: ${user.id})` : 'null'}`);
 
       if (!user) {
         await this.logFailedLogin(loginDto.emailOrUsername, 'User not found', clientIp, userAgent);
@@ -72,9 +66,7 @@ export class AuthService {
       }
 
       // Validate password
-      console.log(`🔑 Validating password for user: ${user.username}`);
       const isPasswordValid = await user.validatePassword(loginDto.password);
-      console.log(`🔑 Password validation result: ${isPasswordValid}`);
 
       if (!isPasswordValid) {
         await this.logFailedLogin(user.username, 'Invalid password', clientIp, userAgent);
@@ -117,7 +109,7 @@ export class AuthService {
           }
         }
       } catch (roleError) {
-        console.log('⚠️ Error loading roles, using defaults:', roleError.message);
+        this.logger.warn('Error loading roles, using defaults:', roleError.message);
         roles = ['user'];
         permissions = ['read'];
         primaryRole = 'user';
@@ -470,8 +462,5 @@ export class AuthService {
     }
   }
 
-  async testMethod(): Promise<{ message: string }> {
-    console.log('🧪 AUTH SERVICE TEST METHOD CALLED');
-    return { message: 'Auth service test successful' };
-  }
+
 }
