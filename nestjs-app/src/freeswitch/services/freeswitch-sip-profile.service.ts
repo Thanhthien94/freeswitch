@@ -90,7 +90,7 @@ export class FreeSwitchSipProfileService {
       updatedBy: createdBy,
     });
 
-    const savedProfile = await this.sipProfileRepository.save(sipProfile);
+    const savedProfile = await this.sipProfileRepository.save(sipProfile) as unknown as any;
 
     // Create version record
     await this.versionService.createVersion(
@@ -234,7 +234,7 @@ export class FreeSwitchSipProfileService {
 
     // Update the profile
     Object.assign(sipProfile, updateDto, { updatedBy });
-    const updatedProfile = await this.sipProfileRepository.save(sipProfile);
+    const updatedProfile = await this.sipProfileRepository.save(sipProfile) as unknown as any;
 
     // Create version record
     await this.versionService.createVersion(
@@ -313,7 +313,7 @@ export class FreeSwitchSipProfileService {
 
     // Set new default
     sipProfile.isDefault = true;
-    return this.sipProfileRepository.save(sipProfile);
+    return this.sipProfileRepository.save(sipProfile) as unknown as any;
   }
 
   async generateXml(id: string): Promise<string> {

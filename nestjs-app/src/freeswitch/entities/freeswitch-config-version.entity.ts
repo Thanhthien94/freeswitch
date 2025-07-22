@@ -142,8 +142,8 @@ export class FreeSwitchConfigDeployment {
   @Column({ type: 'text', nullable: true })
   description?: string;
 
-  @Column({ name: 'domain_id', type: 'int', nullable: true })
-  domainId?: number;
+  @Column({ name: 'domain_id', type: 'uuid', nullable: true })
+  domainId?: string;
 
   @Column({ name: 'config_versions', type: 'jsonb', default: [] })
   configVersions: Array<{
@@ -215,7 +215,7 @@ export class FreeSwitchConfigDeployment {
     }>,
     description?: string,
     domainId?: string,
-    createdBy?: string
+    createdBy?: number
   ): Partial<FreeSwitchConfigDeployment> {
     return {
       deploymentName,

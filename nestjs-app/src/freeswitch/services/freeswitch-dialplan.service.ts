@@ -74,7 +74,7 @@ export class FreeSwitchDialplanService {
       updatedBy: createdBy,
     });
 
-    const savedDialplan = await this.dialplanRepository.save(dialplan);
+    const savedDialplan = await this.dialplanRepository.save(dialplan) as unknown as any;
 
     // Create version record
     await this.versionService.createVersion(
@@ -205,7 +205,7 @@ export class FreeSwitchDialplanService {
 
     // Update the dialplan
     Object.assign(dialplan, updateDto, { updatedBy });
-    const updatedDialplan = await this.dialplanRepository.save(dialplan);
+    const updatedDialplan = await this.dialplanRepository.save(dialplan) as unknown as any;
 
     // Create version record
     await this.versionService.createVersion(

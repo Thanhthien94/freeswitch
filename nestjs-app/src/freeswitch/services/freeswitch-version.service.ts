@@ -230,7 +230,7 @@ export class FreeSwitchVersionService {
       createdBy,
     });
 
-    const savedDeployment = await this.deploymentRepository.save(deployment);
+    const savedDeployment = await this.deploymentRepository.save(deployment) as unknown as any;
     this.logger.log(`Deployment created: ${savedDeployment.id}`);
 
     return savedDeployment;
@@ -269,7 +269,7 @@ export class FreeSwitchVersionService {
     deployment.deployedAt = new Date();
     deployment.deployedBy = deployedBy;
 
-    return this.deploymentRepository.save(deployment);
+    return this.deploymentRepository.save(deployment) as unknown as any;
   }
 
   async markDeploymentAsFailed(
@@ -283,7 +283,7 @@ export class FreeSwitchVersionService {
       deployment.rollbackData = { error };
     }
 
-    return this.deploymentRepository.save(deployment);
+    return this.deploymentRepository.save(deployment) as unknown as any;
   }
 
   async cleanupOldVersions(

@@ -73,7 +73,7 @@ export class FreeSwitchGatewayService {
       updatedBy: createdBy,
     });
 
-    const savedGateway = await this.gatewayRepository.save(gateway);
+    const savedGateway = await this.gatewayRepository.save(gateway) as unknown as any;
 
     // Create version record
     await this.versionService.createVersion(
@@ -202,7 +202,7 @@ export class FreeSwitchGatewayService {
 
     // Update the gateway
     Object.assign(gateway, updateDto, { updatedBy });
-    const updatedGateway = await this.gatewayRepository.save(gateway);
+    const updatedGateway = await this.gatewayRepository.save(gateway) as unknown as any;
 
     // Create version record
     await this.versionService.createVersion(

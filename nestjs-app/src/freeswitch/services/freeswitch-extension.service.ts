@@ -74,7 +74,7 @@ export class FreeSwitchExtensionService {
       updatedBy: createdBy,
     });
 
-    const savedExtension = await this.extensionRepository.save(extension) as FreeSwitchExtension;
+    const savedExtension = await this.extensionRepository.save(extension) as unknown as FreeSwitchExtension;
 
     // Create version record
     await this.versionService.createVersion(
@@ -232,7 +232,7 @@ export class FreeSwitchExtensionService {
 
     // Update the extension
     Object.assign(extension, updateDto, { updatedBy });
-    const updatedExtension = await this.extensionRepository.save(extension);
+    const updatedExtension = await this.extensionRepository.save(extension) as unknown as any;
 
     // Create version record
     await this.versionService.createVersion(
