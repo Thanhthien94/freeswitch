@@ -87,8 +87,14 @@ export const cdrService = {
       }
     });
 
-    const response = await api.get<{ data: CallDetailRecord[], pagination: any }>(`/cdr?${queryParams.toString()}`);
-    return response.data;
+    console.log('🔍 CDR Service: Fetching CDR list with params:', params);
+    const response = await api.get<CallDetailRecord[]>(`/cdr?${queryParams.toString()}`);
+    console.log('✅ CDR Service: Response received:', response);
+    // Backend returns { data: [...], pagination: {...} } directly
+    return {
+      data: response.data,
+      pagination: response.pagination
+    };
   },
 
   // Get CDR by ID
@@ -114,7 +120,8 @@ export const cdrService = {
     });
 
     const response = await api.get<CdrStats>(`/cdr/stats?${queryParams.toString()}`);
-    return response.data;
+    // Stats endpoint returns data directly
+    return response.data || response as any;
   },
 
   // Export CDR data

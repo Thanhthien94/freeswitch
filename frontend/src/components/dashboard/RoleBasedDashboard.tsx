@@ -18,6 +18,9 @@ import {
   SystemGate
 } from '@/components/auth/PermissionGate';
 import { FreeSwitchDashboard } from '@/components/freeswitch/FreeSwitchDashboard';
+import { LiveStatsCard } from '@/components/dashboard/LiveStatsCard';
+import { RecentActivityFeed } from '@/components/dashboard/RecentActivityFeed';
+import { AlertsPanel } from '@/components/dashboard/AlertsPanel';
 import {
   Shield,
   Users,
@@ -113,62 +116,8 @@ export const RoleBasedDashboard: React.FC = () => {
         </Alert>
       )}
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Active Calls</p>
-                <p className="text-2xl font-bold">24</p>
-              </div>
-              <Phone className="h-8 w-8 text-blue-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <CDRGate>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Today&apos;s Calls</p>
-                  <p className="text-2xl font-bold">1,247</p>
-                </div>
-                <BarChart3 className="h-8 w-8 text-green-600" />
-              </div>
-            </CardContent>
-          </Card>
-        </CDRGate>
-
-        <ManagerGate>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Team Members</p>
-                  <p className="text-2xl font-bold">12</p>
-                </div>
-                <Users className="h-8 w-8 text-purple-600" />
-              </div>
-            </CardContent>
-          </Card>
-        </ManagerGate>
-
-        <BillingGate>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Monthly Cost</p>
-                  <p className="text-2xl font-bold">$2,450</p>
-                </div>
-                <DollarSign className="h-8 w-8 text-yellow-600" />
-              </div>
-            </CardContent>
-          </Card>
-        </BillingGate>
-      </div>
+      {/* Live Dashboard Stats */}
+      <LiveStatsCard />
 
       {/* Role-Specific Sections */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -305,6 +254,12 @@ export const RoleBasedDashboard: React.FC = () => {
             </CardContent>
           </Card>
         </HighSecurityGate>
+      </div>
+
+      {/* Activity and Alerts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <RecentActivityFeed />
+        <AlertsPanel />
       </div>
 
       {/* FreeSWITCH Management Section */}

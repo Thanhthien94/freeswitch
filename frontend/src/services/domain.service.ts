@@ -80,10 +80,15 @@ class DomainService {
    * Get all domains with optional filtering and pagination
    */
   async getDomains(params?: DomainQueryParams): Promise<DomainResponse> {
-    const response = await api.get<DomainResponse>('/domains', {
+    const response = await api.get<Domain[]>('/domains', {
       headers: params ? { 'X-Query-Params': JSON.stringify(params) } : undefined
     });
-    return response.data;
+    return {
+      data: response.data,
+      total: response.pagination?.total || 0,
+      page: response.pagination?.page || 1,
+      limit: response.pagination?.limit || 20
+    };
   }
 
   /**
@@ -99,7 +104,7 @@ class DomainService {
    */
   async createDomain(data: CreateDomainData): Promise<Domain> {
     const response = await api.post<Domain>('/domains', data);
-    return response.data;
+    return response;
   }
 
   /**
@@ -107,7 +112,7 @@ class DomainService {
    */
   async updateDomain(id: string, data: UpdateDomainData): Promise<Domain> {
     const response = await api.patch<Domain>(`/domains/${id}`, data);
-    return response.data;
+    return response;
   }
 
   /**
@@ -154,7 +159,7 @@ class DomainService {
    */
   async activateDomain(id: string): Promise<Domain> {
     const response = await api.patch<Domain>(`/domains/${id}/activate`);
-    return response.data;
+    return response;
   }
 
   /**
@@ -162,7 +167,7 @@ class DomainService {
    */
   async deactivateDomain(id: string): Promise<Domain> {
     const response = await api.patch<Domain>(`/domains/${id}/deactivate`);
-    return response.data;
+    return response;
   }
 
   /**
@@ -170,7 +175,7 @@ class DomainService {
    */
   async updateDomainSettings(id: string, settings: Record<string, any>): Promise<Domain> {
     const response = await api.patch<Domain>(`/domains/${id}/settings`, { settings });
-    return response.data;
+    return response;
   }
 
   /**
@@ -223,7 +228,7 @@ class DomainService {
    */
   async testDomainConnectivity(id: string): Promise<{ success: boolean; message: string; details?: any }> {
     const response = await api.post<{ success: boolean; message: string; details?: any }>(`/domains/${id}/test-connectivity`);
-    return response.data;
+    return response;
   }
 }
 

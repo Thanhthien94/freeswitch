@@ -49,17 +49,16 @@ async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Re
   return response;
 }
 
-// API Response Types
+// API Response Types - Updated to match Backend format
 export interface ApiResponse<T = unknown> {
-  success: boolean;
   data: T;
-  message?: string;
   pagination?: {
     page: number;
     limit: number;
     total: number;
     totalPages: number;
   };
+  message?: string;
 }
 
 // Modern API Methods using native fetch
@@ -76,12 +75,12 @@ export const api = {
     }
 
     const data = await response.json();
-    // Backend already returns ApiResponse format
+    // Backend returns direct format: { data: [...], pagination: {...} }
     return data;
   },
 
   // POST request
-  post: async <T = unknown>(url: string, data?: unknown, config?: RequestConfig): Promise<ApiResponse<T>> => {
+  post: async <T = unknown>(url: string, data?: unknown, config?: RequestConfig): Promise<T> => {
     const response = await fetchWithAuth(url, {
       method: 'POST',
       body: data ? JSON.stringify(data) : undefined,
@@ -93,12 +92,12 @@ export const api = {
     }
 
     const responseData = await response.json();
-    // Backend already returns ApiResponse format
+    // For POST requests, Backend returns direct data (like login response)
     return responseData;
   },
 
   // PUT request
-  put: async <T = unknown>(url: string, data?: unknown, config?: RequestConfig): Promise<ApiResponse<T>> => {
+  put: async <T = unknown>(url: string, data?: unknown, config?: RequestConfig): Promise<T> => {
     const response = await fetchWithAuth(url, {
       method: 'PUT',
       body: data ? JSON.stringify(data) : undefined,
@@ -113,7 +112,7 @@ export const api = {
   },
 
   // DELETE request
-  delete: async <T = unknown>(url: string, config?: RequestConfig): Promise<ApiResponse<T>> => {
+  delete: async <T = unknown>(url: string, config?: RequestConfig): Promise<T> => {
     const response = await fetchWithAuth(url, {
       method: 'DELETE',
       ...config,
@@ -127,7 +126,7 @@ export const api = {
   },
 
   // PATCH request
-  patch: async <T = unknown>(url: string, data?: unknown, config?: RequestConfig): Promise<ApiResponse<T>> => {
+  patch: async <T = unknown>(url: string, data?: unknown, config?: RequestConfig): Promise<T> => {
     const response = await fetchWithAuth(url, {
       method: 'PATCH',
       body: data ? JSON.stringify(data) : undefined,

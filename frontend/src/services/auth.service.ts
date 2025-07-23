@@ -77,10 +77,9 @@ export const authService = {
   // Login
   login: async (credentials: LoginRequest): Promise<LoginResponse> => {
     try {
-      const response = await api.post<LoginResponse>('/auth/login', credentials);
+      const loginData = await api.post<LoginResponse>('/auth/login', credentials);
 
       // Store token in localStorage
-      const loginData = response as any;
       if (loginData.access_token) {
         localStorage.setItem('auth_token', loginData.access_token);
         if (loginData.refresh_token) {
@@ -125,8 +124,8 @@ export const authService = {
 
   // Register
   register: async (userData: RegisterRequest): Promise<User> => {
-    const response = await api.post<User>('/auth/register', userData);
-    return response as any;
+    const user = await api.post<User>('/auth/register', userData);
+    return user;
   },
 
   // Logout
@@ -313,7 +312,7 @@ export const authService = {
         action,
         context,
       });
-      return response.data;
+      return response;
     } catch (error) {
       console.error('Policy evaluation failed:', error);
       return {

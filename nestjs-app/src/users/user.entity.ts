@@ -160,14 +160,32 @@ export class User {
     return safeUser;
   }
 
-  // Get active roles
+  // Get active roles - safe method
   getActiveRoles(): UserRoleEntity[] {
-    return this.userRoles?.filter(ur => ur.isValid) || [];
+    if (!this.userRoles || !Array.isArray(this.userRoles)) {
+      return [];
+    }
+    return this.userRoles.filter(ur => {
+      try {
+        return ur && ur.isValid;
+      } catch (error) {
+        return false;
+      }
+    });
   }
 
-  // Get primary role
+  // Get primary role - safe method
   getPrimaryRole(): UserRoleEntity | null {
-    return this.userRoles?.find(ur => ur.isPrimary && ur.isValid) || null;
+    if (!this.userRoles || !Array.isArray(this.userRoles)) {
+      return null;
+    }
+    return this.userRoles.find(ur => {
+      try {
+        return ur && ur.isPrimary && ur.isValid;
+      } catch (error) {
+        return false;
+      }
+    }) || null;
   }
 
   // Check if user has role

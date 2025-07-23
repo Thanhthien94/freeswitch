@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -23,10 +23,23 @@ export default function CdrPage() {
   const [audioPlayerOpen, setAudioPlayerOpen] = useState(false);
   const [selectedCall, setSelectedCall] = useState<CallDetailRecord | null>(null);
 
-  const { data: cdrData, isLoading } = useQuery({
+  const { data: cdrData, isLoading, error } = useQuery({
     queryKey: ['cdr-list', filters],
-    queryFn: () => cdrService.getCdrList(filters),
+    queryFn: () => {
+      console.log('🔍 CDR Page: Fetching CDR data with filters:', filters);
+      return cdrService.getCdrList(filters);
+    },
   });
+
+  // Debug logging with useEffect
+  React.useEffect(() => {
+    if (cdrData) {
+      console.log('✅ CDR Page: Data received successfully:', cdrData);
+    }
+    if (error) {
+      console.error('❌ CDR Page: Error fetching data:', error);
+    }
+  }, [cdrData, error]);
 
   const handleFilterChange = (key: keyof CdrListParams, value: string | number) => {
     setFilters(prev => ({
@@ -61,6 +74,15 @@ export default function CdrPage() {
       setAudioPlayerOpen(true);
     }
   };
+
+  // Debug logging
+  console.log('📊 CDR Page: Current state:', {
+    isLoading,
+    error: error?.message,
+    cdrDataExists: !!cdrData,
+    dataLength: cdrData?.data?.length || 0,
+    pagination: cdrData?.pagination
+  });
 
   return (
     <div className="space-y-6">

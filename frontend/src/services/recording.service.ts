@@ -56,8 +56,14 @@ export const recordingService = {
       }
     });
 
-    const response = await api.get<{ data: Recording[], pagination: any }>(`/recordings?${queryParams.toString()}`);
-    return response.data;
+    console.log('🔍 Recording Service: Fetching recordings list with params:', params);
+    const response = await api.get<Recording[]>(`/recordings?${queryParams.toString()}`);
+    console.log('✅ Recording Service: Response received:', response);
+    // Backend returns { data: [...], pagination: {...} } directly
+    return {
+      data: response.data,
+      pagination: response.pagination
+    };
   },
 
   // Get recording info by call UUID
@@ -85,7 +91,8 @@ export const recordingService = {
   // Get recording statistics
   getRecordingStats: async (): Promise<RecordingStats> => {
     const response = await api.get<RecordingStats>('/recordings/stats');
-    return response.data;
+    // Stats endpoint returns data directly
+    return response.data || response as any;
   },
 
   // Bulk delete recordings

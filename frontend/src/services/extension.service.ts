@@ -174,10 +174,15 @@ class ExtensionService {
    * Get all extensions with optional filtering and pagination
    */
   async getExtensions(params?: ExtensionQueryParams): Promise<ExtensionResponse> {
-    const response = await api.get<ExtensionResponse>('/extensions', {
+    const response = await api.get<Extension[]>('/extensions', {
       headers: params ? { 'X-Query-Params': JSON.stringify(params) } : undefined
     });
-    return response.data;
+    return {
+      data: response.data,
+      total: response.pagination?.total || 0,
+      page: response.pagination?.page || 1,
+      limit: response.pagination?.limit || 20
+    };
   }
 
   /**
@@ -193,7 +198,7 @@ class ExtensionService {
    */
   async createExtension(data: CreateExtensionData): Promise<Extension> {
     const response = await api.post<Extension>('/extensions', data);
-    return response.data;
+    return response;
   }
 
   /**
@@ -201,7 +206,7 @@ class ExtensionService {
    */
   async updateExtension(id: string, data: UpdateExtensionData): Promise<Extension> {
     const response = await api.patch<Extension>(`/extensions/${id}`, data);
-    return response.data;
+    return response;
   }
 
   /**
@@ -232,7 +237,7 @@ class ExtensionService {
    */
   async activateExtension(id: string): Promise<Extension> {
     const response = await api.patch<Extension>(`/extensions/${id}/activate`);
-    return response.data;
+    return response;
   }
 
   /**
@@ -240,7 +245,7 @@ class ExtensionService {
    */
   async deactivateExtension(id: string): Promise<Extension> {
     const response = await api.patch<Extension>(`/extensions/${id}/deactivate`);
-    return response.data;
+    return response;
   }
 
   /**
@@ -248,7 +253,7 @@ class ExtensionService {
    */
   async suspendExtension(id: string): Promise<Extension> {
     const response = await api.patch<Extension>(`/extensions/${id}/suspend`);
-    return response.data;
+    return response;
   }
 
   /**
@@ -256,7 +261,7 @@ class ExtensionService {
    */
   async resetExtensionPassword(id: string, newPassword?: string): Promise<{ extension: Extension; plainPassword: string }> {
     const response = await api.patch<{ extension: Extension; plainPassword: string }>(`/extensions/${id}/reset-password`, { password: newPassword });
-    return response.data;
+    return response;
   }
 
   /**
@@ -284,7 +289,7 @@ class ExtensionService {
    */
   async forceExtensionReregistration(id: string): Promise<{ success: boolean; message: string }> {
     const response = await api.post<{ success: boolean; message: string }>(`/extensions/${id}/force-reregister`);
-    return response.data;
+    return response;
   }
 
   /**
@@ -316,7 +321,7 @@ class ExtensionService {
     deleteFile?: boolean;
   }): Promise<Extension> {
     const response = await api.patch<Extension>(`/extensions/${id}/voicemail-settings`, settings);
-    return response.data;
+    return response;
   }
 
   /**
@@ -330,7 +335,7 @@ class ExtensionService {
     timeout?: number;
   }): Promise<Extension> {
     const response = await api.patch<Extension>(`/extensions/${id}/call-forward-settings`, settings);
-    return response.data;
+    return response;
   }
 
   /**
@@ -338,7 +343,7 @@ class ExtensionService {
    */
   async updateExtensionDND(id: string, enabled: boolean): Promise<Extension> {
     const response = await api.patch<Extension>(`/extensions/${id}/dnd`, { enabled });
-    return response.data;
+    return response;
   }
 
   /**
@@ -390,7 +395,7 @@ class ExtensionService {
    */
   async testExtensionConnectivity(id: string): Promise<{ success: boolean; message: string; details?: any }> {
     const response = await api.post<{ success: boolean; message: string; details?: any }>(`/extensions/${id}/test-connectivity`);
-    return response.data;
+    return response;
   }
 
   /**
@@ -408,7 +413,7 @@ class ExtensionService {
    */
   async testExtensionConnection(id: string): Promise<any> {
     const response = await api.post<any>(`/extensions/${id}/test-connection`);
-    return response.data;
+    return response;
   }
 
   /**
@@ -416,7 +421,7 @@ class ExtensionService {
    */
   async generatePassword(): Promise<{ password: string }> {
     const response = await api.post<{ password: string }>('/extensions/generate-password');
-    return response.data;
+    return response;
   }
 
   /**
@@ -424,7 +429,7 @@ class ExtensionService {
    */
   async rebootExtension(id: string): Promise<any> {
     const response = await api.post<any>(`/extensions/${id}/reboot`);
-    return response.data;
+    return response;
   }
 }
 

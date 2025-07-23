@@ -179,7 +179,6 @@ export class ProfessionalAuthGuard implements CanActivate {
       const user = await this.userRepository.findOne({
         where: { id: userId, isActive: true },
         relations: [
-          'domain',
           'userRoles',
           'userRoles.role',
           'userRoles.role.permissions',
@@ -195,13 +194,14 @@ export class ProfessionalAuthGuard implements CanActivate {
         throw new UnauthorizedException('Domain mismatch');
       }
 
-      // Get current roles and permissions
-      const activeRoles = user.getActiveRoles();
-      const roles = activeRoles.map(ur => ur.role.name);
+      // Get current roles and permissions - fix computed property access
+      const activeRoles = user.userRoles?.filter(ur => ur.isValid) || [];
+      const roles = activeRoles.map(ur => ur.role?.name).filter(Boolean);
       const permissions = activeRoles
-        .flatMap(ur => ur.role.permissions || [])
-        .filter(p => p.isActive)
-        .map(p => p.fullPermission);
+        .flatMap(ur => ur.role?.permissions || [])
+        .filter(p => p?.isActive)
+        .map(p => p.fullPermission)
+        .filter(Boolean);
 
       // Attach comprehensive user info to request
       const userInfo = {
@@ -212,7 +212,7 @@ export class ProfessionalAuthGuard implements CanActivate {
         domainId: user.domainId,
         roles,
         permissions,
-        primaryRole: user.getPrimaryRole()?.role?.name || roles[0] || 'viewer',
+        primaryRole: activeRoles.find(ur => ur.isPrimary)?.role?.name || roles[0] || 'viewer',
         sessionId: payload.sessionId,
         tokenType: payload.tokenType,
         iat: payload.iat,
