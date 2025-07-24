@@ -24,7 +24,7 @@ import { FreeSwitchExtension } from '../entities/freeswitch-extension.entity';
 @ApiTags('FreeSWITCH Extensions')
 @ApiBearerAuth()
 @UseGuards(ProfessionalAuthGuard, RolesGuard)
-@Controller('api/v1/freeswitch/extensions')
+@Controller('freeswitch/extensions')
 export class FreeSwitchExtensionController {
   constructor(
     private readonly extensionService: FreeSwitchExtensionService,

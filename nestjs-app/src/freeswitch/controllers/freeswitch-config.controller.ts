@@ -21,7 +21,7 @@ import { FreeSwitchVersionService } from '../services/freeswitch-version.service
 @ApiTags('FreeSWITCH Configuration')
 @ApiBearerAuth()
 @UseGuards(ProfessionalAuthGuard, RolesGuard)
-@Controller('api/v1/freeswitch/config')
+@Controller('freeswitch/config')
 export class FreeSwitchConfigController {
   constructor(
     private readonly configService: FreeSwitchConfigService,

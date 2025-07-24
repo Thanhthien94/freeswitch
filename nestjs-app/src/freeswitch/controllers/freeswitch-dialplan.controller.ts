@@ -23,7 +23,7 @@ import { FreeSwitchDialplan } from '../entities/freeswitch-dialplan.entity';
 @ApiTags('FreeSWITCH Dialplans')
 @ApiBearerAuth()
 @UseGuards(ProfessionalAuthGuard, RolesGuard)
-@Controller('api/v1/freeswitch/dialplans')
+@Controller('freeswitch/dialplans')
 export class FreeSwitchDialplanController {
   constructor(
     private readonly dialplanService: FreeSwitchDialplanService,

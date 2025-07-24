@@ -23,7 +23,7 @@ import { FreeSwitchGateway } from '../entities/freeswitch-gateway.entity';
 @ApiTags('FreeSWITCH Gateways')
 @ApiBearerAuth()
 @UseGuards(ProfessionalAuthGuard, RolesGuard)
-@Controller('api/v1/freeswitch/gateways')
+@Controller('freeswitch/gateways')
 export class FreeSwitchGatewayController {
   constructor(
     private readonly gatewayService: FreeSwitchGatewayService,

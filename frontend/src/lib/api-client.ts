@@ -11,6 +11,7 @@ const API_BASE_URL = typeof window !== 'undefined'
 interface RequestConfig {
   headers?: Record<string, string>;
   credentials?: RequestCredentials;
+  responseType?: 'json' | 'blob' | 'text';
 }
 
 // Create fetch wrapper with auth
@@ -74,9 +75,18 @@ export const api = {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    const data = await response.json();
-    // Backend returns direct format: { data: [...], pagination: {...} }
-    return data;
+    // Handle different response types
+    if (config?.responseType === 'blob') {
+      const blob = await response.blob();
+      return { data: blob as T };
+    } else if (config?.responseType === 'text') {
+      const text = await response.text();
+      return { data: text as T };
+    } else {
+      const data = await response.json();
+      // Backend returns direct format: { data: [...], pagination: {...} }
+      return data;
+    }
   },
 
   // POST request

@@ -174,7 +174,7 @@ class ExtensionService {
    * Get all extensions with optional filtering and pagination
    */
   async getExtensions(params?: ExtensionQueryParams): Promise<ExtensionResponse> {
-    const response = await api.get<Extension[]>('/extensions', {
+    const response = await api.get<Extension[]>('/freeswitch/extensions', {
       headers: params ? { 'X-Query-Params': JSON.stringify(params) } : undefined
     });
     return {
@@ -189,7 +189,7 @@ class ExtensionService {
    * Get a single extension by ID
    */
   async getExtension(id: string): Promise<Extension> {
-    const response = await api.get<Extension>(`/extensions/${id}`);
+    const response = await api.get<Extension>(`/freeswitch/extensions/${id}`);
     return response.data;
   }
 
@@ -197,7 +197,7 @@ class ExtensionService {
    * Create a new extension
    */
   async createExtension(data: CreateExtensionData): Promise<Extension> {
-    const response = await api.post<Extension>('/extensions', data);
+    const response = await api.post<Extension>('/freeswitch/extensions', data);
     return response;
   }
 
@@ -205,7 +205,7 @@ class ExtensionService {
    * Update an existing extension
    */
   async updateExtension(id: string, data: UpdateExtensionData): Promise<Extension> {
-    const response = await api.patch<Extension>(`/extensions/${id}`, data);
+    const response = await api.patch<Extension>(`/freeswitch/extensions/${id}`, data);
     return response;
   }
 
@@ -213,14 +213,14 @@ class ExtensionService {
    * Delete an extension
    */
   async deleteExtension(id: string): Promise<void> {
-    await api.delete(`/extensions/${id}`);
+    await api.delete(`/freeswitch/extensions/${id}`);
   }
 
   /**
    * Get extension statistics
    */
   async getExtensionStats(): Promise<ExtensionStats> {
-    const response = await api.get<ExtensionStats>('/extensions/stats');
+    const response = await api.get<ExtensionStats>('/freeswitch/extensions/stats');
     return response.data;
   }
 
@@ -228,7 +228,7 @@ class ExtensionService {
    * Get individual extension call statistics
    */
   async getExtensionCallStats(id: string): Promise<ExtensionCallStats> {
-    const response = await api.get<ExtensionCallStats>(`/extensions/${id}/stats`);
+    const response = await api.get<ExtensionCallStats>(`/freeswitch/extensions/${id}/stats`);
     return response.data;
   }
 
@@ -236,7 +236,7 @@ class ExtensionService {
    * Activate an extension
    */
   async activateExtension(id: string): Promise<Extension> {
-    const response = await api.patch<Extension>(`/extensions/${id}/activate`);
+    const response = await api.patch<Extension>(`/freeswitch/extensions/${id}/activate`);
     return response;
   }
 
@@ -244,7 +244,7 @@ class ExtensionService {
    * Deactivate an extension
    */
   async deactivateExtension(id: string): Promise<Extension> {
-    const response = await api.patch<Extension>(`/extensions/${id}/deactivate`);
+    const response = await api.patch<Extension>(`/freeswitch/extensions/${id}/deactivate`);
     return response;
   }
 
@@ -252,7 +252,7 @@ class ExtensionService {
    * Suspend an extension
    */
   async suspendExtension(id: string): Promise<Extension> {
-    const response = await api.patch<Extension>(`/extensions/${id}/suspend`);
+    const response = await api.patch<Extension>(`/freeswitch/extensions/${id}/suspend`);
     return response;
   }
 
@@ -260,7 +260,7 @@ class ExtensionService {
    * Reset extension password
    */
   async resetExtensionPassword(id: string, newPassword?: string): Promise<{ extension: Extension; plainPassword: string }> {
-    const response = await api.patch<{ extension: Extension; plainPassword: string }>(`/extensions/${id}/reset-password`, { password: newPassword });
+    const response = await api.patch<{ extension: Extension; plainPassword: string }>(`/freeswitch/extensions/${id}/reset-password`, { password: newPassword });
     return response;
   }
 
@@ -280,7 +280,7 @@ class ExtensionService {
       registrationIp?: string;
       userAgent?: string;
       expires?: string;
-    }>(`/extensions/${id}/registration`);
+    }>(`/freeswitch/extensions/${id}/registration`);
     return response.data;
   }
 
@@ -288,7 +288,7 @@ class ExtensionService {
    * Force extension re-registration
    */
   async forceExtensionReregistration(id: string): Promise<{ success: boolean; message: string }> {
-    const response = await api.post<{ success: boolean; message: string }>(`/extensions/${id}/force-reregister`);
+    const response = await api.post<{ success: boolean; message: string }>(`/freeswitch/extensions/${id}/force-reregister`);
     return response;
   }
 
@@ -296,7 +296,7 @@ class ExtensionService {
    * Get extension call history
    */
   async getExtensionCallHistory(id: string, params?: { page?: number; limit?: number; startDate?: string; endDate?: string }): Promise<any> {
-    const response = await api.get<any>(`/extensions/${id}/call-history`, {
+    const response = await api.get<any>(`/freeswitch/extensions/${id}/call-history`, {
       headers: params ? { 'X-Query-Params': JSON.stringify(params) } : undefined
     });
     return response.data;
@@ -306,7 +306,7 @@ class ExtensionService {
    * Get extension voicemail messages
    */
   async getExtensionVoicemails(id: string): Promise<any[]> {
-    const response = await api.get<any[]>(`/extensions/${id}/voicemails`);
+    const response = await api.get<any[]>(`/freeswitch/extensions/${id}/voicemails`);
     return response.data;
   }
 
@@ -320,7 +320,7 @@ class ExtensionService {
     attachFile?: boolean;
     deleteFile?: boolean;
   }): Promise<Extension> {
-    const response = await api.patch<Extension>(`/extensions/${id}/voicemail-settings`, settings);
+    const response = await api.patch<Extension>(`/freeswitch/extensions/${id}/voicemail-settings`, settings);
     return response;
   }
 
@@ -334,7 +334,7 @@ class ExtensionService {
     onNoAnswer?: boolean;
     timeout?: number;
   }): Promise<Extension> {
-    const response = await api.patch<Extension>(`/extensions/${id}/call-forward-settings`, settings);
+    const response = await api.patch<Extension>(`/freeswitch/extensions/${id}/call-forward-settings`, settings);
     return response;
   }
 
@@ -342,7 +342,7 @@ class ExtensionService {
    * Update extension DND status
    */
   async updateExtensionDND(id: string, enabled: boolean): Promise<Extension> {
-    const response = await api.patch<Extension>(`/extensions/${id}/dnd`, { enabled });
+    const response = await api.patch<Extension>(`/freeswitch/extensions/${id}/dnd`, { enabled });
     return response;
   }
 
@@ -350,7 +350,7 @@ class ExtensionService {
    * Get extension configuration for FreeSWITCH
    */
   async getExtensionConfig(id: string): Promise<string> {
-    const response = await api.get<string>(`/extensions/${id}/config`);
+    const response = await api.get<string>(`/freeswitch/extensions/${id}/config`);
     return response.data;
   }
 
@@ -358,7 +358,7 @@ class ExtensionService {
    * Validate extension number availability
    */
   async validateExtensionNumber(extension: string, domainId: string): Promise<{ available: boolean; message?: string }> {
-    const response = await api.get<{ available: boolean; message?: string }>(`/extensions/validate/${extension}`, {
+    const response = await api.get<{ available: boolean; message?: string }>(`/freeswitch/extensions/validate/${extension}`, {
       headers: { 'X-Query-Params': JSON.stringify({ domainId }) }
     });
     return response.data;
@@ -384,7 +384,7 @@ class ExtensionService {
    * Get extension audit logs
    */
   async getExtensionAuditLogs(id: string, params?: { page?: number; limit?: number }): Promise<any> {
-    const response = await api.get<any>(`/extensions/${id}/audit-logs`, {
+    const response = await api.get<any>(`/freeswitch/extensions/${id}/audit-logs`, {
       headers: params ? { 'X-Query-Params': JSON.stringify(params) } : undefined
     });
     return response.data;
@@ -394,7 +394,7 @@ class ExtensionService {
    * Test extension connectivity
    */
   async testExtensionConnectivity(id: string): Promise<{ success: boolean; message: string; details?: any }> {
-    const response = await api.post<{ success: boolean; message: string; details?: any }>(`/extensions/${id}/test-connectivity`);
+    const response = await api.post<{ success: boolean; message: string; details?: any }>(`/freeswitch/extensions/${id}/test-connectivity`);
     return response;
   }
 
@@ -402,7 +402,7 @@ class ExtensionService {
    * Get extension call history
    */
   async getExtensionCalls(id: string): Promise<any[]> {
-    const response = await api.get<any[]>(`/extensions/${id}/calls`);
+    const response = await api.get<any[]>(`/freeswitch/extensions/${id}/calls`);
     return response.data;
   }
 
@@ -412,7 +412,7 @@ class ExtensionService {
    * Test extension connection
    */
   async testExtensionConnection(id: string): Promise<any> {
-    const response = await api.post<any>(`/extensions/${id}/test-connection`);
+    const response = await api.post<any>(`/freeswitch/extensions/${id}/test-connection`);
     return response;
   }
 
@@ -420,7 +420,7 @@ class ExtensionService {
    * Generate random password
    */
   async generatePassword(): Promise<{ password: string }> {
-    const response = await api.post<{ password: string }>('/extensions/generate-password');
+    const response = await api.post<{ password: string }>('/freeswitch/extensions/generate-password');
     return response;
   }
 
@@ -428,7 +428,7 @@ class ExtensionService {
    * Reboot extension
    */
   async rebootExtension(id: string): Promise<any> {
-    const response = await api.post<any>(`/extensions/${id}/reboot`);
+    const response = await api.post<any>(`/freeswitch/extensions/${id}/reboot`);
     return response;
   }
 }

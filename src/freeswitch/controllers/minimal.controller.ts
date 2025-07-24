@@ -3,7 +3,7 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { MinimalFreeSwitchService } from '../services/minimal.service';
 
 @ApiTags('FreeSWITCH')
-@Controller('api/v1/freeswitch')
+@Controller('freeswitch')
 export class MinimalFreeSwitchController {
   private readonly logger = new Logger(MinimalFreeSwitchController.name);
 

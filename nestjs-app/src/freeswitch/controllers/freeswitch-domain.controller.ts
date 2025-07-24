@@ -51,7 +51,7 @@ export interface DomainQueryDto {
 @ApiTags('FreeSWITCH Domains')
 @ApiBearerAuth()
 @UseGuards(ProfessionalAuthGuard, RolesGuard)
-@Controller('api/v1/freeswitch/domains')
+@Controller('freeswitch/domains')
 export class FreeSwitchDomainController {
   constructor(
     @InjectRepository(Domain)

@@ -23,7 +23,7 @@ import { FreeSwitchSipProfile } from '../entities/freeswitch-sip-profile.entity'
 @ApiTags('FreeSWITCH SIP Profiles')
 @ApiBearerAuth()
 @UseGuards(ProfessionalAuthGuard, RolesGuard)
-@Controller('api/v1/freeswitch/sip-profiles')
+@Controller('freeswitch/sip-profiles')
 export class FreeSwitchSipProfileController {
   constructor(
     private readonly sipProfileService: FreeSwitchSipProfileService,
