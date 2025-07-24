@@ -27,7 +27,8 @@ import {
   DollarSign,
   Monitor,
   Lock,
-  Building
+  Building,
+  Network
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -95,6 +96,13 @@ const navigationItems = [
         url: '/dashboard/extensions',
         icon: Headphones,
         permission: 'extensions:read',
+        requireAnyRole: ['SuperAdmin', 'DomainAdmin', 'TechnicalManager', 'NetworkAdmin', 'PBXAdmin'],
+      },
+      {
+        title: 'SIP Profiles',
+        url: '/dashboard/sip-profiles',
+        icon: Network,
+        permission: 'sip-profiles:read',
         requireAnyRole: ['SuperAdmin', 'DomainAdmin', 'TechnicalManager', 'NetworkAdmin', 'PBXAdmin'],
       },
     ],
