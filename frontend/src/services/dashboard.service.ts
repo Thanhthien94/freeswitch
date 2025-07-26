@@ -83,7 +83,7 @@ export const dashboardService = {
    */
   async getDashboardData(): Promise<DashboardData> {
     const response = await api.get<DashboardData>('/dashboard');
-    return response.data;
+    return response;
   },
 
   /**
@@ -91,7 +91,7 @@ export const dashboardService = {
    */
   async getStats(): Promise<DashboardStats> {
     const response = await api.get<DashboardStats>('/dashboard/stats');
-    return response.data;
+    return response;
   },
 
   /**
@@ -99,7 +99,7 @@ export const dashboardService = {
    */
   async getCallCenterStats(): Promise<CallCenterStats> {
     const response = await api.get<CallCenterStats>('/dashboard/call-center');
-    return response.data;
+    return response;
   },
 
   /**
@@ -107,7 +107,7 @@ export const dashboardService = {
    */
   async getSystemStatus(): Promise<SystemStatus> {
     const response = await api.get<SystemStatus>('/dashboard/system-status');
-    return response.data;
+    return response;
   },
 
   /**
@@ -115,7 +115,7 @@ export const dashboardService = {
    */
   async getRecentActivity(limit: number = 50): Promise<RecentActivity[]> {
     const response = await api.get<RecentActivity[]>(`/dashboard/activity?limit=${limit}`);
-    return response.data;
+    return response;
   },
 
   /**
@@ -123,7 +123,7 @@ export const dashboardService = {
    */
   async getAlerts(): Promise<Alert[]> {
     const response = await api.get<Alert[]>('/dashboard/alerts');
-    return response.data;
+    return response;
   },
 
   /**
@@ -145,7 +145,7 @@ export const dashboardService = {
    */
   async getLiveMetrics(): Promise<LiveMetrics> {
     const response = await api.get<LiveMetrics>('/dashboard/live-metrics');
-    return response.data;
+    return response;
   },
 
   /**
@@ -159,7 +159,7 @@ export const dashboardService = {
     const response = await api.get<{ timestamp: Date; value: number }[]>(
       `/dashboard/metrics/${metric}?range=${timeRange}&interval=${interval}`
     );
-    return response.data;
+    return response;
   },
 
   /**
@@ -167,7 +167,7 @@ export const dashboardService = {
    */
   async getDomainDashboard(domainId: string): Promise<DashboardData> {
     const response = await api.get<DashboardData>(`/dashboard/domain/${domainId}`);
-    return response.data;
+    return response;
   },
 
   /**
@@ -175,7 +175,7 @@ export const dashboardService = {
    */
   async getUserDashboard(): Promise<DashboardData> {
     const response = await api.get<DashboardData>('/dashboard/user');
-    return response.data;
+    return response;
   },
 
   /**
@@ -189,7 +189,7 @@ export const dashboardService = {
       `/dashboard/export?format=${format}&range=${timeRange}`
     );
     // Convert response to blob if needed
-    return new Blob([JSON.stringify(response.data)], { type: 'application/json' });
+    return new Blob([JSON.stringify(response)], { type: 'application/json' });
   },
 
   /**
@@ -197,7 +197,7 @@ export const dashboardService = {
    */
   async getDashboardConfig(): Promise<any> {
     const response = await api.get<any>('/dashboard/config');
-    return response.data;
+    return response;
   },
 
   /**
@@ -212,7 +212,7 @@ export const dashboardService = {
    */
   async getPerformanceInsights(): Promise<any> {
     const response = await api.get<any>('/dashboard/insights');
-    return response.data;
+    return response;
   },
 
   /**
@@ -220,6 +220,6 @@ export const dashboardService = {
    */
   async getTrendingData(metric: string, period: '24h' | '7d' | '30d'): Promise<any> {
     const response = await api.get<any>(`/dashboard/trending/${metric}?period=${period}`);
-    return response.data;
+    return response;
   }
 };

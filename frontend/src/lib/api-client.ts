@@ -65,7 +65,7 @@ export interface ApiResponse<T = unknown> {
 // Modern API Methods using native fetch
 export const api = {
   // GET request
-  get: async <T = unknown>(url: string, config?: RequestConfig): Promise<ApiResponse<T>> => {
+  get: async <T = unknown>(url: string, config?: RequestConfig): Promise<T> => {
     const response = await fetchWithAuth(url, {
       method: 'GET',
       ...config,
@@ -78,10 +78,10 @@ export const api = {
     // Handle different response types
     if (config?.responseType === 'blob') {
       const blob = await response.blob();
-      return { data: blob as T };
+      return blob as T;
     } else if (config?.responseType === 'text') {
       const text = await response.text();
-      return { data: text as T };
+      return text as T;
     } else {
       const data = await response.json();
       // Backend returns direct format: { data: [...], pagination: {...} }

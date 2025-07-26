@@ -25,16 +25,17 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { 
-  Plus, 
-  Search, 
-  Edit, 
-  Trash2, 
-  Phone, 
+import {
+  Plus,
+  Search,
+  Edit,
+  Trash2,
+  Phone,
   PhoneOff,
   Settings,
   Users,
-  Filter
+  Filter,
+  Link
 } from 'lucide-react';
 import { extensionService, Extension } from '@/services/extension.service';
 import { domainService, Domain } from '@/services/domain.service';
@@ -54,13 +55,12 @@ export default function ExtensionsPage() {
   const [selectedDomain, setSelectedDomain] = useState<string>('all');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newExtension, setNewExtension] = useState({
-    extension: '',
+    extensionNumber: '',
     displayName: '',
     description: '',
-    type: 'user' as const,
     password: '',
-    callerIdName: '',
-    callerIdNumber: '',
+    effectiveCallerIdName: '',
+    effectiveCallerIdNumber: '',
     domainId: ''
   });
 
@@ -72,8 +72,17 @@ export default function ExtensionsPage() {
   const loadExtensions = async () => {
     try {
       setLoading(true);
+      console.log('=== Loading extensions ===');
       const response = await extensionService.getExtensions();
-      setExtensions(response.data);
+      console.log('Extension service response:', response);
+      console.log('Response type:', typeof response);
+      console.log('Response is array:', Array.isArray(response));
+      console.log('Response keys:', Object.keys(response));
+      console.log('Response data:', response.data);
+      console.log('Response data length:', response.data?.length);
+      const extensionsData = response.data || [];
+      console.log('Setting extensions to:', extensionsData);
+      setExtensions(extensionsData);
     } catch (error) {
       console.error('Error loading extensions:', error);
       toast({
@@ -81,6 +90,7 @@ export default function ExtensionsPage() {
         description: "Failed to load extensions",
         variant: "destructive",
       });
+      setExtensions([]); // Set empty array on error
     } finally {
       setLoading(false);
     }
@@ -89,28 +99,40 @@ export default function ExtensionsPage() {
   const loadDomains = async () => {
     try {
       const response = await domainService.getDomains();
-      setDomains(response.data);
+      setDomains(response.data || []);
     } catch (error) {
       console.error('Error loading domains:', error);
+      setDomains([]); // Set empty array on error
     }
   };
 
   const handleCreateExtension = async () => {
     try {
-      await extensionService.createExtension(newExtension);
+      // Clean up the data before sending
+      const extensionData = {
+        extensionNumber: newExtension.extensionNumber,
+        displayName: newExtension.displayName || undefined,
+        description: newExtension.description || undefined,
+        domainId: newExtension.domainId || undefined,
+        password: newExtension.password || undefined,
+        effectiveCallerIdName: newExtension.effectiveCallerIdName || undefined,
+        effectiveCallerIdNumber: newExtension.effectiveCallerIdNumber || undefined,
+        isActive: true
+      };
+
+      await extensionService.createExtension(extensionData);
       toast({
         title: "Success",
         description: "Extension created successfully",
       });
       setIsCreateDialogOpen(false);
       setNewExtension({
-        extension: '',
+        extensionNumber: '',
         displayName: '',
         description: '',
-        type: 'user' as const,
         password: '',
-        callerIdName: '',
-        callerIdNumber: '',
+        effectiveCallerIdName: '',
+        effectiveCallerIdNumber: '',
         domainId: ''
       });
       loadExtensions();
@@ -147,10 +169,10 @@ export default function ExtensionsPage() {
   };
 
   const filteredExtensions = extensions.filter(ext => {
-    const matchesSearch = ext.extension.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const matchesSearch = ext.extensionNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          ext.displayName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         ext.callerIdName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         ext.callerIdNumber?.toLowerCase().includes(searchTerm.toLowerCase());
+                         ext.effectiveCallerIdName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         ext.effectiveCallerIdNumber?.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesDomain = selectedDomain === 'all' || ext.domainId === selectedDomain;
 
@@ -166,7 +188,15 @@ export default function ExtensionsPage() {
             Manage SIP extensions and their configurations
           </p>
         </div>
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <div className="flex space-x-2">
+          <Button
+            variant="outline"
+            onClick={() => router.push('/dashboard/extension-profiles')}
+          >
+            <Link className="w-4 h-4 mr-2" />
+            Manage Associations
+          </Button>
+          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="mr-2 h-4 w-4" />
@@ -187,8 +217,8 @@ export default function ExtensionsPage() {
                 </Label>
                 <Input
                   id="extension"
-                  value={newExtension.extension}
-                  onChange={(e) => setNewExtension({ ...newExtension, extension: e.target.value })}
+                  value={newExtension.extensionNumber}
+                  onChange={(e) => setNewExtension({ ...newExtension, extensionNumber: e.target.value })}
                   className="col-span-3"
                   placeholder="1001"
                 />
@@ -235,8 +265,8 @@ export default function ExtensionsPage() {
                 </Label>
                 <Input
                   id="callerIdName"
-                  value={newExtension.callerIdName}
-                  onChange={(e) => setNewExtension({ ...newExtension, callerIdName: e.target.value })}
+                  value={newExtension.effectiveCallerIdName}
+                  onChange={(e) => setNewExtension({ ...newExtension, effectiveCallerIdName: e.target.value })}
                   className="col-span-3"
                   placeholder="John Doe"
                 />
@@ -247,8 +277,8 @@ export default function ExtensionsPage() {
                 </Label>
                 <Input
                   id="callerIdNumber"
-                  value={newExtension.callerIdNumber}
-                  onChange={(e) => setNewExtension({ ...newExtension, callerIdNumber: e.target.value })}
+                  value={newExtension.effectiveCallerIdNumber}
+                  onChange={(e) => setNewExtension({ ...newExtension, effectiveCallerIdNumber: e.target.value })}
                   className="col-span-3"
                   placeholder="1001"
                 />
@@ -278,6 +308,7 @@ export default function ExtensionsPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       <Card>
@@ -346,20 +377,20 @@ export default function ExtensionsPage() {
                   filteredExtensions.map((extension) => (
                     <TableRow key={extension.id}>
                       <TableCell className="font-medium">
-                        {extension.extension}
+                        {extension.extensionNumber}
                       </TableCell>
                       <TableCell>
                         <div>
-                          <div className="font-medium">{extension.displayName || extension.callerIdName || 'N/A'}</div>
-                          <div className="text-sm text-muted-foreground">{extension.callerIdNumber || 'N/A'}</div>
+                          <div className="font-medium">{extension.displayName || extension.effectiveCallerIdName || 'N/A'}</div>
+                          <div className="text-sm text-muted-foreground">{extension.effectiveCallerIdNumber || 'N/A'}</div>
                         </div>
                       </TableCell>
                       <TableCell>
                         {extension.domain?.name || 'N/A'}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={extension.status === 'active' ? "default" : "secondary"}>
-                          {extension.status === 'active' ? (
+                        <Badge variant={extension.isActive ? "default" : "secondary"}>
+                          {extension.isActive ? (
                             <>
                               <Phone className="mr-1 h-3 w-3" />
                               Active
@@ -367,7 +398,7 @@ export default function ExtensionsPage() {
                           ) : (
                             <>
                               <PhoneOff className="mr-1 h-3 w-3" />
-                              {extension.status}
+                              Inactive
                             </>
                           )}
                         </Badge>

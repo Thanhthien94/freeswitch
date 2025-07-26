@@ -1,5 +1,5 @@
 // Modern NextJS 15 API Pattern - Using api client
-import { api } from '@/lib/api-client';
+import { api, ApiResponse } from '@/lib/api-client';
 
 export interface ExtensionCallStats {
   totalCalls: number;
@@ -12,50 +12,30 @@ export interface ExtensionCallStats {
 
 export interface Extension {
   id: string;
-  extension: string;
-  domainId: string;
-  userId?: string;
-  displayName: string;
-  description: string;
-  type: 'user' | 'conference' | 'queue' | 'ivr';
-  status: 'active' | 'inactive' | 'suspended';
-  sipPassword: string;
-  authId: string;
-  callerIdName?: string;
-  callerIdNumber?: string;
+  extensionNumber: string;
+  displayName?: string;
+  description?: string;
+  domainId?: string;
+  userId?: number;
+  profileId?: string;
+  password?: string;
+  effectiveCallerIdName?: string;
+  effectiveCallerIdNumber?: string;
   outboundCallerIdName?: string;
   outboundCallerIdNumber?: string;
-  voicemailEnabled: boolean;
-  voicemailPassword?: string;
-  voicemailEmail?: string;
-  voicemailAttachFile: boolean;
-  voicemailDeleteFile: boolean;
-  callForwardEnabled: boolean;
-  callForwardDestination?: string;
-  callForwardOnBusy: boolean;
-  callForwardOnNoAnswer: boolean;
-  callForwardTimeout: number;
-  callRecordingEnabled: boolean;
-  callRecordingMode: 'none' | 'inbound' | 'outbound' | 'all';
-  dndEnabled: boolean;
-  presenceId?: string;
-  maxCalls: number;
-  callTimeout: number;
-  callGroup?: string;
-  pickupGroup?: string;
-  codecPrefs?: string;
-  forcePing: boolean;
-  sipForceContact?: string;
-  sipForceExpires?: string;
-  isRegistered: boolean;
+  directorySettings?: any;
+  dialSettings?: any;
+  voicemailSettings?: any;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  createdBy?: number;
+  updatedBy?: number;
+  // Relations
   lastRegistration?: string;
   registrationIp?: string;
   userAgent?: string;
   variables: Record<string, any>;
-  createdAt: string;
-  updatedAt: string;
-  createdBy?: string;
-  updatedBy?: string;
   domain?: {
     id: string;
     name: string;
@@ -69,86 +49,35 @@ export interface Extension {
 }
 
 export interface CreateExtensionData {
-  extension: string;
-  domainId: string;
-  displayName: string;
-  description: string;
-  type: 'user' | 'conference' | 'queue' | 'ivr';
-  password: string;
-  userId?: string;
-  callerIdName?: string;
-  callerIdNumber?: string;
-  outboundCallerIdName?: string;
-  outboundCallerIdNumber?: string;
-  voicemailEnabled?: boolean;
-  voicemailPassword?: string;
-  voicemailEmail?: string;
-  voicemailAttachFile?: boolean;
-  voicemailDeleteFile?: boolean;
-  callForwardEnabled?: boolean;
-  callForwardDestination?: string;
-  callForwardOnBusy?: boolean;
-  callForwardOnNoAnswer?: boolean;
-  callForwardTimeout?: number;
-  callRecordingEnabled?: boolean;
-  callRecordingMode?: 'none' | 'inbound' | 'outbound' | 'all';
-  dndEnabled?: boolean;
-  presenceId?: string;
-  maxCalls?: number;
-  callTimeout?: number;
-  callGroup?: string;
-  pickupGroup?: string;
-  codecPrefs?: string;
-  forcePing?: boolean;
-  sipForceContact?: string;
-  sipForceExpires?: string;
-  variables?: Record<string, any>;
-}
-
-export interface UpdateExtensionData {
+  extensionNumber: string;
   displayName?: string;
   description?: string;
-  type?: 'user' | 'conference' | 'queue' | 'ivr';
-  userId?: string;
-  callerIdName?: string;
-  callerIdNumber?: string;
+  domainId?: string;
+  userId?: number;
+  profileId?: string;
+  password?: string;
+  effectiveCallerIdName?: string;
+  effectiveCallerIdNumber?: string;
   outboundCallerIdName?: string;
   outboundCallerIdNumber?: string;
-  voicemailEnabled?: boolean;
-  voicemailPassword?: string;
-  voicemailEmail?: string;
-  voicemailAttachFile?: boolean;
-  voicemailDeleteFile?: boolean;
-  callForwardEnabled?: boolean;
-  callForwardDestination?: string;
-  callForwardOnBusy?: boolean;
-  callForwardOnNoAnswer?: boolean;
-  callForwardTimeout?: number;
-  callRecordingEnabled?: boolean;
-  callRecordingMode?: 'none' | 'inbound' | 'outbound' | 'all';
-  dndEnabled?: boolean;
-  presenceId?: string;
-  maxCalls?: number;
-  callTimeout?: number;
-  callGroup?: string;
-  pickupGroup?: string;
-  codecPrefs?: string;
-  forcePing?: boolean;
-  sipForceContact?: string;
-  sipForceExpires?: string;
-  variables?: Record<string, any>;
+  directorySettings?: any;
+  dialSettings?: any;
+  voicemailSettings?: any;
+  isActive?: boolean;
 }
+
+export type UpdateExtensionData = Partial<CreateExtensionData>;
 
 export interface ExtensionQueryParams {
   page?: number;
   limit?: number;
   search?: string;
   domainId?: string;
-  type?: 'user' | 'conference' | 'queue' | 'ivr';
-  status?: 'active' | 'inactive' | 'suspended';
-  isRegistered?: boolean;
+  userId?: number;
+  profileId?: string;
+  isActive?: boolean;
   sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
+  sortOrder?: 'ASC' | 'DESC';
 }
 
 export interface ExtensionResponse {
@@ -174,15 +103,17 @@ class ExtensionService {
    * Get all extensions with optional filtering and pagination
    */
   async getExtensions(params?: ExtensionQueryParams): Promise<ExtensionResponse> {
-    const response = await api.get<Extension[]>('/freeswitch/extensions', {
-      headers: params ? { 'X-Query-Params': JSON.stringify(params) } : undefined
-    });
-    return {
-      data: response.data,
-      total: response.pagination?.total || 0,
-      page: response.pagination?.page || 1,
-      limit: response.pagination?.limit || 20
-    };
+    const queryParams = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          queryParams.append(key, value.toString());
+        }
+      });
+    }
+
+    const response = await api.get<ExtensionResponse>(`/freeswitch/extensions?${queryParams.toString()}`);
+    return response;
   }
 
   /**
@@ -190,7 +121,7 @@ class ExtensionService {
    */
   async getExtension(id: string): Promise<Extension> {
     const response = await api.get<Extension>(`/freeswitch/extensions/${id}`);
-    return response.data;
+    return response;
   }
 
   /**
@@ -205,7 +136,7 @@ class ExtensionService {
    * Update an existing extension
    */
   async updateExtension(id: string, data: UpdateExtensionData): Promise<Extension> {
-    const response = await api.patch<Extension>(`/freeswitch/extensions/${id}`, data);
+    const response = await api.put<Extension>(`/freeswitch/extensions/${id}`, data);
     return response;
   }
 
@@ -221,7 +152,7 @@ class ExtensionService {
    */
   async getExtensionStats(): Promise<ExtensionStats> {
     const response = await api.get<ExtensionStats>('/freeswitch/extensions/stats');
-    return response.data;
+    return response;
   }
 
   /**
@@ -229,7 +160,7 @@ class ExtensionService {
    */
   async getExtensionCallStats(id: string): Promise<ExtensionCallStats> {
     const response = await api.get<ExtensionCallStats>(`/freeswitch/extensions/${id}/stats`);
-    return response.data;
+    return response;
   }
 
   /**
@@ -281,7 +212,7 @@ class ExtensionService {
       userAgent?: string;
       expires?: string;
     }>(`/freeswitch/extensions/${id}/registration`);
-    return response.data;
+    return response;
   }
 
   /**
@@ -299,7 +230,7 @@ class ExtensionService {
     const response = await api.get<any>(`/freeswitch/extensions/${id}/call-history`, {
       headers: params ? { 'X-Query-Params': JSON.stringify(params) } : undefined
     });
-    return response.data;
+    return response;
   }
 
   /**
@@ -307,7 +238,7 @@ class ExtensionService {
    */
   async getExtensionVoicemails(id: string): Promise<any[]> {
     const response = await api.get<any[]>(`/freeswitch/extensions/${id}/voicemails`);
-    return response.data;
+    return response;
   }
 
   /**
@@ -351,7 +282,7 @@ class ExtensionService {
    */
   async getExtensionConfig(id: string): Promise<string> {
     const response = await api.get<string>(`/freeswitch/extensions/${id}/config`);
-    return response.data;
+    return response;
   }
 
   /**
@@ -361,7 +292,7 @@ class ExtensionService {
     const response = await api.get<{ available: boolean; message?: string }>(`/freeswitch/extensions/validate/${extension}`, {
       headers: { 'X-Query-Params': JSON.stringify({ domainId }) }
     });
-    return response.data;
+    return response;
   }
 
   /**
@@ -387,7 +318,7 @@ class ExtensionService {
     const response = await api.get<any>(`/freeswitch/extensions/${id}/audit-logs`, {
       headers: params ? { 'X-Query-Params': JSON.stringify(params) } : undefined
     });
-    return response.data;
+    return response;
   }
 
   /**
@@ -403,7 +334,7 @@ class ExtensionService {
    */
   async getExtensionCalls(id: string): Promise<any[]> {
     const response = await api.get<any[]>(`/freeswitch/extensions/${id}/calls`);
-    return response.data;
+    return response;
   }
 
 

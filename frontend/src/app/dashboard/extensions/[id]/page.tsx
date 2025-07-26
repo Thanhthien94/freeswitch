@@ -29,7 +29,6 @@ import { Textarea } from '@/components/ui/textarea';
 
 import { extensionService, Extension, ExtensionCallStats } from '@/services/extension.service';
 import { domainService } from '@/services/domain.service';
-import { ExtensionStatus, ExtensionType } from '@/types/extension';
 import { Domain } from '@/types/domain';
 
 // Extended interface for form data with additional properties
@@ -213,55 +212,24 @@ export default function ExtensionDetailPage() {
   useEffect(() => {
     if (extension && !isEditing) {
       setFormData({
-        extension: extension.extension,
+        extensionNumber: extension.extensionNumber,
         domainId: extension.domainId,
         displayName: extension.displayName || '',
         description: extension.description || '',
-        type: extension.type as ExtensionType,
-        status: extension.status as ExtensionStatus,
-        context: (extension as any).context || 'default',
-        callerIdName: (extension as any).callerIdName || '',
-        callerIdNumber: (extension as any).callerIdNumber || '',
-        callGroup: (extension as any).callGroup || 'default',
-        pickupGroup: extension.pickupGroup || 'default',
-        maxCalls: (extension as any).maxCalls || 1,
-        callTimeout: (extension as any).callTimeout || 30,
-        recordCalls: (extension as any).recordCalls || false,
-        hangupAfterBridge: (extension as any).hangupAfterBridge || false,
-        continueOnFail: (extension as any).continueOnFail || false,
+        password: extension.password || '',
+        effectiveCallerIdName: extension.effectiveCallerIdName || '',
+        effectiveCallerIdNumber: extension.effectiveCallerIdNumber || '',
+        isActive: extension.isActive,
+        // Set default values for additional form fields
+        context: 'default',
+        voicemailEnabled: false,
+        dndEnabled: false,
+        callForwardEnabled: false,
       });
     }
   }, [extension, isEditing]);
 
   // Helper functions
-  const getTypeBadge = (type: ExtensionType) => {
-    const variants = {
-      [ExtensionType.USER]: 'default',
-      [ExtensionType.CONFERENCE]: 'secondary',
-      [ExtensionType.QUEUE]: 'outline',
-      [ExtensionType.IVR]: 'outline',
-    } as const;
-
-    return (
-      <Badge variant={variants[type] || 'secondary'}>
-        {type}
-      </Badge>
-    );
-  };
-
-  const getStatusBadge = (status: ExtensionStatus) => {
-    const variants = {
-      [ExtensionStatus.ACTIVE]: 'default',
-      [ExtensionStatus.INACTIVE]: 'secondary',
-      [ExtensionStatus.SUSPENDED]: 'destructive',
-    } as const;
-
-    return (
-      <Badge variant={variants[status] || 'secondary'}>
-        {status}
-      </Badge>
-    );
-  };
 
   const getRegistrationIcon = () => {
     if (!registration) return <WifiOff className="h-4 w-4 text-gray-400" />;
@@ -314,22 +282,19 @@ export default function ExtensionDetailPage() {
   const handleCancel = () => {
     setIsEditing(false);
     setFormData({
-      extension: extension?.extension,
+      extensionNumber: extension?.extensionNumber,
       domainId: extension?.domainId,
       displayName: extension?.displayName || '',
       description: extension?.description || '',
-      type: extension?.type as ExtensionType,
-      status: extension?.status as ExtensionStatus,
-      context: (extension as any)?.context || 'default',
-      callerIdName: (extension as any)?.callerIdName || '',
-      callerIdNumber: (extension as any)?.callerIdNumber || '',
-      callGroup: (extension as any)?.callGroup || 'default',
-      pickupGroup: extension?.pickupGroup || 'default',
-      maxCalls: (extension as any)?.maxCalls || 1,
-      callTimeout: (extension as any)?.callTimeout || 30,
-      recordCalls: (extension as any)?.recordCalls || false,
-      hangupAfterBridge: (extension as any)?.hangupAfterBridge || false,
-      continueOnFail: (extension as any)?.continueOnFail || false,
+      password: extension?.password || '',
+      effectiveCallerIdName: extension?.effectiveCallerIdName || '',
+      effectiveCallerIdNumber: extension?.effectiveCallerIdNumber || '',
+      isActive: extension?.isActive,
+      // Set default values for additional form fields
+      context: 'default',
+      voicemailEnabled: false,
+      dndEnabled: false,
+      callForwardEnabled: false,
     });
   };
 
@@ -368,7 +333,7 @@ export default function ExtensionDetailPage() {
           Extensions
         </Link>
         <ChevronRight className="h-4 w-4" />
-        <span className="text-foreground">{extension.extension}</span>
+        <span className="text-foreground">{extension.extensionNumber}</span>
       </nav>
 
       {/* Header */}
@@ -376,12 +341,13 @@ export default function ExtensionDetailPage() {
         <div>
           <div className="flex items-center space-x-3">
             <h1 className="text-3xl font-bold tracking-tight">
-              Extension {extension.extension}
+              Extension {extension.extensionNumber}
             </h1>
             <div className="flex items-center space-x-2">
               {getRegistrationIcon()}
-              {getStatusBadge(extension.status as ExtensionStatus)}
-              {getTypeBadge(extension.type as ExtensionType)}
+              <Badge variant={extension.isActive ? 'default' : 'secondary'}>
+                {extension.isActive ? 'Active' : 'Inactive'}
+              </Badge>
             </div>
           </div>
           <div className="flex items-center space-x-4 mt-2">
@@ -526,8 +492,8 @@ export default function ExtensionDetailPage() {
                     <Label htmlFor="extension">Extension Number</Label>
                     <Input
                       id="extension"
-                      value={formData.extension || ''}
-                      onChange={(e) => setFormData({ ...formData, extension: e.target.value })}
+                      value={formData.extensionNumber || ''}
+                      onChange={(e) => setFormData({ ...formData, extensionNumber: e.target.value })}
                       disabled={!isEditing}
                       placeholder="1001"
                     />
@@ -576,41 +542,18 @@ export default function ExtensionDetailPage() {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="type">Extension Type</Label>
-                    <Select
-                      value={formData.type || ''}
-                      onValueChange={(value) => setFormData({ ...formData, type: value as ExtensionType })}
+                <div className="space-y-2">
+                  <Label htmlFor="isActive">Status</Label>
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="isActive"
+                      checked={formData.isActive || false}
+                      onCheckedChange={(checked) => setFormData({ ...formData, isActive: checked })}
                       disabled={!isEditing}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={ExtensionType.USER}>User</SelectItem>
-                        <SelectItem value={ExtensionType.CONFERENCE}>Conference</SelectItem>
-                        <SelectItem value={ExtensionType.QUEUE}>Queue</SelectItem>
-                        <SelectItem value={ExtensionType.IVR}>IVR</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="status">Status</Label>
-                    <Select
-                      value={formData.status || ''}
-                      onValueChange={(value) => setFormData({ ...formData, status: value as ExtensionStatus })}
-                      disabled={!isEditing}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={ExtensionStatus.ACTIVE}>Active</SelectItem>
-                        <SelectItem value={ExtensionStatus.INACTIVE}>Inactive</SelectItem>
-                        <SelectItem value={ExtensionStatus.SUSPENDED}>Suspended</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    />
+                    <span className="text-sm text-muted-foreground">
+                      {formData.isActive ? 'Active' : 'Inactive'}
+                    </span>
                   </div>
                 </div>
               </CardContent>
@@ -626,49 +569,28 @@ export default function ExtensionDetailPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="callerIdName">Caller ID Name</Label>
+                  <Label htmlFor="effectiveCallerIdName">Caller ID Name</Label>
                   <Input
-                    id="callerIdName"
-                    value={formData.callerIdName || ''}
-                    onChange={(e) => setFormData({ ...formData, callerIdName: e.target.value })}
+                    id="effectiveCallerIdName"
+                    value={formData.effectiveCallerIdName || ''}
+                    onChange={(e) => setFormData({ ...formData, effectiveCallerIdName: e.target.value })}
                     disabled={!isEditing}
                     placeholder="John Doe"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="callerIdNumber">Caller ID Number</Label>
+                  <Label htmlFor="effectiveCallerIdNumber">Caller ID Number</Label>
                   <Input
-                    id="callerIdNumber"
-                    value={formData.callerIdNumber || ''}
-                    onChange={(e) => setFormData({ ...formData, callerIdNumber: e.target.value })}
+                    id="effectiveCallerIdNumber"
+                    value={formData.effectiveCallerIdNumber || ''}
+                    onChange={(e) => setFormData({ ...formData, effectiveCallerIdNumber: e.target.value })}
                     disabled={!isEditing}
                     placeholder="1001"
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="callGroup">Call Group</Label>
-                    <Input
-                      id="callGroup"
-                      value={formData.callGroup || ''}
-                      onChange={(e) => setFormData({ ...formData, callGroup: e.target.value })}
-                      disabled={!isEditing}
-                      placeholder="default"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="pickupGroup">Pickup Group</Label>
-                    <Input
-                      id="pickupGroup"
-                      value={formData.pickupGroup || ''}
-                      onChange={(e) => setFormData({ ...formData, pickupGroup: e.target.value })}
-                      disabled={!isEditing}
-                      placeholder="default"
-                    />
-                  </div>
-                </div>
+
               </CardContent>
             </Card>
           </div>
@@ -1417,15 +1339,15 @@ export default function ExtensionDetailPage() {
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Extension Status:</span>
                     <div className="flex items-center space-x-2">
-                      {extension?.status === 'active' ? (
+                      {extension?.isActive ? (
                         <CheckCircle className="h-4 w-4 text-green-500" />
                       ) : (
                         <XCircle className="h-4 w-4 text-red-500" />
                       )}
                       <span className={`text-sm font-medium ${
-                        extension?.status === 'active' ? 'text-green-600' : 'text-red-600'
+                        extension?.isActive ? 'text-green-600' : 'text-red-600'
                       }`}>
-                        {extension?.status || 'Unknown'}
+                        {extension?.isActive ? 'Active' : 'Inactive'}
                       </span>
                     </div>
                   </div>
@@ -1926,7 +1848,7 @@ export default function ExtensionDetailPage() {
                           const url = URL.createObjectURL(blob);
                           const a = document.createElement('a');
                           a.href = url;
-                          a.download = `extension-${extension?.extension}-config.json`;
+                          a.download = `extension-${extension?.extensionNumber}-config.json`;
                           a.click();
                           URL.revokeObjectURL(url);
                         }}

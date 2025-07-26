@@ -292,7 +292,7 @@ export const authService = {
   getUserAttributes: async (): Promise<UserAttributes | null> => {
     try {
       const response = await api.get<UserAttributes>('/auth/attributes');
-      return response.data;
+      return response;
     } catch (error) {
       console.error('Failed to fetch user attributes:', error);
       return null;

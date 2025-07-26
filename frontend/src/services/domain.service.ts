@@ -84,10 +84,10 @@ class DomainService {
       headers: params ? { 'X-Query-Params': JSON.stringify(params) } : undefined
     });
     return {
-      data: response.data,
-      total: response.pagination?.total || 0,
-      page: response.pagination?.page || 1,
-      limit: response.pagination?.limit || 20
+      data: response,
+      total: (response as any).pagination?.total || response.length || 0,
+      page: (response as any).pagination?.page || 1,
+      limit: (response as any).pagination?.limit || 20
     };
   }
 
@@ -96,7 +96,7 @@ class DomainService {
    */
   async getDomain(id: string): Promise<Domain> {
     const response = await api.get<Domain>(`/freeswitch/domains/${id}`);
-    return response.data;
+    return response;
   }
 
   /**
@@ -127,7 +127,7 @@ class DomainService {
    */
   async getDomainStats(id: string): Promise<DomainStats> {
     const response = await api.get<DomainStats>(`/freeswitch/domains/${id}/stats`);
-    return response.data;
+    return response;
   }
 
   /**
@@ -135,7 +135,7 @@ class DomainService {
    */
   async getAllDomainStats(): Promise<AllDomainStats> {
     const response = await api.get<AllDomainStats>('/freeswitch/domains/stats');
-    return response.data;
+    return response;
   }
 
   /**
@@ -143,7 +143,7 @@ class DomainService {
    */
   async getDomainUsers(id: string): Promise<any[]> {
     const response = await api.get<any[]>(`/freeswitch/domains/${id}/users`);
-    return response.data;
+    return response;
   }
 
   /**
@@ -151,7 +151,7 @@ class DomainService {
    */
   async getDomainExtensions(id: string): Promise<any[]> {
     const response = await api.get<any[]>(`/freeswitch/domains/${id}/extensions`);
-    return response.data;
+    return response;
   }
 
   /**
@@ -183,7 +183,7 @@ class DomainService {
    */
   async getDomainConfig(id: string): Promise<string> {
     const response = await api.get<string>(`/domains/${id}/config`);
-    return response.data;
+    return response;
   }
 
   /**
@@ -191,7 +191,7 @@ class DomainService {
    */
   async validateDomainName(name: string): Promise<{ available: boolean; message?: string }> {
     const response = await api.get<{ available: boolean; message?: string }>(`/freeswitch/domains/validate/${name}`);
-    return response.data;
+    return response;
   }
 
   /**
@@ -220,7 +220,7 @@ class DomainService {
     const response = await api.get<any>(`/freeswitch/domains/${id}/audit-logs`, {
       headers: params ? { 'X-Query-Params': JSON.stringify(params) } : undefined
     });
-    return response.data;
+    return response;
   }
 
   /**

@@ -47,12 +47,14 @@ import {
 
 import { sipProfileService, SipProfile, SipProfileQueryParams } from '@/services/sip-profile.service';
 import { domainService } from '@/services/domain.service';
+import { CreateSipProfileDialog } from '@/components/dialogs/CreateSipProfileDialog';
+// import { EditSipProfileDialog } from '@/components/dialogs/EditSipProfileDialog';
 
 export default function SipProfilesPage() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedDomain, setSelectedDomain] = useState<string>('');
-  const [statusFilter, setStatusFilter] = useState<string>('');
+  const [selectedDomain, setSelectedDomain] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<SipProfile | null>(null);
@@ -64,7 +66,7 @@ export default function SipProfilesPage() {
     page: currentPage,
     limit: pageSize,
     search: searchTerm || undefined,
-    domainId: selectedDomain || undefined,
+    domainId: selectedDomain === 'all' ? undefined : selectedDomain,
     isActive: statusFilter === 'active' ? true : statusFilter === 'inactive' ? false : undefined,
     sortBy: 'name',
     sortOrder: 'ASC',
@@ -301,7 +303,7 @@ export default function SipProfilesPage() {
             <SelectValue placeholder="All Domains" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Domains</SelectItem>
+            <SelectItem value="all">All Domains</SelectItem>
             {domains.map((domain) => (
               <SelectItem key={domain.id} value={domain.id}>
                 {domain.displayName}
@@ -314,7 +316,7 @@ export default function SipProfilesPage() {
             <SelectValue placeholder="All Status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Status</SelectItem>
+            <SelectItem value="all">All Status</SelectItem>
             <SelectItem value="active">Active</SelectItem>
             <SelectItem value="inactive">Inactive</SelectItem>
           </SelectContent>
@@ -378,12 +380,15 @@ export default function SipProfilesPage() {
                     <TableCell>
                       <div className="flex items-center">
                         <Network className="w-4 h-4 mr-1 text-muted-foreground" />
-                        {profile.sipPort}
+                        {profile.bindPort}
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">
-                        {profile.rtpPortStart}-{profile.rtpPortEnd}
+                        {(profile as any).rtpPortStart && (profile as any).rtpPortEnd
+                          ? `${(profile as any).rtpPortStart}-${(profile as any).rtpPortEnd}`
+                          : '-'
+                        }
                       </div>
                     </TableCell>
                     <TableCell>
@@ -397,7 +402,7 @@ export default function SipProfilesPage() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      {getStatusBadge(profile.isActive)}
+                      {getStatusBadge(profile.isActive ?? true)}
                     </TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
@@ -462,6 +467,28 @@ export default function SipProfilesPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Create SIP Profile Dialog */}
+      <CreateSipProfileDialog
+        open={isCreateDialogOpen}
+        onOpenChange={setIsCreateDialogOpen}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ['sip-profiles'] });
+          queryClient.invalidateQueries({ queryKey: ['sip-profile-stats'] });
+        }}
+      />
+
+      {/* Edit SIP Profile Dialog */}
+      {/* <EditSipProfileDialog
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        profile={selectedProfile}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ['sip-profiles'] });
+          queryClient.invalidateQueries({ queryKey: ['sip-profile-stats'] });
+          setSelectedProfile(null);
+        }}
+      /> */}
     </div>
   );
 }

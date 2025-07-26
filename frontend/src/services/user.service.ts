@@ -131,12 +131,12 @@ class UserService {
     const url = queryString ? `${this.baseUrl}?${queryString}` : this.baseUrl;
 
     const response = await api.get<UserListResponse>(url);
-    return response.data;
+    return response;
   }
 
   async getUserById(id: number): Promise<User> {
     const response = await api.get<User>(`${this.baseUrl}/${id}`);
-    return response.data;
+    return response;
   }
 
   async createUser(userData: CreateUserRequest): Promise<User> {
@@ -169,17 +169,17 @@ class UserService {
 
   async getUserStats(): Promise<UserStatsResponse> {
     const response = await api.get<UserStatsResponse>(`${this.baseUrl}/stats`);
-    return response.data;
+    return response;
   }
 
   async getUserActivity(id: number, days: number = 30): Promise<any[]> {
     const response = await api.get<any[]>(`${this.baseUrl}/${id}/activity?days=${days}`);
-    return response.data;
+    return response;
   }
 
   async getUserSessions(id: number): Promise<any[]> {
     const response = await api.get<any[]>(`${this.baseUrl}/${id}/sessions`);
-    return response.data;
+    return response;
   }
 
   async terminateUserSession(id: number, sessionId: string): Promise<void> {
@@ -219,7 +219,7 @@ class UserService {
 
   async getUserPreferences(id: number): Promise<Record<string, any>> {
     const response = await api.get<Record<string, any>>(`${this.baseUrl}/${id}/preferences`);
-    return response.data;
+    return response;
   }
 
   async updateUserPreferences(id: number, preferences: Record<string, any>): Promise<void> {
@@ -248,7 +248,7 @@ class UserService {
     const response = await api.get<Blob>(url, {
       responseType: 'blob',
     });
-    return response.data;
+    return response;
   }
 
   async importUsers(file: File): Promise<{ success: number; failed: number; errors: string[] }> {

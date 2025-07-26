@@ -61,15 +61,15 @@ export const recordingService = {
     console.log('✅ Recording Service: Response received:', response);
     // Backend returns { data: [...], pagination: {...} } directly
     return {
-      data: response.data,
-      pagination: response.pagination
+      data: response,
+      pagination: (response as any).pagination
     };
   },
 
   // Get recording info by call UUID
   getRecordingInfo: async (callUuid: string): Promise<RecordingInfo> => {
     const response = await api.get<RecordingInfo>(`/recordings/${callUuid}/info`);
-    return response.data;
+    return response;
   },
 
   // Download recording
@@ -92,7 +92,7 @@ export const recordingService = {
   getRecordingStats: async (): Promise<RecordingStats> => {
     const response = await api.get<RecordingStats>('/recordings/stats');
     // Stats endpoint returns data directly
-    return response.data || response as any;
+    return response;
   },
 
   // Bulk delete recordings

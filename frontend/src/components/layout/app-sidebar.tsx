@@ -28,7 +28,8 @@ import {
   Monitor,
   Lock,
   Building,
-  Network
+  Network,
+  Link as LinkIcon
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -103,6 +104,13 @@ const navigationItems = [
         url: '/dashboard/sip-profiles',
         icon: Network,
         permission: 'sip-profiles:read',
+        requireAnyRole: ['SuperAdmin', 'DomainAdmin', 'TechnicalManager', 'NetworkAdmin', 'PBXAdmin'],
+      },
+      {
+        title: 'Extension-Profile Management',
+        url: '/dashboard/extension-profiles',
+        icon: LinkIcon,
+        permission: 'extensions:read',
         requireAnyRole: ['SuperAdmin', 'DomainAdmin', 'TechnicalManager', 'NetworkAdmin', 'PBXAdmin'],
       },
     ],

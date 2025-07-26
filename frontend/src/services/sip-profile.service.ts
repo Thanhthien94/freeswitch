@@ -3,43 +3,24 @@ import { api } from '@/lib/api-client';
 export interface SipProfile {
   id: string;
   name: string;
-  displayName: string;
+  displayName?: string;
   description?: string;
-  sipPort: number;
-  sipIp: string;
-  rtpIp: string;
-  rtpPortStart: number;
-  rtpPortEnd: number;
-  dialplan: string;
-  context: string;
-  dtmfDuration: number;
-  codecPrefs: string;
-  useRtpTimer: boolean;
-  rtpTimerName: string;
-  holdMusic: string;
-  recordPath: string;
-  recordTemplate: string;
-  managePresence: boolean;
-  presenceHosts: string;
-  presencePrivacy: boolean;
-  authCalls: boolean;
-  authAllPackets: boolean;
-  acceptBlindReg: boolean;
-  acceptBlindAuth: boolean;
-  suppressCng: boolean;
-  enableTimer: boolean;
-  minimumSessionExpires: number;
-  sessionTimeout: number;
-  dtmfType: string;
-  liberalDtmf: boolean;
-  rtpTimeout: number;
-  rtpHoldTimeout: number;
-  forceRegisterDomain: string;
-  forceRegisterDbDomain: string;
-  forceSubscriptionExpires: number;
-  challengeRealm: string;
-  isActive: boolean;
+  type: 'internal' | 'external' | 'custom';
   domainId?: string;
+  bindIp?: string;
+  bindPort: number;
+  tlsPort?: number;
+  rtpIp?: string;
+  extRtpIp?: string;
+  extSipIp?: string;
+  sipPort?: number;
+  settings?: any;
+  advancedSettings?: any;
+  securitySettings?: any;
+  codecSettings?: any;
+  isActive?: boolean;
+  isDefault?: boolean;
+  order?: number;
   domain?: {
     id: string;
     name: string;
@@ -55,42 +36,24 @@ export interface SipProfile {
 
 export interface CreateSipProfileData {
   name: string;
-  displayName: string;
+  displayName?: string;
   description?: string;
-  sipPort: number;
-  sipIp: string;
-  rtpIp: string;
-  rtpPortStart: number;
-  rtpPortEnd: number;
-  dialplan: string;
-  context: string;
-  dtmfDuration?: number;
-  codecPrefs?: string;
-  useRtpTimer?: boolean;
-  rtpTimerName?: string;
-  holdMusic?: string;
-  recordPath?: string;
-  recordTemplate?: string;
-  managePresence?: boolean;
-  presenceHosts?: string;
-  presencePrivacy?: boolean;
-  authCalls?: boolean;
-  authAllPackets?: boolean;
-  acceptBlindReg?: boolean;
-  acceptBlindAuth?: boolean;
-  suppressCng?: boolean;
-  enableTimer?: boolean;
-  minimumSessionExpires?: number;
-  sessionTimeout?: number;
-  dtmfType?: string;
-  liberalDtmf?: boolean;
-  rtpTimeout?: number;
-  rtpHoldTimeout?: number;
-  forceRegisterDomain?: string;
-  forceRegisterDbDomain?: string;
-  forceSubscriptionExpires?: number;
-  challengeRealm?: string;
+  type: 'internal' | 'external' | 'custom';
   domainId?: string;
+  bindIp?: string;
+  bindPort: number;
+  tlsPort?: number;
+  rtpIp?: string;
+  extRtpIp?: string;
+  extSipIp?: string;
+  sipPort?: number;
+  settings?: any;
+  advancedSettings?: any;
+  securitySettings?: any;
+  codecSettings?: any;
+  isActive?: boolean;
+  isDefault?: boolean;
+  order?: number;
 }
 
 export interface UpdateSipProfileData extends Partial<CreateSipProfileData> {
@@ -130,7 +93,7 @@ export interface SipProfileResponse {
 }
 
 class SipProfileService {
-  private readonly baseUrl = '/api/v1/freeswitch/sip-profiles';
+  private readonly baseUrl = '/freeswitch/sip-profiles';
 
   async getSipProfiles(params?: SipProfileQueryParams): Promise<SipProfileResponse> {
     const searchParams = new URLSearchParams();
@@ -146,17 +109,17 @@ class SipProfileService {
     const url = searchParams.toString() ? `${this.baseUrl}?${searchParams}` : this.baseUrl;
     const response = await api.get<SipProfile[]>(url);
     return {
-      data: response.data,
-      total: response.pagination?.total || 0,
-      page: response.pagination?.page || 1,
-      limit: response.pagination?.limit || 10,
-      totalPages: Math.ceil((response.pagination?.total || 0) / (response.pagination?.limit || 10))
+      data: response,
+      total: (response as any).pagination?.total || response.length || 0,
+      page: (response as any).pagination?.page || 1,
+      limit: (response as any).pagination?.limit || 10,
+      totalPages: Math.ceil(((response as any).pagination?.total || response.length || 0) / ((response as any).pagination?.limit || 10))
     };
   }
 
   async getSipProfile(id: string): Promise<SipProfile> {
     const response = await api.get<SipProfile>(`${this.baseUrl}/${id}`);
-    return response.data;
+    return response;
   }
 
   async createSipProfile(data: CreateSipProfileData): Promise<SipProfile> {
@@ -177,24 +140,24 @@ class SipProfileService {
 
   async getSipProfileStats(): Promise<SipProfileStats> {
     const response = await api.get<SipProfileStats>(`${this.baseUrl}/stats`);
-    return response.data;
+    return response;
   }
 
   async getSipProfilesByDomain(domainId: string): Promise<SipProfile[]> {
     const response = await api.get<SipProfile[]>(`${this.baseUrl}/by-domain/${domainId}`);
-    return response.data;
+    return response;
   }
 
   async generateSipProfileXml(id: string): Promise<{ xml: string }> {
     const response = await api.get<{ xml: string }>(`${this.baseUrl}/${id}/xml`);
-    return response.data;
+    return response;
   }
 
   async downloadSipProfileXml(id: string): Promise<Blob> {
     const response = await api.get(`${this.baseUrl}/${id}/xml/download`, {
       responseType: 'blob'
     });
-    return response.data as Blob;
+    return response as Blob;
   }
 
   async testSipProfile(id: string): Promise<{ success: boolean; message: string; details?: any }> {
@@ -218,7 +181,7 @@ class SipProfileService {
 
     const url = searchParams.toString() ? `${this.baseUrl}/export?${searchParams}` : `${this.baseUrl}/export`;
     const response = await api.get(url, { responseType: 'blob' });
-    return response.data as Blob;
+    return response as Blob;
   }
 
   async importSipProfiles(file: File): Promise<{ success: boolean; imported: number; errors: string[] }> {
