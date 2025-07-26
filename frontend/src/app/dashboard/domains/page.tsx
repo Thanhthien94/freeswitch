@@ -14,6 +14,7 @@ import { domainService, Domain } from '@/services/domain.service';
 import { DomainDialog } from '@/components/freeswitch/DomainDialog';
 import { DomainCard } from '@/components/freeswitch/DomainCard';
 import { DomainHierarchy } from '@/components/freeswitch/DomainHierarchy';
+import { DomainProfilesView } from '@/components/freeswitch/DomainProfilesView';
 
 export default function DomainsPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -162,6 +163,7 @@ export default function DomainsPage() {
         <TabsList>
           <TabsTrigger value="grid">Grid View</TabsTrigger>
           <TabsTrigger value="hierarchy">Hierarchy View</TabsTrigger>
+          <TabsTrigger value="profiles">SIP Profiles</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
         </TabsList>
 
@@ -251,6 +253,10 @@ export default function DomainsPage() {
 
         <TabsContent value="hierarchy">
           <DomainHierarchy domains={filteredDomains} onEditDomain={handleEditDomain} />
+        </TabsContent>
+
+        <TabsContent value="profiles" className="space-y-4">
+          <DomainProfilesView domains={filteredDomains} onRefresh={refetch} />
         </TabsContent>
 
         <TabsContent value="analytics">
