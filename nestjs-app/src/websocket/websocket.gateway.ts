@@ -30,7 +30,7 @@ export interface ActiveCall {
   callId: string;
   callerNumber: string;
   calleeNumber: string;
-  status: 'ringing' | 'answered' | 'bridged' | 'hold';
+  status: 'ringing' | 'answered' | 'bridged' | 'hold' | 'transferring';
   direction: 'inbound' | 'outbound';
   startTime: Date;
   answerTime?: Date;

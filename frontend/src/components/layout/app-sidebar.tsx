@@ -51,7 +51,7 @@ const navigationItems = [
       },
       {
         title: 'Live Calls',
-        url: '/dashboard/calls',
+        url: '/dashboard/live-calls',
         icon: PhoneCall,
         permission: 'calls:read',
       },

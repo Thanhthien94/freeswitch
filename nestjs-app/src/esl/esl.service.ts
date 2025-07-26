@@ -551,16 +551,37 @@ export class EslService implements OnModuleInit, OnModuleDestroy {
       throw new Error('ESL not connected to FreeSWITCH');
     }
 
+    this.logger.debug('Requesting active calls from FreeSWITCH via ESL');
+
     return new Promise((resolve, reject) => {
       this.connection.api('show', 'channels as json', (result) => {
         try {
+          this.logger.debug('Received response from show channels API');
+
           if (!result || typeof result.getBody !== 'function') {
             this.logger.warn('Invalid response from show channels API, returning empty array');
             resolve([]);
             return;
           }
+
           const body = result.getBody();
-          resolve(body ? JSON.parse(body) : []);
+          this.logger.debug(`Raw response body: ${body}`);
+
+          if (!body || body.trim() === '') {
+            this.logger.debug('Empty response body, returning empty array');
+            resolve([]);
+            return;
+          }
+
+          try {
+            const parsed = JSON.parse(body);
+            this.logger.debug(`Parsed JSON response: ${JSON.stringify(parsed)}`);
+            resolve(parsed);
+          } catch (parseError) {
+            this.logger.error('Failed to parse JSON response:', parseError);
+            this.logger.debug(`Raw body that failed to parse: ${body}`);
+            resolve([]);
+          }
         } catch (error) {
           this.logger.error('Failed to get active calls:', error);
           reject(error);

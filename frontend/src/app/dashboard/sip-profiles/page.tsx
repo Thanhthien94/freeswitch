@@ -303,7 +303,7 @@ export default function SipProfilesPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Domains</SelectItem>
-            {domains.map((domain) => (
+            {Array.isArray(domains) && domains.map((domain) => (
               <SelectItem key={domain.id} value={domain.id}>
                 {domain.displayName}
               </SelectItem>
@@ -353,7 +353,7 @@ export default function SipProfilesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {profiles.map((profile) => (
+                {Array.isArray(profiles) && profiles.map((profile) => (
                   <TableRow key={profile.id}>
                     <TableCell>
                       <div>

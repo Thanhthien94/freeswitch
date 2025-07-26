@@ -168,7 +168,7 @@ export default function ExtensionsPage() {
     }
   };
 
-  const filteredExtensions = extensions.filter(ext => {
+  const filteredExtensions = Array.isArray(extensions) ? extensions.filter(ext => {
     const matchesSearch = ext.extensionNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          ext.displayName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          ext.effectiveCallerIdName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -177,7 +177,7 @@ export default function ExtensionsPage() {
     const matchesDomain = selectedDomain === 'all' || ext.domainId === selectedDomain;
 
     return matchesSearch && matchesDomain;
-  });
+  }) : [];
 
   return (
     <div className="space-y-6">
@@ -292,7 +292,7 @@ export default function ExtensionsPage() {
                     <SelectValue placeholder="Select domain" />
                   </SelectTrigger>
                   <SelectContent>
-                    {domains.map((domain) => (
+                    {Array.isArray(domains) && domains.map((domain) => (
                       <SelectItem key={domain.id} value={domain.id}>
                         {domain.name}
                       </SelectItem>
@@ -339,7 +339,7 @@ export default function ExtensionsPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Domains</SelectItem>
-                {domains.map((domain) => (
+                {Array.isArray(domains) && domains.map((domain) => (
                   <SelectItem key={domain.id} value={domain.id}>
                     {domain.name}
                   </SelectItem>
