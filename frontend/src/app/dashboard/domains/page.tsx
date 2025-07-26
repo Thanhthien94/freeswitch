@@ -1,470 +1,317 @@
 'use client';
 
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { Plus, Search, Filter, MoreHorizontal, Building2, Users, Phone, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
-import { Plus, Search, Edit, Trash2, Users, Phone, Settings } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { toast } from 'sonner';
-import { domainService, CreateDomainData, UpdateDomainData, Domain } from '@/services/domain.service';
-
-// Types imported from service
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { domainService, Domain } from '@/services/domain.service';
+import { DomainDialog } from '@/components/freeswitch/DomainDialog';
+import { DomainCard } from '@/components/freeswitch/DomainCard';
+import { DomainHierarchy } from '@/components/freeswitch/DomainHierarchy';
 
 export default function DomainsPage() {
-  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string>('__all__');
   const [selectedDomain, setSelectedDomain] = useState<Domain | null>(null);
-  const [formData, setFormData] = useState<CreateDomainData>({
-    name: '',
-    displayName: '',
-    description: '',
-    maxUsers: 100,
-    maxExtensions: 200,
-    adminEmail: '',
-    adminPhone: '',
-    costCenter: '',
-  });
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('grid');
 
-  // Fetch domains using React Query
-  const { data: domainsResponse, isLoading } = useQuery({
+  // Fetch domains
+  const { data: domainsData, isLoading, refetch } = useQuery({
     queryKey: ['domains'],
-    queryFn: () => domainService.getDomains(),
+    queryFn: () => domainService.getDomains({ limit: 100 }),
   });
 
-  const domains = domainsResponse?.data || [];
-
-  // Mutations
-  const createMutation = useMutation({
-    mutationFn: (data: CreateDomainData) => domainService.createDomain(data),
-    onSuccess: () => {
-      toast.success('Domain created successfully');
-      setIsCreateDialogOpen(false);
-      resetForm();
-      queryClient.invalidateQueries({ queryKey: ['domains'] });
-    },
-    onError: (error: any) => {
-      console.error('Error creating domain:', error);
-      toast.error(error.message || 'Failed to create domain');
-    },
+  // Fetch domain statistics
+  const { data: statsData } = useQuery({
+    queryKey: ['domain-stats'],
+    queryFn: () => domainService.getAllDomainStats(),
   });
 
-  const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: UpdateDomainData }) =>
-      domainService.updateDomain(id, data),
-    onSuccess: () => {
-      toast.success('Domain updated successfully');
-      setIsEditDialogOpen(false);
-      setSelectedDomain(null);
-      resetForm();
-      queryClient.invalidateQueries({ queryKey: ['domains'] });
-    },
-    onError: (error: any) => {
-      console.error('Error updating domain:', error);
-      toast.error(error.message || 'Failed to update domain');
-    },
+  const domains = Array.isArray(domainsData?.data) ? domainsData.data : [];
+
+  // Filter domains based on criteria
+  const filteredDomains = domains.filter(domain => {
+    const matchesSearch =
+      domain.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      domain.displayName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      domain.description?.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesStatus =
+      statusFilter === '__all__' ||
+      (statusFilter === 'active' && domain.isActive) ||
+      (statusFilter === 'inactive' && !domain.isActive);
+
+    return matchesSearch && matchesStatus;
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) => domainService.deleteDomain(id),
-    onSuccess: () => {
-      toast.success('Domain deleted successfully');
-      queryClient.invalidateQueries({ queryKey: ['domains'] });
-    },
-    onError: (error: any) => {
-      console.error('Error deleting domain:', error);
-      toast.error(error.message || 'Failed to delete domain');
-    },
-  });
+  // Calculate statistics
+  const getStatistics = () => {
+    const totalDomains = domains.length;
+    const activeDomains = domains.filter(domain => domain.isActive).length;
+    const inactiveDomains = totalDomains - activeDomains;
+    const totalUsers = domains.reduce((sum, domain) => sum + (domain.users?.length || 0), 0);
+    const totalExtensions = domains.reduce((sum, domain) => sum + (domain.maxExtensions || 0), 0);
+
+    return {
+      totalDomains,
+      activeDomains,
+      inactiveDomains,
+      totalUsers,
+      totalExtensions,
+      utilizationRate: totalDomains > 0 ? (activeDomains / totalDomains) * 100 : 0,
+    };
+  };
+
+  const statistics = getStatistics();
 
   const handleCreateDomain = () => {
-    createMutation.mutate(formData);
+    setSelectedDomain(null);
+    setIsDialogOpen(true);
   };
 
-  const handleUpdateDomain = () => {
-    if (!selectedDomain) return;
-    updateMutation.mutate({ id: selectedDomain.id, data: formData });
-  };
-
-  const handleDeleteDomain = (domain: Domain) => {
-    if (!confirm(`Are you sure you want to delete domain "${domain.name}"?`)) {
-      return;
-    }
-    deleteMutation.mutate(domain.id);
-  };
-
-  const resetForm = () => {
-    setFormData({
-      name: '',
-      displayName: '',
-      description: '',
-      maxUsers: 100,
-      maxExtensions: 200,
-      adminEmail: '',
-      adminPhone: '',
-      costCenter: '',
-    });
-  };
-
-  const openEditDialog = (domain: Domain) => {
+  const handleEditDomain = (domain: Domain) => {
     setSelectedDomain(domain);
-    setFormData({
-      name: domain.name,
-      displayName: domain.displayName,
-      description: domain.description,
-      maxUsers: domain.maxUsers,
-      maxExtensions: domain.maxExtensions,
-      adminEmail: domain.adminEmail,
-      adminPhone: domain.adminPhone || '',
-      costCenter: domain.costCenter || '',
-    });
-    setIsEditDialogOpen(true);
+    setIsDialogOpen(true);
   };
 
-  const filteredDomains = (domains || []).filter(domain =>
-    domain.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    domain.displayName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    domain.description.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const handleDialogClose = () => {
+    setIsDialogOpen(false);
+    setSelectedDomain(null);
+    refetch();
+  };
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      {/* Header */}
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Domains</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Domain Management</h1>
           <p className="text-muted-foreground">
-            Manage domains and their configurations
+            Manage multi-tenant domains with hierarchical structure and enterprise features
           </p>
         </div>
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={() => resetForm()}>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Domain
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[600px]">
-            <DialogHeader>
-              <DialogTitle>Create New Domain</DialogTitle>
-              <DialogDescription>
-                Add a new domain to the system. Fill in the required information below.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Domain Name *</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="example.com"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="displayName">Display Name *</Label>
-                  <Input
-                    id="displayName"
-                    value={formData.displayName}
-                    onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
-                    placeholder="Example Company"
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Domain description..."
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="maxUsers">Max Users</Label>
-                  <Input
-                    id="maxUsers"
-                    type="number"
-                    value={formData.maxUsers}
-                    onChange={(e) => setFormData({ ...formData, maxUsers: parseInt(e.target.value) })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="maxExtensions">Max Extensions</Label>
-                  <Input
-                    id="maxExtensions"
-                    type="number"
-                    value={formData.maxExtensions}
-                    onChange={(e) => setFormData({ ...formData, maxExtensions: parseInt(e.target.value) })}
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="adminEmail">Admin Email *</Label>
-                  <Input
-                    id="adminEmail"
-                    type="email"
-                    value={formData.adminEmail}
-                    onChange={(e) => setFormData({ ...formData, adminEmail: e.target.value })}
-                    placeholder="admin@example.com"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="adminPhone">Admin Phone</Label>
-                  <Input
-                    id="adminPhone"
-                    value={formData.adminPhone}
-                    onChange={(e) => setFormData({ ...formData, adminPhone: e.target.value })}
-                    placeholder="+1234567890"
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="costCenter">Cost Center</Label>
-                <Input
-                  id="costCenter"
-                  value={formData.costCenter}
-                  onChange={(e) => setFormData({ ...formData, costCenter: e.target.value })}
-                  placeholder="CC-001"
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleCreateDomain}>Create Domain</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => refetch()}>
+            <Settings className="w-4 h-4 mr-2" />
+            Refresh
+          </Button>
+          <Button onClick={handleCreateDomain}>
+            <Plus className="w-4 h-4 mr-2" />
+            Create Domain
+          </Button>
+        </div>
       </div>
 
-      <div className="flex items-center space-x-2">
-        <Search className="h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Search domains..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="max-w-sm"
-        />
+      {/* Statistics Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Domains</CardTitle>
+            <Building2 className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{statistics.totalDomains}</div>
+            <p className="text-xs text-muted-foreground">
+              {statistics.utilizationRate.toFixed(1)}% utilization rate
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Active Domains</CardTitle>
+            <Building2 className="h-4 w-4 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{statistics.activeDomains}</div>
+            <p className="text-xs text-muted-foreground">
+              {statistics.inactiveDomains} inactive domains
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{statistics.totalUsers}</div>
+            <p className="text-xs text-muted-foreground">Across all domains</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Extensions</CardTitle>
+            <Phone className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{statistics.totalExtensions}</div>
+            <p className="text-xs text-muted-foreground">Maximum capacity</p>
+          </CardContent>
+        </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Domains ({filteredDomains.length})</CardTitle>
-          <CardDescription>
-            List of all domains in the system
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="flex justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Domain</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Users</TableHead>
-                  <TableHead>Extensions</TableHead>
-                  <TableHead>Plan</TableHead>
-                  <TableHead>Admin</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredDomains.map((domain) => (
-                  <TableRow key={domain.id}>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">{domain.displayName}</div>
-                        <div className="text-sm text-muted-foreground">{domain.name}</div>
-                        {domain.description && (
-                          <div className="text-xs text-muted-foreground mt-1">
-                            {domain.description}
-                          </div>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={domain.isActive ? "default" : "secondary"}>
-                        {domain.isActive ? "Active" : "Inactive"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-1">
-                        <Users className="h-4 w-4 text-muted-foreground" />
-                        <span>{domain.users?.length || 0}/{domain.maxUsers}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-1">
-                        <Phone className="h-4 w-4 text-muted-foreground" />
-                        <span>0/{domain.maxExtensions}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{domain.billingPlan}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm">
-                        <div>{domain.adminEmail}</div>
-                        {domain.adminPhone && (
-                          <div className="text-muted-foreground">{domain.adminPhone}</div>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm text-muted-foreground">
-                        {new Date(domain.createdAt).toLocaleDateString()}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => openEditDialog(domain)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteDomain(domain)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="grid">Grid View</TabsTrigger>
+          <TabsTrigger value="hierarchy">Hierarchy View</TabsTrigger>
+          <TabsTrigger value="analytics">Analytics</TabsTrigger>
+        </TabsList>
 
-      {/* Edit Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>Edit Domain</DialogTitle>
-            <DialogDescription>
-              Update domain information. Some fields may be read-only.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit-name">Domain Name</Label>
-                <Input
-                  id="edit-name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  disabled
-                />
+        <TabsContent value="grid" className="space-y-4">
+          {/* Filters */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Filter Domains</CardTitle>
+              <CardDescription>Search and filter domains by various criteria</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex flex-col gap-4 md:flex-row">
+                <div className="flex-1">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search domains..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue placeholder="Filter by status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__all__">All Domains</SelectItem>
+                    <SelectItem value="active">Active Only</SelectItem>
+                    <SelectItem value="inactive">Inactive Only</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-displayName">Display Name *</Label>
-                <Input
-                  id="edit-displayName"
-                  value={formData.displayName}
-                  onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
+            </CardContent>
+          </Card>
+
+          {/* Domains Grid */}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {isLoading ? (
+              Array.from({ length: 6 }).map((_, i) => (
+                <Card key={i} className="animate-pulse">
+                  <CardHeader>
+                    <div className="h-4 bg-muted rounded w-3/4"></div>
+                    <div className="h-3 bg-muted rounded w-1/2"></div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <div className="h-3 bg-muted rounded"></div>
+                      <div className="h-3 bg-muted rounded w-2/3"></div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            ) : filteredDomains.length > 0 ? (
+              filteredDomains.map((domain) => (
+                <DomainCard
+                  key={domain.id}
+                  domain={domain}
+                  onEdit={handleEditDomain}
+                  onRefresh={refetch}
                 />
+              ))
+            ) : (
+              <div className="col-span-full">
+                <Card>
+                  <CardContent className="flex flex-col items-center justify-center py-12">
+                    <Building2 className="h-12 w-12 text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">No domains found</h3>
+                    <p className="text-muted-foreground text-center mb-4">
+                      {searchTerm || statusFilter !== '__all__'
+                        ? 'No domains match your current filters.'
+                        : 'Create your first domain to get started.'}
+                    </p>
+                    {!searchTerm && statusFilter === '__all__' && (
+                      <Button onClick={handleCreateDomain}>
+                        <Plus className="w-4 h-4 mr-2" />
+                        Create Domain
+                      </Button>
+                    )}
+                  </CardContent>
+                </Card>
               </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-description">Description</Label>
-              <Textarea
-                id="edit-description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit-maxUsers">Max Users</Label>
-                <Input
-                  id="edit-maxUsers"
-                  type="number"
-                  value={formData.maxUsers}
-                  onChange={(e) => setFormData({ ...formData, maxUsers: parseInt(e.target.value) })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-maxExtensions">Max Extensions</Label>
-                <Input
-                  id="edit-maxExtensions"
-                  type="number"
-                  value={formData.maxExtensions}
-                  onChange={(e) => setFormData({ ...formData, maxExtensions: parseInt(e.target.value) })}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit-adminEmail">Admin Email *</Label>
-                <Input
-                  id="edit-adminEmail"
-                  type="email"
-                  value={formData.adminEmail}
-                  onChange={(e) => setFormData({ ...formData, adminEmail: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-adminPhone">Admin Phone</Label>
-                <Input
-                  id="edit-adminPhone"
-                  value={formData.adminPhone}
-                  onChange={(e) => setFormData({ ...formData, adminPhone: e.target.value })}
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-costCenter">Cost Center</Label>
-              <Input
-                id="edit-costCenter"
-                value={formData.costCenter}
-                onChange={(e) => setFormData({ ...formData, costCenter: e.target.value })}
-              />
-            </div>
+            )}
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleUpdateDomain}>Update Domain</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        </TabsContent>
+
+        <TabsContent value="hierarchy">
+          <DomainHierarchy domains={filteredDomains} onEditDomain={handleEditDomain} />
+        </TabsContent>
+
+        <TabsContent value="analytics">
+          <div className="grid gap-4 md:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>Domain Distribution</CardTitle>
+                <CardDescription>Status breakdown of all domains</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                      <span className="text-sm">Active</span>
+                    </div>
+                    <span className="text-sm font-medium">{statistics.activeDomains} domains</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-gray-400 rounded-full"></div>
+                      <span className="text-sm">Inactive</span>
+                    </div>
+                    <span className="text-sm font-medium">{statistics.inactiveDomains} domains</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Resource Summary</CardTitle>
+                <CardDescription>Overall resource utilization</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Total Users</span>
+                    <span className="text-sm font-medium">{statistics.totalUsers}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Total Extensions</span>
+                    <span className="text-sm font-medium">{statistics.totalExtensions}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Utilization Rate</span>
+                    <span className="text-sm font-medium">{statistics.utilizationRate.toFixed(1)}%</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+      </Tabs>
+
+      {/* Domain Dialog */}
+      <DomainDialog
+        domain={selectedDomain}
+        open={isDialogOpen}
+        onClose={handleDialogClose}
+      />
     </div>
   );
 }
