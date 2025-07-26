@@ -48,7 +48,6 @@ import {
 import { sipProfileService, SipProfile, SipProfileQueryParams } from '@/services/sip-profile.service';
 import { domainService } from '@/services/domain.service';
 import { CreateSipProfileDialog } from '@/components/dialogs/CreateSipProfileDialog';
-// import { EditSipProfileDialog } from '@/components/dialogs/EditSipProfileDialog';
 
 export default function SipProfilesPage() {
   const queryClient = useQueryClient();
@@ -478,17 +477,7 @@ export default function SipProfilesPage() {
         }}
       />
 
-      {/* Edit SIP Profile Dialog */}
-      {/* <EditSipProfileDialog
-        open={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
-        profile={selectedProfile}
-        onSuccess={() => {
-          queryClient.invalidateQueries({ queryKey: ['sip-profiles'] });
-          queryClient.invalidateQueries({ queryKey: ['sip-profile-stats'] });
-          setSelectedProfile(null);
-        }}
-      /> */}
+
     </div>
   );
 }
