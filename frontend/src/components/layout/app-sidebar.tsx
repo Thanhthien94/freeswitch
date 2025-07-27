@@ -29,7 +29,8 @@ import {
   Lock,
   Building,
   Network,
-  Link as LinkIcon
+  Link as LinkIcon,
+  Router
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -104,6 +105,13 @@ const navigationItems = [
         url: '/dashboard/sip-profiles',
         icon: Network,
         permission: 'sip-profiles:read',
+        requireAnyRole: ['SuperAdmin', 'DomainAdmin', 'TechnicalManager', 'NetworkAdmin', 'PBXAdmin'],
+      },
+      {
+        title: 'Gateways',
+        url: '/dashboard/gateways',
+        icon: Router,
+        permission: 'gateways:read',
         requireAnyRole: ['SuperAdmin', 'DomainAdmin', 'TechnicalManager', 'NetworkAdmin', 'PBXAdmin'],
       },
       {
