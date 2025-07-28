@@ -173,6 +173,13 @@ const navigationItems = [
         requireAnyRole: ['SuperAdmin', 'SystemAdmin', 'TechnicalManager'],
       },
       {
+        title: 'Network Config',
+        url: '/dashboard/network-config',
+        icon: Network,
+        permission: 'config:write',
+        requireAnyRole: ['SuperAdmin', 'SystemAdmin', 'TechnicalManager'],
+      },
+      {
         title: 'Monitoring',
         url: '/dashboard/monitoring',
         icon: Monitor,

@@ -4,6 +4,9 @@ import { Repository } from 'typeorm';
 import { FreeSwitchExtension, DirectorySettings, DialSettings, VoicemailSettings } from '../entities/freeswitch-extension.entity';
 import { FreeSwitchVersionService } from './freeswitch-version.service';
 import { FreeSwitchConfigType } from '../entities/freeswitch-config-version.entity';
+import { FreeSwitchEslService } from './freeswitch-esl.service';
+import { FreeSwitchDirectorySyncService } from './freeswitch-directory-sync.service';
+import * as crypto from 'crypto';
 
 export interface CreateExtensionDto {
   extensionNumber: string;
@@ -45,6 +48,8 @@ export class FreeSwitchExtensionService {
     @InjectRepository(FreeSwitchExtension)
     private readonly extensionRepository: Repository<FreeSwitchExtension>,
     private readonly versionService: FreeSwitchVersionService,
+    private readonly eslService: FreeSwitchEslService,
+    private readonly directorySyncService: FreeSwitchDirectorySyncService,
   ) {}
 
   async create(createDto: any, createdBy?: number): Promise<FreeSwitchExtension> {
@@ -85,6 +90,18 @@ export class FreeSwitchExtensionService {
       'Initial extension created',
       createdBy
     );
+
+    // Auto sync extension to FreeSWITCH directory
+    try {
+      const syncResult = await this.directorySyncService.syncExtensionToDirectory(savedExtension.id);
+      if (syncResult.success) {
+        this.logger.log(`Extension ${savedExtension.extensionNumber} synced to FreeSWITCH directory`);
+      } else {
+        this.logger.warn(`Failed to sync extension ${savedExtension.extensionNumber}: ${syncResult.message}`);
+      }
+    } catch (error) {
+      this.logger.error(`Error syncing extension ${savedExtension.extensionNumber}:`, error);
+    }
 
     this.logger.log(`Extension created successfully: ${savedExtension.id}`);
     return savedExtension;
@@ -206,6 +223,7 @@ export class FreeSwitchExtensionService {
 
   async update(id: string, updateDto: any, updatedBy?: number): Promise<FreeSwitchExtension> {
     this.logger.log(`Updating extension: ${id}`);
+    this.logger.log(`Update data: ${JSON.stringify(updateDto, null, 2)}`);
 
     const extension = await this.findOne(id);
 
@@ -244,6 +262,18 @@ export class FreeSwitchExtensionService {
       updatedBy
     );
 
+    // Auto sync extension to FreeSWITCH directory
+    try {
+      const syncResult = await this.directorySyncService.syncExtensionToDirectory(updatedExtension.id);
+      if (syncResult.success) {
+        this.logger.log(`Extension ${updatedExtension.extensionNumber} synced to FreeSWITCH directory`);
+      } else {
+        this.logger.warn(`Failed to sync extension ${updatedExtension.extensionNumber}: ${syncResult.message}`);
+      }
+    } catch (error) {
+      this.logger.error(`Error syncing extension ${updatedExtension.extensionNumber}:`, error);
+    }
+
     this.logger.log(`Extension updated successfully: ${id}`);
     return updatedExtension;
   }
@@ -252,8 +282,21 @@ export class FreeSwitchExtensionService {
     this.logger.log(`Removing extension: ${id}`);
 
     const extension = await this.findOne(id);
+
+    // Remove from FreeSWITCH directory before removing from database
+    try {
+      const syncResult = await this.directorySyncService.removeExtensionFromDirectory(id);
+      if (syncResult.success) {
+        this.logger.log(`Extension ${extension.extensionNumber} removed from FreeSWITCH directory`);
+      } else {
+        this.logger.warn(`Failed to remove extension ${extension.extensionNumber} from directory: ${syncResult.message}`);
+      }
+    } catch (error) {
+      this.logger.error(`Error removing extension ${extension.extensionNumber} from directory:`, error);
+    }
+
     await this.extensionRepository.remove(extension);
-    
+
     this.logger.log(`Extension removed successfully: ${id}`);
   }
 
@@ -373,5 +416,400 @@ export class FreeSwitchExtensionService {
   async generateXml(id: string): Promise<string> {
     const extension = await this.findOne(id);
     return extension.getDirectoryXml();
+  }
+
+  /**
+   * Get extension call statistics
+   */
+  async getExtensionStats(id: string): Promise<{
+    totalCalls: number;
+    inboundCalls: number;
+    outboundCalls: number;
+    missedCalls: number;
+    averageDuration: number;
+    totalDuration: number;
+  }> {
+    const extension = await this.findOne(id);
+
+    try {
+      // Get call statistics from FreeSWITCH via ESL
+      const activeCalls = await this.eslService.getActiveCalls();
+
+      // Filter calls for this extension
+      const extensionCalls = activeCalls.calls?.filter(call =>
+        call.callerNumber === extension.extensionNumber ||
+        call.calleeNumber === extension.extensionNumber
+      ) || [];
+
+      // For now, return basic stats from active calls
+      // In production, you'd query CDR database for historical data
+      return {
+        totalCalls: extensionCalls.length,
+        inboundCalls: extensionCalls.filter(call => call.calleeNumber === extension.extensionNumber).length,
+        outboundCalls: extensionCalls.filter(call => call.callerNumber === extension.extensionNumber).length,
+        missedCalls: 0, // Would need CDR data
+        averageDuration: extensionCalls.length > 0 ?
+          extensionCalls.reduce((sum, call) => sum + call.duration, 0) / extensionCalls.length : 0,
+        totalDuration: extensionCalls.reduce((sum, call) => sum + call.duration, 0),
+      };
+    } catch (error) {
+      this.logger.error(`Failed to get extension stats for ${id}: ${error.message}`);
+      return {
+        totalCalls: 0,
+        inboundCalls: 0,
+        outboundCalls: 0,
+        missedCalls: 0,
+        averageDuration: 0,
+        totalDuration: 0,
+      };
+    }
+  }
+
+  /**
+   * Get extension call history
+   */
+  async getExtensionCalls(id: string): Promise<any[]> {
+    const extension = await this.findOne(id);
+
+    try {
+      // Get active calls from FreeSWITCH
+      const activeCalls = await this.eslService.getActiveCalls();
+
+      // Filter calls for this extension
+      const extensionCalls = activeCalls.calls?.filter(call =>
+        call.callerNumber === extension.extensionNumber ||
+        call.calleeNumber === extension.extensionNumber
+      ) || [];
+
+      // Transform to expected format
+      return extensionCalls.map(call => ({
+        uuid: call.uuid,
+        direction: call.callerNumber === extension.extensionNumber ? 'outbound' : 'inbound',
+        callerNumber: call.callerNumber,
+        destinationNumber: call.calleeNumber,
+        duration: call.duration,
+        status: 'active',
+        startTime: new Date().toISOString(), // Would need actual start time from CDR
+      }));
+    } catch (error) {
+      this.logger.error(`Failed to get extension calls for ${id}: ${error.message}`);
+      return [];
+    }
+  }
+
+  /**
+   * Get extension registration status
+   */
+  async getExtensionRegistration(id: string): Promise<{
+    isRegistered: boolean;
+    lastRegistration?: string;
+    registrationIp?: string;
+    userAgent?: string;
+    expires?: string;
+  }> {
+    const extension = await this.findOne(id);
+
+    try {
+      // Get registration status via ESL
+      const command = `sofia status profile internal reg ${extension.extensionNumber}@${extension.domain?.name || 'localhost'}`;
+      const result = await this.eslService.executeCommand(command);
+
+      // Parse registration result
+      const isRegistered = result.includes('Registrations:') &&
+                          !result.includes('Total items returned: 0') &&
+                          !result.includes('0 total');
+
+      // Extract registration details if available
+      let registrationIp: string | undefined;
+      let userAgent: string | undefined;
+      let expires: string | undefined;
+
+      if (isRegistered) {
+        const lines = result.split('\n');
+        for (const line of lines) {
+          if (line.includes('Contact:')) {
+            const ipMatch = line.match(/sip:.*@([^:;]+)/);
+            if (ipMatch) registrationIp = ipMatch[1];
+          }
+          if (line.includes('User-Agent:')) {
+            userAgent = line.split('User-Agent:')[1]?.trim();
+          }
+          if (line.includes('Expires:')) {
+            expires = line.split('Expires:')[1]?.trim();
+          }
+        }
+      }
+
+      return {
+        isRegistered,
+        lastRegistration: isRegistered ? new Date().toISOString() : undefined,
+        registrationIp,
+        userAgent,
+        expires,
+      };
+    } catch (error) {
+      this.logger.error(`Failed to get extension registration for ${id}: ${error.message}`);
+      return {
+        isRegistered: false,
+      };
+    }
+  }
+
+  /**
+   * Reset extension password
+   */
+  async resetExtensionPassword(id: string, newPassword?: string, updatedBy?: number): Promise<{
+    extension: FreeSwitchExtension;
+    plainPassword: string;
+  }> {
+    const extension = await this.findOne(id);
+
+    // Generate new password if not provided
+    const plainPassword = newPassword || this.generateRandomPassword();
+
+    // Update extension with new password
+    await this.extensionRepository.update(id, {
+      password: plainPassword,
+      updatedBy,
+      updatedAt: new Date(),
+    });
+
+    // Create version record
+    const updatedExtension = await this.findOne(id);
+    await this.versionService.createVersion(
+      FreeSwitchConfigType.EXTENSION,
+      id,
+      updatedExtension,
+      updatedExtension.getDirectoryXml(),
+      'Password reset',
+      updatedBy
+    );
+
+    // Reload XML to apply changes
+    try {
+      await this.eslService.reloadXmlConfig();
+    } catch (error) {
+      this.logger.warn(`Failed to reload XML after password reset: ${error.message}`);
+    }
+
+    return {
+      extension: updatedExtension,
+      plainPassword,
+    };
+  }
+
+  /**
+   * Test extension connection
+   */
+  async testExtensionConnection(id: string): Promise<{
+    connected: boolean;
+    message: string;
+    details?: any;
+  }> {
+    const extension = await this.findOne(id);
+
+    try {
+      // Check registration status
+      const registration = await this.getExtensionRegistration(id);
+
+      if (registration.isRegistered) {
+        return {
+          connected: true,
+          message: 'Extension is registered and connected',
+          details: registration,
+        };
+      } else {
+        return {
+          connected: false,
+          message: 'Extension is not registered',
+          details: registration,
+        };
+      }
+    } catch (error) {
+      this.logger.error(`Failed to test extension connection for ${id}: ${error.message}`);
+      return {
+        connected: false,
+        message: `Connection test failed: ${error.message}`,
+      };
+    }
+  }
+
+  /**
+   * Reboot extension (force re-registration)
+   */
+  async rebootExtension(id: string): Promise<{
+    success: boolean;
+    message: string;
+  }> {
+    const extension = await this.findOne(id);
+
+    try {
+      // Force flush registration to make extension re-register
+      const command = `sofia profile internal flush_inbound_reg ${extension.extensionNumber}@${extension.domain?.name || 'localhost'}`;
+      await this.eslService.executeCommand(command);
+
+      return {
+        success: true,
+        message: 'Extension reboot initiated - device will re-register',
+      };
+    } catch (error) {
+      this.logger.error(`Failed to reboot extension ${id}: ${error.message}`);
+      return {
+        success: false,
+        message: `Failed to reboot extension: ${error.message}`,
+      };
+    }
+  }
+
+  /**
+   * Generate random password
+   */
+  generatePassword(): { password: string } {
+    const password = this.generateRandomPassword();
+    return { password };
+  }
+
+  /**
+   * Update extension recording settings
+   */
+  async updateRecordingSettings(id: string, settings: {
+    enabled?: boolean;
+    mode?: string;
+    format?: string;
+    stereo?: boolean;
+  }, updatedBy?: number): Promise<FreeSwitchExtension> {
+    const extension = await this.findOne(id);
+
+    // Update recording settings in directorySettings
+    const directorySettings = extension.directorySettings || {};
+    const recordingSettings = directorySettings.recording || {};
+
+    if (settings.enabled !== undefined) {
+      recordingSettings.enabled = settings.enabled;
+    }
+    if (settings.mode !== undefined) {
+      recordingSettings.mode = settings.mode;
+    }
+    if (settings.format !== undefined) {
+      recordingSettings.format = settings.format;
+    }
+    if (settings.stereo !== undefined) {
+      recordingSettings.stereo = settings.stereo;
+    }
+
+    directorySettings.recording = recordingSettings;
+
+    // Update extension
+    return this.update(id, { directorySettings }, updatedBy);
+  }
+
+  /**
+   * Update extension voicemail settings
+   */
+  async updateVoicemailSettings(id: string, settings: {
+    enabled?: boolean;
+    password?: string;
+    email?: string;
+    attachFile?: boolean;
+    deleteFile?: boolean;
+  }, updatedBy?: number): Promise<FreeSwitchExtension> {
+    const extension = await this.findOne(id);
+
+    // Update voicemail settings
+    const voicemailSettings = extension.voicemailSettings || {};
+
+    if (settings.enabled !== undefined) {
+      voicemailSettings.enabled = settings.enabled;
+    }
+    if (settings.password !== undefined) {
+      voicemailSettings.password = settings.password;
+    }
+    if (settings.email !== undefined) {
+      voicemailSettings.email = settings.email;
+    }
+    if (settings.attachFile !== undefined) {
+      voicemailSettings.attachFile = settings.attachFile;
+    }
+    if (settings.deleteFile !== undefined) {
+      voicemailSettings.deleteFile = settings.deleteFile;
+    }
+
+    // Update extension
+    return this.update(id, { voicemailSettings }, updatedBy);
+  }
+
+  /**
+   * Update extension call forwarding settings
+   */
+  async updateCallForwardSettings(id: string, settings: {
+    enabled?: boolean;
+    destination?: string;
+    onBusy?: boolean;
+    onNoAnswer?: boolean;
+    timeout?: number;
+  }, updatedBy?: number): Promise<FreeSwitchExtension> {
+    const extension = await this.findOne(id);
+
+    // Update call forwarding settings in directorySettings
+    const directorySettings = extension.directorySettings || {};
+    const callForwardSettings = directorySettings.callForward || {};
+
+    if (settings.enabled !== undefined) {
+      callForwardSettings.enabled = settings.enabled;
+    }
+    if (settings.destination !== undefined) {
+      callForwardSettings.destination = settings.destination;
+    }
+    if (settings.onBusy !== undefined) {
+      callForwardSettings.onBusy = settings.onBusy;
+    }
+    if (settings.onNoAnswer !== undefined) {
+      callForwardSettings.onNoAnswer = settings.onNoAnswer;
+    }
+    if (settings.timeout !== undefined) {
+      callForwardSettings.timeout = settings.timeout;
+    }
+
+    directorySettings.callForward = callForwardSettings;
+
+    // Update extension
+    return this.update(id, { directorySettings }, updatedBy);
+  }
+
+  /**
+   * Update extension Do Not Disturb settings
+   */
+  async updateDndSettings(id: string, settings: {
+    enabled?: boolean;
+  }, updatedBy?: number): Promise<FreeSwitchExtension> {
+    const extension = await this.findOne(id);
+
+    // Update DND settings in directorySettings
+    const directorySettings = extension.directorySettings || {};
+    const dndSettings = directorySettings.dnd || {};
+
+    if (settings.enabled !== undefined) {
+      dndSettings.enabled = settings.enabled;
+    }
+
+    directorySettings.dnd = dndSettings;
+
+    // Update extension
+    return this.update(id, { directorySettings }, updatedBy);
+  }
+
+  /**
+   * Generate random password helper
+   */
+  private generateRandomPassword(length: number = 12): string {
+    const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+    let password = '';
+
+    for (let i = 0; i < length; i++) {
+      const randomIndex = crypto.randomInt(0, charset.length);
+      password += charset[randomIndex];
+    }
+
+    return password;
   }
 }

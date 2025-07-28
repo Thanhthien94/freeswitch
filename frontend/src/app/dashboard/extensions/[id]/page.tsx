@@ -222,9 +222,12 @@ export default function ExtensionDetailPage() {
         isActive: extension.isActive,
         // Set default values for additional form fields
         context: 'default',
-        voicemailEnabled: false,
-        dndEnabled: false,
-        callForwardEnabled: false,
+        // Map features from backend response
+        recordCalls: extension.directorySettings?.recording?.enabled || false,
+        recordingMode: extension.directorySettings?.recording?.mode || 'all',
+        voicemailEnabled: extension.voicemailSettings?.enabled || false,
+        dndEnabled: extension.directorySettings?.dnd?.enabled || false,
+        callForwardEnabled: extension.directorySettings?.callForward?.enabled || false,
       });
     }
   }, [extension, isEditing]);
@@ -276,7 +279,35 @@ export default function ExtensionDetailPage() {
   };
 
   const handleSave = () => {
-    updateMutation.mutate(formData);
+    // Transform formData to backend format
+    const updateData = {
+      extensionNumber: formData.extensionNumber,
+      domainId: formData.domainId,
+      displayName: formData.displayName,
+      description: formData.description,
+      password: formData.password,
+      effectiveCallerIdName: formData.effectiveCallerIdName,
+      effectiveCallerIdNumber: formData.effectiveCallerIdNumber,
+      isActive: formData.isActive,
+      // Map features to backend format
+      directorySettings: {
+        recording: {
+          enabled: formData.recordCalls || false,
+          mode: formData.recordingMode || 'all',
+        },
+        dnd: {
+          enabled: formData.dndEnabled || false,
+        },
+        callForward: {
+          enabled: formData.callForwardEnabled || false,
+        },
+      },
+      voicemailSettings: {
+        enabled: formData.voicemailEnabled || false,
+      },
+    };
+
+    updateMutation.mutate(updateData);
   };
 
   const handleCancel = () => {

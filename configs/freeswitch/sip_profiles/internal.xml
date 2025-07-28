@@ -68,6 +68,11 @@
     <param name="apply-inbound-acl" value="domains"/>
     <param name="apply-register-acl" value="domains"/>
 
+    <!-- SRTP Configuration - Disable for compatibility -->
+    <param name="rtp-secure-media" value="false"/>
+    <param name="rtp-secure-media-inbound" value="false"/>
+    <param name="rtp-secure-media-outbound" value="false"/>
+
     <!-- NAT Configuration -->
     <param name="nat-options-ping" value="true"/>
     <param name="aggressive-nat-detection" value="true"/>

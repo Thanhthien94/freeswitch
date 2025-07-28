@@ -3,6 +3,8 @@ import { FreeSwitchSipProfile } from '../entities/freeswitch-sip-profile.entity'
 import { FreeSwitchGateway } from '../entities/freeswitch-gateway.entity';
 import { FreeSwitchDialplan } from '../entities/freeswitch-dialplan.entity';
 import { FreeSwitchExtension } from '../entities/freeswitch-extension.entity';
+import { GlobalNetworkConfig } from '../entities/global-network-config.entity';
+import { GlobalNetworkConfigService } from './global-network-config.service';
 import { Domain } from '../entities/domain.entity';
 
 export interface XmlValidationResult {
@@ -14,6 +16,10 @@ export interface XmlValidationResult {
 @Injectable()
 export class FreeSwitchXmlGeneratorService {
   private readonly logger = new Logger(FreeSwitchXmlGeneratorService.name);
+
+  constructor(
+    private readonly globalNetworkConfigService: GlobalNetworkConfigService,
+  ) {}
 
   // SIP Profile XML Generation
   generateSipProfileXml(profile: FreeSwitchSipProfile, gateways: FreeSwitchGateway[] = []): string {
@@ -239,6 +245,45 @@ export class FreeSwitchXmlGeneratorService {
       dialplanConfig,
       directoryConfig,
     };
+  }
+
+  // Generate vars.xml from global network configuration
+  async generateVarsXml(): Promise<string> {
+    this.logger.debug('Generating vars.xml from global network configuration');
+
+    try {
+      const globalConfig = await this.globalNetworkConfigService.findConfig();
+      return globalConfig.generateVarsXmlConfig();
+    } catch (error) {
+      this.logger.error(`Failed to generate vars.xml: ${error.message}`);
+      throw error;
+    }
+  }
+
+  // Generate complete vars.xml file
+  async generateCompleteVarsXml(): Promise<string> {
+    this.logger.debug('Generating complete vars.xml file');
+
+    try {
+      const globalConfig = await this.globalNetworkConfigService.findConfig();
+
+      return `<?xml version="1.0" encoding="utf-8"?>
+<include>
+  <!-- Global Network Configuration - Auto-generated from Database -->
+  <!-- Generated at: ${new Date().toISOString()} -->
+  <!-- Config ID: ${globalConfig.id} - ${globalConfig.configName} -->
+
+  ${globalConfig.generateVarsXmlConfig()}
+
+  <!-- Additional Variables -->
+  <X-PRE-PROCESS cmd="set" data="unroll_loops=true"/>
+  <X-PRE-PROCESS cmd="set" data="outbound_caller_id_name=FreeSWITCH"/>
+  <X-PRE-PROCESS cmd="set" data="outbound_caller_id_number=0000000000"/>
+</include>`;
+    } catch (error) {
+      this.logger.error(`Failed to generate complete vars.xml: ${error.message}`);
+      throw error;
+    }
   }
 
   // XML Validation

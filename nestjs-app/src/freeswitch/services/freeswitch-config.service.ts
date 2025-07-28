@@ -6,6 +6,7 @@ import { FreeSwitchExtensionService } from './freeswitch-extension.service';
 import { FreeSwitchXmlGeneratorService } from './freeswitch-xml-generator.service';
 import { FreeSwitchEslService } from './freeswitch-esl.service';
 import { FreeSwitchVersionService } from './freeswitch-version.service';
+import { GlobalNetworkConfigService } from './global-network-config.service';
 
 export interface CompleteConfigResult {
   sofiaConfig: string;
@@ -35,6 +36,7 @@ export class FreeSwitchConfigService {
     private readonly xmlGeneratorService: FreeSwitchXmlGeneratorService,
     private readonly eslService: FreeSwitchEslService,
     private readonly versionService: FreeSwitchVersionService,
+    private readonly globalNetworkConfigService: GlobalNetworkConfigService,
   ) {}
 
   async generateCompleteConfiguration(domainId?: any): Promise<CompleteConfigResult> {
@@ -43,12 +45,13 @@ export class FreeSwitchConfigService {
 
       const errors: string[] = [];
 
-      // Get all configuration data
-      const [profilesResult, gatewaysResult, dialplansResult, extensionsResult] = await Promise.all([
+      // Get all configuration data including global network config
+      const [profilesResult, gatewaysResult, dialplansResult, extensionsResult, globalNetworkConfig] = await Promise.all([
         this.sipProfileService.findAll({ domainId, isActive: true, limit: 1000 }),
         this.gatewayService.findAll({ domainId, isActive: true, limit: 1000 }),
         this.dialplanService.findAll({ domainId, isActive: true, limit: 1000 }),
         this.extensionService.findAll({ domainId, isActive: true, limit: 1000 }),
+        this.globalNetworkConfigService.findConfig(),
       ]);
 
       const profiles = profilesResult.data;
@@ -70,7 +73,7 @@ export class FreeSwitchConfigService {
         return acc;
       }, {} as Record<string, any[]>);
 
-      // Generate Sofia configuration
+      // Generate Sofia configuration with global network settings
       const profilesXml = profiles
         .map(profile => this.xmlGeneratorService.generateSipProfileXml(profile, gatewaysByProfile[profile.id] || []))
         .join('\n');
@@ -82,6 +85,9 @@ export class FreeSwitchConfigService {
     <param name="abort-on-empty-external-ip" value="true"/>
     <param name="auto-restart" value="false"/>
     <param name="debug-presence" value="0"/>
+    <!-- Global Network Configuration Applied -->
+    <param name="rtp-start-port" value="${globalNetworkConfig.rtpStartPort}"/>
+    <param name="rtp-end-port" value="${globalNetworkConfig.rtpEndPort}"/>
   </global_settings>
   <profiles>
     ${profilesXml}
@@ -102,8 +108,8 @@ export class FreeSwitchConfigService {
   ${contextsXml}
 </configuration>`;
 
-      // Generate Directory configuration
-      const domainName = domainId ? 'domain.local' : 'localhost'; // TODO: Get actual domain name
+      // Generate Directory configuration using global network config domain
+      const domainName = domainId ? 'domain.local' : globalNetworkConfig.domain;
       const directoryConfig = this.xmlGeneratorService.generateDirectoryXml(extensions, domainName);
 
       return {

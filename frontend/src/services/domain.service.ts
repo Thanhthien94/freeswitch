@@ -80,15 +80,41 @@ class DomainService {
    * Get all domains with optional filtering and pagination
    */
   async getDomains(params?: DomainQueryParams): Promise<DomainResponse> {
-    const response = await api.get<Domain[]>('/freeswitch/domains', {
-      headers: params ? { 'X-Query-Params': JSON.stringify(params) } : undefined
-    });
-    return {
-      data: response,
-      total: (response as any).pagination?.total || response.length || 0,
-      page: (response as any).pagination?.page || 1,
-      limit: (response as any).pagination?.limit || 20
-    };
+    const queryParams = new URLSearchParams();
+
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          queryParams.append(key, value.toString());
+        }
+      });
+    }
+
+    const response = await api.get<any>(`/freeswitch/domains?${queryParams.toString()}`);
+
+    // Handle response format similar to CDR service
+    if (response.data && Array.isArray(response.data)) {
+      return {
+        data: response.data,
+        total: response.total || response.data.length,
+        page: response.page || 1,
+        limit: response.limit || 20
+      };
+    } else if (Array.isArray(response)) {
+      return {
+        data: response,
+        total: response.length,
+        page: 1,
+        limit: 20
+      };
+    } else {
+      return {
+        data: [],
+        total: 0,
+        page: 1,
+        limit: 20
+      };
+    }
   }
 
   /**
@@ -217,9 +243,17 @@ class DomainService {
    * Get domain audit logs
    */
   async getDomainAuditLogs(id: string, params?: { page?: number; limit?: number }): Promise<any> {
-    const response = await api.get<any>(`/freeswitch/domains/${id}/audit-logs`, {
-      headers: params ? { 'X-Query-Params': JSON.stringify(params) } : undefined
-    });
+    const queryParams = new URLSearchParams();
+
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && String(value).trim() !== '') {
+          queryParams.append(key, value.toString());
+        }
+      });
+    }
+
+    const response = await api.get<any>(`/freeswitch/domains/${id}/audit-logs?${queryParams.toString()}`);
     return response;
   }
 

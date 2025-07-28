@@ -8,6 +8,7 @@ import { FreeSwitchGateway } from './entities/freeswitch-gateway.entity';
 import { FreeSwitchDialplan } from './entities/freeswitch-dialplan.entity';
 import { FreeSwitchExtension } from './entities/freeswitch-extension.entity';
 import { FreeSwitchConfigVersion, FreeSwitchConfigDeployment } from './entities/freeswitch-config-version.entity';
+import { GlobalNetworkConfig } from './entities/global-network-config.entity';
 
 // Controllers
 import { FreeSwitchSipProfileController } from './controllers/freeswitch-sip-profile.controller';
@@ -25,8 +26,13 @@ import { FreeSwitchXmlGeneratorService } from './services/freeswitch-xml-generat
 import { FreeSwitchEslService } from './services/freeswitch-esl.service';
 import { FreeSwitchVersionService } from './services/freeswitch-version.service';
 import { FreeSwitchConfigService } from './services/freeswitch-config.service';
+import { FreeSwitchDirectorySyncService } from './services/freeswitch-directory-sync.service';
+import { GlobalNetworkConfigService } from './services/global-network-config.service';
+import { FreeSwitchConfigApplyService } from './services/freeswitch-config-apply.service';
 
 import { FreeSwitchDomainController } from './controllers/freeswitch-domain.controller';
+import { FreeSwitchDirectorySyncController } from './controllers/freeswitch-directory-sync.controller';
+import { GlobalNetworkConfigController } from './controllers/global-network-config.controller';
 
 // Shared modules
 import { SharedModule } from '../shared/shared.module';
@@ -42,6 +48,7 @@ import { EslModule } from '../esl/esl.module';
       FreeSwitchExtension,
       FreeSwitchConfigVersion,
       FreeSwitchConfigDeployment,
+      GlobalNetworkConfig,
     ]),
     SharedModule,
     EslModule,
@@ -53,6 +60,8 @@ import { EslModule } from '../esl/esl.module';
     FreeSwitchExtensionController,
     FreeSwitchConfigController,
     FreeSwitchDomainController,
+    FreeSwitchDirectorySyncController,
+    GlobalNetworkConfigController,
   ],
   providers: [
     FreeSwitchSipProfileService,
@@ -63,6 +72,9 @@ import { EslModule } from '../esl/esl.module';
     FreeSwitchEslService,
     FreeSwitchVersionService,
     FreeSwitchConfigService,
+    FreeSwitchDirectorySyncService,
+    GlobalNetworkConfigService,
+    FreeSwitchConfigApplyService,
   ],
   exports: [
     FreeSwitchSipProfileService,
@@ -73,6 +85,9 @@ import { EslModule } from '../esl/esl.module';
     FreeSwitchEslService,
     FreeSwitchVersionService,
     FreeSwitchConfigService,
+    FreeSwitchDirectorySyncService,
+    GlobalNetworkConfigService,
+    FreeSwitchConfigApplyService,
   ],
 })
 export class FreeSwitchModule {}

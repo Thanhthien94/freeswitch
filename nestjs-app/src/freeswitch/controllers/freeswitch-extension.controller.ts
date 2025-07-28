@@ -4,6 +4,7 @@ import {
   Post,
   Put,
   Delete,
+  Patch,
   Body,
   Param,
   Query,
@@ -166,5 +167,142 @@ export class FreeSwitchExtensionController {
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Extension not found' })
   async remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
     return this.extensionService.remove(id);
+  }
+
+  @Get(':id/stats')
+  @Roles('superadmin', 'admin', 'user')
+  @ApiOperation({ summary: 'Get extension call statistics' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Extension statistics retrieved successfully' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Extension not found' })
+  async getExtensionStats(@Param('id', ParseUUIDPipe) id: string) {
+    return this.extensionService.getExtensionStats(id);
+  }
+
+  @Get(':id/calls')
+  @Roles('superadmin', 'admin', 'user')
+  @ApiOperation({ summary: 'Get extension call history' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Call history retrieved successfully' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Extension not found' })
+  async getExtensionCalls(@Param('id', ParseUUIDPipe) id: string) {
+    return this.extensionService.getExtensionCalls(id);
+  }
+
+  @Get(':id/registration')
+  @Roles('superadmin', 'admin', 'user')
+  @ApiOperation({ summary: 'Get extension registration status' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Registration status retrieved successfully' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Extension not found' })
+  async getExtensionRegistration(@Param('id', ParseUUIDPipe) id: string) {
+    return this.extensionService.getExtensionRegistration(id);
+  }
+
+  @Patch(':id/reset-password')
+  @Roles('superadmin', 'admin')
+  @ApiOperation({ summary: 'Reset extension password' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Password reset successfully' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Extension not found' })
+  async resetPassword(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: { password?: string },
+    @CurrentUser() user: any,
+  ) {
+    return this.extensionService.resetExtensionPassword(id, body.password, user.id);
+  }
+
+  @Post(':id/test-connection')
+  @Roles('superadmin', 'admin')
+  @ApiOperation({ summary: 'Test extension connection' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Connection test completed' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Extension not found' })
+  async testConnection(@Param('id', ParseUUIDPipe) id: string) {
+    return this.extensionService.testExtensionConnection(id);
+  }
+
+  @Post(':id/reboot')
+  @Roles('superadmin', 'admin')
+  @ApiOperation({ summary: 'Reboot extension (force re-registration)' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Extension reboot initiated' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Extension not found' })
+  async rebootExtension(@Param('id', ParseUUIDPipe) id: string) {
+    return this.extensionService.rebootExtension(id);
+  }
+
+  @Post('generate-password')
+  @Roles('superadmin', 'admin')
+  @ApiOperation({ summary: 'Generate random password' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Password generated successfully' })
+  async generatePassword() {
+    return this.extensionService.generatePassword();
+  }
+
+  @Patch(':id/recording-settings')
+  @Roles('superadmin', 'admin')
+  @ApiOperation({ summary: 'Update extension recording settings' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Recording settings updated successfully' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Extension not found' })
+  async updateRecordingSettings(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() settings: {
+      enabled?: boolean;
+      mode?: string;
+      format?: string;
+      stereo?: boolean;
+    },
+    @CurrentUser() user: any,
+  ): Promise<FreeSwitchExtension> {
+    return this.extensionService.updateRecordingSettings(id, settings, user.id);
+  }
+
+  @Patch(':id/voicemail-settings')
+  @Roles('superadmin', 'admin')
+  @ApiOperation({ summary: 'Update extension voicemail settings' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Voicemail settings updated successfully' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Extension not found' })
+  async updateVoicemailSettings(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() settings: {
+      enabled?: boolean;
+      password?: string;
+      email?: string;
+      attachFile?: boolean;
+      deleteFile?: boolean;
+    },
+    @CurrentUser() user: any,
+  ): Promise<FreeSwitchExtension> {
+    return this.extensionService.updateVoicemailSettings(id, settings, user.id);
+  }
+
+  @Patch(':id/call-forward-settings')
+  @Roles('superadmin', 'admin')
+  @ApiOperation({ summary: 'Update extension call forwarding settings' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Call forwarding settings updated successfully' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Extension not found' })
+  async updateCallForwardSettings(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() settings: {
+      enabled?: boolean;
+      destination?: string;
+      onBusy?: boolean;
+      onNoAnswer?: boolean;
+      timeout?: number;
+    },
+    @CurrentUser() user: any,
+  ): Promise<FreeSwitchExtension> {
+    return this.extensionService.updateCallForwardSettings(id, settings, user.id);
+  }
+
+  @Patch(':id/dnd-settings')
+  @Roles('superadmin', 'admin')
+  @ApiOperation({ summary: 'Update extension Do Not Disturb settings' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'DND settings updated successfully' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Extension not found' })
+  async updateDndSettings(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() settings: {
+      enabled?: boolean;
+    },
+    @CurrentUser() user: any,
+  ): Promise<FreeSwitchExtension> {
+    return this.extensionService.updateDndSettings(id, settings, user.id);
   }
 }

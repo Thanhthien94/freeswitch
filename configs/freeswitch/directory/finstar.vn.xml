@@ -1,0 +1,33 @@
+<!--
+  Domain: finstar.vn
+  Description: Auto-generated domain
+  Auto-generated from database at: 2025-07-27T10:41:43.823Z
+  Do not edit manually - use the web interface to modify settings.
+-->
+
+<include>
+  <domain name="finstar.vn">
+    <params>
+      <param name="dial-string" value="{^^:sip_invite_domain=${dialed_domain}:presence_id=${dialed_user}@${dialed_domain}}${sofia_contact(*/${dialed_user}@${dialed_domain})},${verto_contact(${dialed_user}@${dialed_domain})}"/>
+      <!-- Global domain settings -->
+      <param name="jsonrpc-allowed-methods" value="verto"/>
+      <param name="jsonrpc-allowed-event-channels" value="demo,conference,presence"/>
+    </params>
+
+    <variables>
+      <variable name="record_stereo" value="true"/>
+      <variable name="default_gateway" value="$${default_provider}"/>
+      <variable name="default_areacode" value="$${default_areacode}"/>
+      <variable name="transfer_fallback_extension" value="operator"/>
+    </variables>
+
+    <groups>
+      <group name="default">
+        <users>
+          <!-- Include all user files from domain directory -->
+          <X-PRE-PROCESS cmd="include" data="finstar.vn/*.xml"/>
+        </users>
+      </group>
+    </groups>
+  </domain>
+</include>

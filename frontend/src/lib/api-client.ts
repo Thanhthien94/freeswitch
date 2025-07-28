@@ -66,12 +66,17 @@ export interface ApiResponse<T = unknown> {
 export const api = {
   // GET request
   get: async <T = unknown>(url: string, config?: RequestConfig): Promise<T> => {
+    console.log('🔍 API Client: Making GET request to:', url);
+
     const response = await fetchWithAuth(url, {
       method: 'GET',
       ...config,
     });
 
+    console.log('🔍 API Client: Response status:', response.status);
+
     if (!response.ok) {
+      console.error('❌ API Client: HTTP error:', response.status);
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
@@ -84,6 +89,7 @@ export const api = {
       return text as T;
     } else {
       const data = await response.json();
+      console.log('✅ API Client: Response data:', data);
       // Backend returns direct format: { data: [...], pagination: {...} }
       return data;
     }
