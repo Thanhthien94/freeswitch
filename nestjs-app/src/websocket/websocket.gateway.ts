@@ -40,7 +40,7 @@ export interface ActiveCall {
 
 @WSGateway({
   cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:3002',
+    origin: process.env.CORS_ORIGIN?.split(',').map(origin => origin.trim()) || [process.env.FRONTEND_URL || 'http://localhost:3002'],
     credentials: true,
   },
   namespace: '/realtime',

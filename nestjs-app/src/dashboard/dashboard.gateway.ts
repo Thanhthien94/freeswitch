@@ -16,7 +16,7 @@ import { Interval } from '@nestjs/schedule';
 @WebSocketGateway({
   namespace: '/dashboard',
   cors: {
-    origin: ['http://localhost:3002', 'http://localhost:3000', 'http://localhost:3001'],
+    origin: process.env.CORS_ORIGIN?.split(',').map(origin => origin.trim()) || ['http://localhost:3002', 'http://localhost:3000', 'http://localhost:3001'],
     credentials: true,
   },
 })
