@@ -18,7 +18,7 @@ services:
       # Event Socket Library
       - "8023:8021"
       # RTP media ports (optimized range)
-      - "16384-16484:16384-16484/udp"
+      - "16384-16584:16384-16584/udp"
     volumes:
       - ./configs/freeswitch:/etc/freeswitch:rw
       - ./configs/freeswitch-logs:/var/log/freeswitch:rw
