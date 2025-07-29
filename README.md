@@ -8,36 +8,39 @@ Complete FreeSWITCH-based PBX system with NestJS backend, Next.js frontend, and 
 ```bash
 git clone https://github.com/Thanhthien94/freeswitch.git
 cd freeswitch
+cp .env.example .env
+# Edit .env with your development values
 docker-compose up -d
 ```
-- Frontend: http://localhost:3002
-- Backend API: http://localhost:3000
-- Grafana: http://localhost:3001
 
 ### Production
 ```bash
 git clone https://github.com/Thanhthien94/freeswitch.git
 cd freeswitch
-cp .env.production .env.production.local
-# Edit .env.production.local with your values
+cp .env.example .env
+# Edit .env with your production values and set NODE_ENV=production
 ./deploy.sh
 ```
+
+**Access URLs:**
+- Frontend: http://localhost:3002
+- Backend API: http://localhost:3000
+- Grafana: http://localhost:3001
+- RabbitMQ: http://localhost:15672
 
 ## 📁 Project Structure
 
 ```
-├── docker-compose.yml              # Development environment
-├── docker-compose.production.yml   # Production environment (no internal nginx)
-├── deploy.sh                       # Production deployment script
-├── stop.sh                         # Service management script
-├── .env.production                 # Production environment template
+├── docker-compose.yml              # Unified environment (dev/production)
+├── deploy.sh                       # Deployment script (dev/production)
+├── .env.example                    # Environment template
 ├── nestjs-app/                     # NestJS Backend API
 ├── frontend/                       # Next.js Frontend
 ├── configs/freeswitch/             # FreeSWITCH configuration
 ├── recordings/                     # Call recordings storage
 ├── database/                       # Database initialization
-├── nginx-proxy-manager-config.txt  # NPM configuration
-└── deployment-guide.md             # Complete deployment guide
+├── monitoring/                     # Grafana & Prometheus config
+└── docs/                           # Documentation
 ```
 
 ## 🔧 Docker Compose Files
