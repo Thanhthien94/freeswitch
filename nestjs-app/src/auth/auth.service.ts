@@ -79,22 +79,22 @@ export class AuthService {
       let primaryRole = 'user';
 
       try {
-        // Load user with relations separately
+        // Load user roles using raw query to debug the issue
         this.logger.debug(`Loading roles for user ID: ${user.id}`);
-        const userWithRoles = await this.userRepository.findOne({
-          where: { id: user.id },
-          relations: ['userRoles', 'userRoles.role'],
-        });
 
-        this.logger.debug(`User with roles found: ${!!userWithRoles}, userRoles count: ${userWithRoles?.userRoles?.length || 0}`);
+        const rawQuery = `
+          SELECT ur.*, r.name as role_name, r.id as role_id
+          FROM user_roles ur
+          LEFT JOIN roles r ON ur.role_id = r.id
+          WHERE ur.user_id = $1 AND ur.is_active = true
+        `;
 
-        if (userWithRoles && userWithRoles.userRoles) {
-          const activeRoles = userWithRoles.userRoles.filter(ur => ur.isActive);
-          this.logger.debug(`Active roles count: ${activeRoles.length}`);
-          this.logger.debug(`Active roles: ${JSON.stringify(activeRoles.map(ur => ({ id: ur.id, roleId: ur.roleId, roleName: ur.role?.name, isPrimary: ur.isPrimary })))}`);
+        const rawResult = await this.userRepository.query(rawQuery, [user.id]);
+        this.logger.debug(`Raw query result: ${JSON.stringify(rawResult)}`);
 
-          roles = activeRoles.map(ur => ur.role.name);
-          primaryRole = activeRoles.find(ur => ur.isPrimary)?.role?.name || roles[0] || 'user';
+        if (rawResult && rawResult.length > 0) {
+          roles = rawResult.map(row => row.role_name);
+          primaryRole = rawResult.find(row => row.is_primary)?.role_name || roles[0] || 'user';
 
           this.logger.debug(`Final roles: ${JSON.stringify(roles)}, primaryRole: ${primaryRole}`);
 
@@ -266,10 +266,10 @@ export class AuthService {
 
   // ==================== UTILITY METHODS ====================
 
-  private async getDefaultRoleId(): Promise<string> {
+  private async getDefaultRoleId(): Promise<number> {
     // This would fetch the default role ID from database
-    // For now, return user role ID
-    return 'role-user';
+    // For now, return user role ID (ID = 5)
+    return 5;
   }
 
   private generateSessionId(): string {

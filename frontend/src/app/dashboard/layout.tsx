@@ -1,5 +1,5 @@
 import { DashboardLayout } from '@/components/layout/dashboard-layout';
-import { ProtectedPage } from '@/components/auth/AuthGuard';
+import { ProtectedPage } from '@/components/auth/UnifiedAuthGuard';
 
 export default function Layout({
   children,

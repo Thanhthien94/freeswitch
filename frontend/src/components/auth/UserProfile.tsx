@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { useAuth } from '@/hooks/useAuth';
-import { usePermissions } from '@/hooks/usePermissions';
+import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
+import { useEnhancedPermissions } from '@/hooks/useEnhancedPermissions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -20,8 +20,8 @@ import {
 } from 'lucide-react';
 
 export const UserProfile: React.FC = () => {
-  const { user, logout } = useAuth();
-  const permissions = usePermissions();
+  const { user, logout } = useEnhancedAuth();
+  const permissions = useEnhancedPermissions();
   const [showAllPermissions, setShowAllPermissions] = useState(false);
 
   if (!user) {
@@ -270,9 +270,7 @@ export const UserProfile: React.FC = () => {
               <h4 className="font-medium">User Management</h4>
               <div className="space-y-1 text-sm">
                 {permissions.canReadUsers && <div className="text-green-600">✓ View Users</div>}
-                {permissions.canCreateUsers && <div className="text-green-600">✓ Create Users</div>}
-                {permissions.canUpdateUsers && <div className="text-green-600">✓ Update Users</div>}
-                {permissions.canDeleteUsers && <div className="text-green-600">✓ Delete Users</div>}
+                {permissions.canManageUsers && <div className="text-green-600">✓ Manage Users</div>}
                 {!permissions.canReadUsers && <div className="text-red-600">✗ No User Access</div>}
               </div>
             </div>
@@ -281,8 +279,7 @@ export const UserProfile: React.FC = () => {
               <h4 className="font-medium">Call Data</h4>
               <div className="space-y-1 text-sm">
                 {permissions.canReadCDR && <div className="text-green-600">✓ View CDR</div>}
-                {permissions.canExportCDR && <div className="text-green-600">✓ Export CDR</div>}
-                {permissions.canDeleteCDR && <div className="text-green-600">✓ Delete CDR</div>}
+                {permissions.canManageCDR && <div className="text-green-600">✓ Manage CDR</div>}
                 {!permissions.canReadCDR && <div className="text-red-600">✗ No CDR Access</div>}
               </div>
             </div>
@@ -291,8 +288,7 @@ export const UserProfile: React.FC = () => {
               <h4 className="font-medium">Recordings</h4>
               <div className="space-y-1 text-sm">
                 {permissions.canReadRecordings && <div className="text-green-600">✓ View Recordings</div>}
-                {permissions.canDownloadRecordings && <div className="text-green-600">✓ Download Recordings</div>}
-                {permissions.canDeleteRecordings && <div className="text-green-600">✓ Delete Recordings</div>}
+                {permissions.canManageRecordings && <div className="text-green-600">✓ Manage Recordings</div>}
                 {!permissions.canReadRecordings && <div className="text-red-600">✗ No Recording Access</div>}
               </div>
             </div>
@@ -301,8 +297,9 @@ export const UserProfile: React.FC = () => {
               <h4 className="font-medium">Reports & Analytics</h4>
               <div className="space-y-1 text-sm">
                 {permissions.canReadReports && <div className="text-green-600">✓ View Reports</div>}
-                {permissions.canExecuteReports && <div className="text-green-600">✓ Generate Reports</div>}
+                {permissions.canManageReports && <div className="text-green-600">✓ Manage Reports</div>}
                 {permissions.canReadAnalytics && <div className="text-green-600">✓ View Analytics</div>}
+                {permissions.canManageAnalytics && <div className="text-green-600">✓ Manage Analytics</div>}
                 {!permissions.canReadReports && <div className="text-red-600">✗ No Report Access</div>}
               </div>
             </div>
@@ -313,7 +310,7 @@ export const UserProfile: React.FC = () => {
                 {permissions.canReadSystem && <div className="text-green-600">✓ View System</div>}
                 {permissions.canManageSystem && <div className="text-green-600">✓ Manage System</div>}
                 {permissions.canReadConfig && <div className="text-green-600">✓ View Config</div>}
-                {permissions.canUpdateConfig && <div className="text-green-600">✓ Update Config</div>}
+                {permissions.canManageConfig && <div className="text-green-600">✓ Manage Config</div>}
                 {!permissions.canReadSystem && <div className="text-red-600">✗ No System Access</div>}
               </div>
             </div>
@@ -321,10 +318,10 @@ export const UserProfile: React.FC = () => {
             <div className="space-y-2">
               <h4 className="font-medium">Special Access</h4>
               <div className="space-y-1 text-sm">
-                {permissions.canAccessFinancialData && <div className="text-green-600">✓ Financial Data</div>}
-                {permissions.canPerformCriticalOperations && <div className="text-green-600">✓ Critical Operations</div>}
-                {permissions.canAccessAuditLogs && <div className="text-green-600">✓ Audit Logs</div>}
-                {permissions.canManageSubordinates && <div className="text-green-600">✓ Manage Subordinates</div>}
+                {permissions.hasPermission('billing:manage') && <div className="text-green-600">✓ Financial Data</div>}
+                {permissions.hasPermission('system:manage') && <div className="text-green-600">✓ Critical Operations</div>}
+                {permissions.hasPermission('security:manage') && <div className="text-green-600">✓ Security Access</div>}
+                {permissions.isSuperAdmin && <div className="text-green-600">✓ Super Admin</div>}
               </div>
             </div>
           </div>

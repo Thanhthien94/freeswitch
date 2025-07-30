@@ -2,9 +2,9 @@
 
 // API Client Configuration
 // For Docker: Frontend runs on :3002, Backend on :3000
-// Browser always uses localhost (Docker port mapping), Server uses container name
+// Browser uses environment variable or fallback, Server uses container name
 const API_BASE_URL = typeof window !== 'undefined'
-  ? 'http://localhost:3000/api/v1'  // Browser: use localhost (Docker port mapping)
+  ? (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1')  // Browser: use env var
   : 'http://nestjs-api:3000/api/v1'; // Server-side: use container name
 
 // Request configuration type

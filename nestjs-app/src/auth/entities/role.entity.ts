@@ -16,23 +16,17 @@ import { Domain } from '../../freeswitch/entities/domain.entity';
 import { UserRole } from './user-role.entity';
 
 export enum RoleType {
-  GLOBAL = 'global',
-  DOMAIN = 'domain',
-  DEPARTMENT = 'department',
-  TEAM = 'team',
+  SYSTEM = 'SYSTEM',
+  DOMAIN = 'DOMAIN',
+  CUSTOM = 'CUSTOM',
 }
 
 export enum RoleLevel {
-  SUPER_ADMIN = 0,
-  SYSTEM_ADMIN = 10,
-  DOMAIN_ADMIN = 20,
-  DEPARTMENT_MANAGER = 30,
-  TEAM_LEAD = 40,
-  SUPERVISOR = 50,
-  SENIOR_AGENT = 60,
-  AGENT = 70,
-  USER = 80,
-  GUEST = 90,
+  SUPERADMIN = 'SUPERADMIN',
+  ADMIN = 'ADMIN',
+  MANAGER = 'MANAGER',
+  USER = 'USER',
+  GUEST = 'GUEST',
 }
 
 @Entity('roles')
@@ -42,8 +36,8 @@ export enum RoleLevel {
 @Index(['isActive'])
 @Index(['domainId'])
 export class Role {
-  @Column({ primary: true, length: 50 })
-  id: string;
+  @PrimaryGeneratedColumn()
+  id: number;
 
   @Column({ length: 100 })
   name: string;
@@ -77,10 +71,6 @@ export class Role {
   // Domain association (null for global roles)
   @Column({ name: 'domain_id', nullable: true })
   domainId: string;
-
-  @ManyToOne(() => Domain, { nullable: true })
-  @JoinColumn({ name: 'domain_id' })
-  domain: Domain;
 
   // Role hierarchy
   @Column({ name: 'parent_role_id', nullable: true })
@@ -124,14 +114,14 @@ export class Role {
 
   // Computed properties
   get isGlobal(): boolean {
-    return this.type === RoleType.GLOBAL;
+    return this.type === RoleType.SYSTEM;
   }
 
   get isDomainSpecific(): boolean {
-    return this.type !== RoleType.GLOBAL && this.domainId !== null;
+    return this.type !== RoleType.SYSTEM && this.domainId !== null;
   }
 
-  get hierarchyLevel(): number {
+  get hierarchyLevel(): string {
     return this.level;
   }
 
@@ -141,11 +131,25 @@ export class Role {
   }
 
   isHigherThan(otherRole: Role): boolean {
-    return this.level < otherRole.level;
+    const levelOrder = {
+      [RoleLevel.SUPERADMIN]: 0,
+      [RoleLevel.ADMIN]: 1,
+      [RoleLevel.MANAGER]: 2,
+      [RoleLevel.USER]: 3,
+      [RoleLevel.GUEST]: 4,
+    };
+    return levelOrder[this.level] < levelOrder[otherRole.level];
   }
 
   isLowerThan(otherRole: Role): boolean {
-    return this.level > otherRole.level;
+    const levelOrder = {
+      [RoleLevel.SUPERADMIN]: 0,
+      [RoleLevel.ADMIN]: 1,
+      [RoleLevel.MANAGER]: 2,
+      [RoleLevel.USER]: 3,
+      [RoleLevel.GUEST]: 4,
+    };
+    return levelOrder[this.level] > levelOrder[otherRole.level];
   }
 
   // Static methods for predefined roles
@@ -157,7 +161,7 @@ export class Role {
     return {
       name,
       level,
-      type: RoleType.GLOBAL,
+      type: RoleType.SYSTEM,
       isSystem: true,
       description: description || `System role: ${name}`,
     };

@@ -35,7 +35,7 @@ import {
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { useAuth } from '@/hooks/useAuth';
+import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 
 import { PermissionGate } from '@/components/auth/PermissionGate';
 
@@ -225,7 +225,7 @@ const navigationItems = [
 
 export function AppSidebar() {
   const pathname = usePathname();
-  const { user } = useAuth();
+  const { user } = useEnhancedAuth();
 
   return (
     <Sidebar>
@@ -247,6 +247,17 @@ export function AppSidebar() {
               <SidebarMenu>
                 {group.items.map((item) => {
                   const isActive = pathname === item.url;
+
+                  // Check if user meets all requirements for this menu item
+                  const meetsRequirements = () => {
+                    // For now, we'll simplify and only check permissions
+                    // TODO: Implement clearance level, business hours, and role checks
+                    return true;
+                  };
+
+                  if (!meetsRequirements()) {
+                    return null;
+                  }
 
                   return (
                     <PermissionGate

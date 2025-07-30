@@ -13,11 +13,11 @@ import {
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Bell, LogOut, Settings, User } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/hooks/useAuth';
+import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 
 export function Header() {
   const router = useRouter();
-  const { user, logout: authLogout } = useAuth();
+  const { user, logout: authLogout } = useEnhancedAuth();
 
   return (
     <header className="flex h-16 items-center justify-between border-b px-6">

@@ -25,7 +25,7 @@ export class UserRole {
   userId: number;
 
   @Column({ name: 'role_id' })
-  roleId: string;
+  roleId: number;
 
   @Column({ name: 'is_active', default: true })
   isActive: boolean;
@@ -34,14 +34,14 @@ export class UserRole {
   isPrimary: boolean;
 
   // Time-based access
-  @Column({ name: 'granted_at', type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
+  @Column({ name: 'assigned_at', type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
   assignedAt: Date;
 
   @Column({ name: 'expires_at', type: 'timestamptz', nullable: true })
   expiresAt: Date;
 
   // Context and constraints
-  @Column({ name: 'granted_by', nullable: true })
+  @Column({ name: 'assigned_by', nullable: true })
   assignedBy: string;
 
   // Audit fields
@@ -80,7 +80,7 @@ export class UserRole {
   // Static methods
   static createUserRole(
     userId: number,
-    roleId: string,
+    roleId: number,
     assignedBy: string,
     options?: {
       isPrimary?: boolean;

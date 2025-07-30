@@ -1,6 +1,6 @@
 import React from 'react';
-import { usePermissions, PermissionHookResult } from '@/hooks/usePermissions';
-import { useAuth } from '@/hooks/useAuth';
+import { useEnhancedPermissions, EnhancedPermissionHookResult } from '@/hooks/useEnhancedPermissions';
+import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 import { User } from '@/services/auth.service';
 
 interface PermissionGateProps {
@@ -25,7 +25,7 @@ interface PermissionGateProps {
   requireBusinessHours?: boolean;
   
   // Custom authorization function
-  customAuth?: (user: User, permissions: PermissionHookResult) => boolean;
+  customAuth?: (user: User, permissions: EnhancedPermissionHookResult) => boolean;
   
   // Fallback component when access is denied
   fallback?: React.ReactNode;
@@ -52,8 +52,8 @@ export const PermissionGate: React.FC<PermissionGateProps> = ({
   showLoading = false,
   invert = false,
 }) => {
-  const { user, isAuthenticated, isLoading } = useAuth();
-  const permissions = usePermissions();
+  const { user, isAuthenticated, isLoading } = useEnhancedAuth();
+  const permissions = useEnhancedPermissions();
 
   // Show loading if requested
   if (isLoading && showLoading) {

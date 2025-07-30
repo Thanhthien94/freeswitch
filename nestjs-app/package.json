@@ -20,7 +20,10 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "migration:generate": "typeorm-ts-node-commonjs migration:generate -d src/database/data-source.ts",
     "migration:run": "typeorm-ts-node-commonjs migration:run -d src/database/data-source.ts",
-    "migration:revert": "typeorm-ts-node-commonjs migration:revert -d src/database/data-source.ts"
+    "migration:revert": "typeorm-ts-node-commonjs migration:revert -d src/database/data-source.ts",
+    "db:seed": "ts-node src/database/seeds/index.ts",
+    "db:init": "npm run migration:run && npm run db:seed",
+    "db:reset": "npm run migration:revert && npm run db:init"
   },
   "dependencies": {
     "@nestjs-modules/ioredis": "^2.0.2",
@@ -61,7 +64,6 @@
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.8.1",
     "socket.io": "^4.8.1",
-    "typeorm": "^0.3.25",
     "winston": "^3.10.0",
     "xml2js": "^0.6.2"
   },
@@ -90,6 +92,8 @@
     "ts-loader": "^9.4.3",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
+    "typeorm": "^0.3.25",
+    "typeorm-ts-node-commonjs": "^0.3.20",
     "typescript": "^5.8.3"
   },
   "jest": {

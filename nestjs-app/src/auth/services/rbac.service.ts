@@ -69,7 +69,7 @@ export class RBACService {
 
   async assignRole(
     userId: number,
-    roleId: string,
+    roleId: number,
     assignedBy: string | number,
     options?: RoleAssignmentOptions,
   ): Promise<UserRole> {
@@ -131,7 +131,7 @@ export class RBACService {
 
   async revokeRole(
     userId: number,
-    roleId: string,
+    roleId: number,
     revokedBy: string,
     reason?: string,
   ): Promise<void> {
@@ -256,10 +256,18 @@ export class RBACService {
   async isHigherRole(userId: number, targetUserId: number): Promise<boolean> {
     const userRoles = await this.getUserRoles(userId);
     const targetUserRoles = await this.getUserRoles(targetUserId);
-    
-    const userHighestLevel = Math.min(...userRoles.map(ur => ur.role.level));
-    const targetHighestLevel = Math.min(...targetUserRoles.map(ur => ur.role.level));
-    
+
+    const levelOrder = {
+      [RoleLevel.SUPERADMIN]: 0,
+      [RoleLevel.ADMIN]: 1,
+      [RoleLevel.MANAGER]: 2,
+      [RoleLevel.USER]: 3,
+      [RoleLevel.GUEST]: 4,
+    };
+
+    const userHighestLevel = Math.min(...userRoles.map(ur => levelOrder[ur.role.level]));
+    const targetHighestLevel = Math.min(...targetUserRoles.map(ur => levelOrder[ur.role.level]));
+
     return userHighestLevel < targetHighestLevel;
   }
 
@@ -309,7 +317,7 @@ export class RBACService {
     await this.auditLogRepository.save(auditLog);
   }
 
-  async getRoleHierarchy(roleId: string): Promise<Role[]> {
+  async getRoleHierarchy(roleId: number): Promise<Role[]> {
     const role = await this.roleRepository.findOne({
       where: { id: roleId },
       relations: ['parentRole', 'childRoles'],

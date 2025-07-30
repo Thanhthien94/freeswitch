@@ -14,7 +14,7 @@ import {
 import { Exclude } from 'class-transformer';
 import * as bcrypt from 'bcrypt';
 import { Domain } from '../freeswitch/entities/domain.entity';
-import { UserRole as UserRoleEntity } from '../auth/entities/user-role.entity';
+import { UserRole } from '../auth/entities/user-role.entity';
 
 // Legacy enum removed - now using RBAC system
 
@@ -119,8 +119,8 @@ export class User {
   password?: string;
 
   // Relations
-  @OneToMany(() => UserRoleEntity, (userRole) => userRole.user)
-  userRoles: UserRoleEntity[];
+  @OneToMany(() => UserRole, (userRole) => userRole.user)
+  userRoles: UserRole[];
 
   // Computed properties for compatibility
   get roles(): any[] {
@@ -161,7 +161,7 @@ export class User {
   }
 
   // Get active roles - safe method
-  getActiveRoles(): UserRoleEntity[] {
+  getActiveRoles(): UserRole[] {
     if (!this.userRoles || !Array.isArray(this.userRoles)) {
       return [];
     }
@@ -175,7 +175,7 @@ export class User {
   }
 
   // Get primary role - safe method
-  getPrimaryRole(): UserRoleEntity | null {
+  getPrimaryRole(): UserRole | null {
     if (!this.userRoles || !Array.isArray(this.userRoles)) {
       return null;
     }

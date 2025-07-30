@@ -9,14 +9,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, Phone, Eye, EyeOff } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
+import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 
 export const LoginForm: React.FC = () => {
   const [emailOrUsername, setEmailOrUsername] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const { login, isAuthenticated, isLoading, error, clearError } = useAuth();
+  const { login, isAuthenticated, isLoading, error, clearError } = useEnhancedAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -41,7 +41,7 @@ export const LoginForm: React.FC = () => {
       await login({ emailOrUsername, password, rememberMe });
       // Redirect will happen automatically via useEffect
     } catch (err) {
-      // Error is handled by useAuth hook
+      // Error is handled by useEnhancedAuth hook
       console.error('Login failed:', err);
     }
   };
