@@ -70,7 +70,7 @@ export class RBACService {
   async assignRole(
     userId: number,
     roleId: string,
-    assignedBy: string,
+    assignedBy: string | number,
     options?: RoleAssignmentOptions,
   ): Promise<UserRole> {
     // Validate user exists
@@ -110,11 +110,9 @@ export class RBACService {
     const userRole = this.userRoleRepository.create({
       userId,
       roleId,
-      grantedBy: assignedBy,
+      assignedBy: typeof assignedBy === 'string' ? assignedBy : assignedBy.toString(), // Convert to string
       isPrimary: options?.isPrimary || false,
       expiresAt: options?.expiresAt,
-      grantReason: options?.reason,
-      constraints: options?.constraints,
     });
 
     const savedUserRole = await this.userRoleRepository.save(userRole);
@@ -146,7 +144,7 @@ export class RBACService {
       throw new NotFoundException('User role assignment not found');
     }
 
-    userRole.revoke(revokedBy, reason);
+    userRole.isActive = false;
     await this.userRoleRepository.save(userRole);
 
     // Audit log
@@ -168,7 +166,7 @@ export class RBACService {
     return this.userRoleRepository.find({
       where: whereCondition,
       relations: ['role', 'role.permissions'],
-      order: { isPrimary: 'DESC', grantedAt: 'DESC' },
+      order: { isPrimary: 'DESC', assignedAt: 'DESC' },
     });
   }
 

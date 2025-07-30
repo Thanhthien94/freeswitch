@@ -18,8 +18,8 @@ import { Role } from './role.entity';
 @Index(['isActive'])
 @Index(['expiresAt'])
 export class UserRole {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+  @PrimaryGeneratedColumn()
+  id: number;
 
   @Column({ name: 'user_id' })
   userId: number;
@@ -35,23 +35,14 @@ export class UserRole {
 
   // Time-based access
   @Column({ name: 'granted_at', type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
-  grantedAt: Date;
+  assignedAt: Date;
 
   @Column({ name: 'expires_at', type: 'timestamptz', nullable: true })
   expiresAt: Date;
 
   // Context and constraints
   @Column({ name: 'granted_by', nullable: true })
-  grantedBy: string;
-
-  @Column({ name: 'grant_reason', length: 255, nullable: true })
-  grantReason: string;
-
-  @Column({ type: 'jsonb', nullable: true })
-  constraints: Record<string, any>;
-
-  @Column({ type: 'jsonb', nullable: true })
-  context: Record<string, any>;
+  assignedBy: string;
 
   // Audit fields
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
@@ -59,15 +50,6 @@ export class UserRole {
 
   @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
   updatedAt: Date;
-
-  @Column({ name: 'revoked_at', type: 'timestamptz', nullable: true })
-  revokedAt: Date;
-
-  @Column({ name: 'revoked_by', nullable: true })
-  revokedBy: string;
-
-  @Column({ name: 'revoke_reason', length: 255, nullable: true })
-  revokeReason: string;
 
   // Relations
   @ManyToOne(() => User, (user) => user.userRoles)
@@ -84,7 +66,7 @@ export class UserRole {
   }
 
   get isValid(): boolean {
-    return this.isActive && !this.isExpired && !this.revokedAt;
+    return this.isActive && !this.isExpired;
   }
 
   get daysUntilExpiry(): number | null {
@@ -93,43 +75,24 @@ export class UserRole {
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   }
 
-  // Methods
-  revoke(revokedBy: string, reason?: string): void {
-    this.isActive = false;
-    this.revokedAt = new Date();
-    this.revokedBy = revokedBy;
-    this.revokeReason = reason;
-  }
 
-  extend(newExpiryDate: Date, extendedBy: string): void {
-    this.expiresAt = newExpiryDate;
-    this.context = {
-      ...this.context,
-      lastExtendedBy: extendedBy,
-      lastExtendedAt: new Date(),
-    };
-  }
 
   // Static methods
   static createUserRole(
     userId: number,
     roleId: string,
-    grantedBy: string,
+    assignedBy: string,
     options?: {
       isPrimary?: boolean;
       expiresAt?: Date;
-      reason?: string;
-      constraints?: Record<string, any>;
     }
   ): Partial<UserRole> {
     return {
       userId,
       roleId,
-      grantedBy,
+      assignedBy,
       isPrimary: options?.isPrimary || false,
       expiresAt: options?.expiresAt,
-      grantReason: options?.reason,
-      constraints: options?.constraints,
     };
   }
 }

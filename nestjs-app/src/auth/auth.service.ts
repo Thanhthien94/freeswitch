@@ -80,15 +80,23 @@ export class AuthService {
 
       try {
         // Load user with relations separately
+        this.logger.debug(`Loading roles for user ID: ${user.id}`);
         const userWithRoles = await this.userRepository.findOne({
           where: { id: user.id },
           relations: ['userRoles', 'userRoles.role'],
         });
 
+        this.logger.debug(`User with roles found: ${!!userWithRoles}, userRoles count: ${userWithRoles?.userRoles?.length || 0}`);
+
         if (userWithRoles && userWithRoles.userRoles) {
           const activeRoles = userWithRoles.userRoles.filter(ur => ur.isActive);
+          this.logger.debug(`Active roles count: ${activeRoles.length}`);
+          this.logger.debug(`Active roles: ${JSON.stringify(activeRoles.map(ur => ({ id: ur.id, roleId: ur.roleId, roleName: ur.role?.name, isPrimary: ur.isPrimary })))}`);
+
           roles = activeRoles.map(ur => ur.role.name);
           primaryRole = activeRoles.find(ur => ur.isPrimary)?.role?.name || roles[0] || 'user';
+
+          this.logger.debug(`Final roles: ${JSON.stringify(roles)}, primaryRole: ${primaryRole}`);
 
           // Assign permissions based on roles - compatible with frontend logic
           if (roles.includes('superadmin')) {
@@ -109,7 +117,8 @@ export class AuthService {
           }
         }
       } catch (roleError) {
-        this.logger.warn('Error loading roles, using defaults:', roleError.message);
+        this.logger.error('Error loading roles, using defaults:', roleError.message);
+        this.logger.error('Role error stack:', roleError.stack);
         roles = ['user'];
         permissions = ['read'];
         primaryRole = 'user';
@@ -259,8 +268,8 @@ export class AuthService {
 
   private async getDefaultRoleId(): Promise<string> {
     // This would fetch the default role ID from database
-    // For now, return a placeholder
-    return 'default-user-role-id';
+    // For now, return user role ID
+    return 'role-user';
   }
 
   private generateSessionId(): string {

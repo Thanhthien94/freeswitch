@@ -42,7 +42,7 @@ export enum RoleLevel {
 @Index(['isActive'])
 @Index(['domainId'])
 export class Role {
-  @PrimaryGeneratedColumn('uuid')
+  @Column({ primary: true, length: 50 })
   id: string;
 
   @Column({ length: 100 })
@@ -84,7 +84,7 @@ export class Role {
 
   // Role hierarchy
   @Column({ name: 'parent_role_id', nullable: true })
-  parentRoleId: string;
+  parentRoleId: number;
 
   @ManyToOne(() => Role, (role) => role.childRoles, { nullable: true })
   @JoinColumn({ name: 'parent_role_id' })
