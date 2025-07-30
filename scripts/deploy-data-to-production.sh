@@ -8,7 +8,21 @@ set -e
 # Configuration
 PRODUCTION_SERVER="42.96.20.37"
 PRODUCTION_USER="root"
-LATEST_EXPORT=$(ls -t ./backups/production-sync/ | head -n1)
+
+# Check if production-sync directory exists
+if [[ ! -d "./backups/production-sync" ]]; then
+    echo "❌ Error: ./backups/production-sync directory not found"
+    echo "Please run ./scripts/export-data-for-production.sh first"
+    exit 1
+fi
+
+LATEST_EXPORT=$(ls -t ./backups/production-sync/ 2>/dev/null | head -n1)
+if [[ -z "$LATEST_EXPORT" ]]; then
+    echo "❌ Error: No export found in ./backups/production-sync/"
+    echo "Please run ./scripts/export-data-for-production.sh first"
+    exit 1
+fi
+
 EXPORT_DIR="./backups/production-sync/$LATEST_EXPORT"
 
 echo "🚀 FreeSWITCH PBX - Deploy Data to Production"
@@ -61,26 +75,29 @@ echo ""
 echo "📥 Importing data on production server..."
 echo "======================================="
 
+# Get the export directory name for SSH
+EXPORT_BASENAME=$(basename "$EXPORT_DIR")
+
 # Import data on production server
-ssh "$PRODUCTION_USER@$PRODUCTION_SERVER" << EOF
+ssh "$PRODUCTION_USER@$PRODUCTION_SERVER" "
 set -e
 
-cd /tmp/$(basename $EXPORT_DIR)
+cd /tmp/$EXPORT_BASENAME
 
-echo "🔍 Verifying files on production server..."
+echo '🔍 Verifying files on production server...'
 ls -la *.sql
 
-echo ""
-echo "📊 Running data verification..."
+echo ''
+echo '📊 Running data verification...'
 ./verify-data.sh
 
-echo ""
-echo "🚀 Starting data import..."
-POSTGRES_PASSWORD="$PROD_DB_PASSWORD" ./import-to-production.sh
+echo ''
+echo '🚀 Starting data import...'
+POSTGRES_PASSWORD='$PROD_DB_PASSWORD' ./import-to-production.sh
 
-echo ""
-echo "✅ Data import completed on production server!"
-EOF
+echo ''
+echo '✅ Data import completed on production server!'
+"
 
 if [[ $? -eq 0 ]]; then
     echo ""
@@ -115,6 +132,6 @@ else
     echo ""
     echo "🔗 Access production server to investigate:"
     echo "ssh $PRODUCTION_USER@$PRODUCTION_SERVER"
-    echo "cd /tmp/$(basename $EXPORT_DIR)"
+    echo "cd /tmp/$EXPORT_BASENAME"
     exit 1
 fi

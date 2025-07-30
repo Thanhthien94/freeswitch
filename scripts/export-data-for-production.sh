@@ -19,17 +19,30 @@ echo ""
 # Create export directory
 mkdir -p "$EXPORT_DIR"
 
-# Function to export table data
+# Function to export full database schema
+export_schema() {
+    echo "🏗️  Exporting database schema..."
+
+    docker-compose exec -T postgres pg_dump \
+        -h localhost -p 5432 -U pbx_user -d pbx_db \
+        --schema-only --clean --if-exists --no-owner --no-privileges \
+        > "$EXPORT_DIR/00_schema.sql" 2>/dev/null
+
+    echo "✅ Database schema exported to 00_schema.sql"
+}
+
+# Function to export table schema and data
 export_table() {
     local table_name=$1
     local description=$2
 
     echo "📋 Exporting $description ($table_name)..."
 
-    # Check if table has data
+    # Check if table exists and has data
     local count=$(docker-compose exec -T postgres psql -U pbx_user -d pbx_db -t -c "SELECT COUNT(*) FROM $table_name;" 2>/dev/null | tr -d ' \n' || echo "0")
 
     if [[ "$count" -gt 0 ]]; then
+        # Export only data (schema is in 00_schema.sql)
         docker-compose exec -T postgres pg_dump \
             -h localhost -p 5432 -U pbx_user -d pbx_db \
             --data-only --inserts --table="$table_name" \
@@ -49,6 +62,11 @@ ESSENTIAL_TABLES=(
     "freeswitch_domains:FreeSWITCH Domains"
     "users:Users"
     "permissions:Permissions"
+    "roles:Roles"
+    "role_permissions:Role Permissions"
+    "user_roles:User Roles"
+    "user_attributes:User Attributes"
+    "policies:Policies"
     "freeswitch_sip_profiles:SIP Profiles"
     "freeswitch_gateways:Gateways"
     "freeswitch_dialplans:Dialplans"
@@ -56,8 +74,15 @@ ESSENTIAL_TABLES=(
     "migrations:Database Migrations"
 )
 
-echo "📊 Exporting Essential Data for Production..."
-echo "==========================================="
+echo "📊 Exporting Database Schema and Data for Production..."
+echo "===================================================="
+
+# Export full database schema first
+export_schema
+
+echo ""
+echo "📋 Exporting Essential Data..."
+echo "============================="
 
 # Export essential tables
 for table_info in "${ESSENTIAL_TABLES[@]}"; do
@@ -115,7 +140,11 @@ import_data() {
     fi
 }
 
-# Import essential data in correct order
+# Import schema first, then data in correct order
+echo "🏗️  Importing Database Schema..."
+import_data "00_schema.sql" "Database Schema"
+
+echo ""
 echo "📊 Importing Essential Data..."
 
 # Core configuration first
@@ -126,7 +155,12 @@ import_data "global_network_configs.sql" "Global Network Configuration"
 # Domain and user management
 import_data "freeswitch_domains.sql" "FreeSWITCH Domains"
 import_data "permissions.sql" "Permissions"
+import_data "roles.sql" "Roles"
 import_data "users.sql" "Users"
+import_data "role_permissions.sql" "Role Permissions"
+import_data "user_roles.sql" "User Roles"
+import_data "user_attributes.sql" "User Attributes"
+import_data "policies.sql" "Policies"
 
 # FreeSWITCH configuration
 import_data "freeswitch_sip_profiles.sql" "SIP Profiles"
@@ -202,10 +236,13 @@ cat > "$EXPORT_DIR/README.md" << EOF
 
 ## 🎯 Purpose
 
-This export contains essential data from development database for syncing to production database.
-Production database should already have the schema (from migrations).
+This export contains complete database schema and essential data from development database for syncing to production database.
+The export includes both schema creation and data insertion, so it can be imported to an empty database.
 
 ## 📦 Contents
+
+### Schema File
+- \`00_schema.sql\` - Complete database schema (tables, indexes, constraints)
 
 ### Essential Data Files
 - \`config_categories.sql\` - Configuration categories
@@ -244,10 +281,11 @@ POSTGRES_PASSWORD=your_production_password ./import-to-production.sh
 
 ## ⚠️ Important Notes
 
-1. **Production Database**: Must already have schema (run migrations first)
-2. **Empty Database**: This is for syncing to empty production database
+1. **Empty Database**: This export can be imported to an empty production database
+2. **Schema Included**: No need to run migrations first - schema is included
 3. **Password**: Set POSTGRES_PASSWORD environment variable
 4. **Network**: Update production IP in import script if needed
+5. **Clean Import**: Use \`--clean\` flag to drop existing objects if needed
 
 ## 🔧 Configuration
 
@@ -286,4 +324,4 @@ echo "   cd /tmp/$(basename $EXPORT_DIR)"
 echo "   POSTGRES_PASSWORD=your_password ./import-to-production.sh"
 echo "4. Verify data integrity"
 echo ""
-echo "⚠️  Important: Ensure production database has schema (run migrations first)!"
+echo "✅ Schema included: No need to run migrations first - complete schema is exported!"
