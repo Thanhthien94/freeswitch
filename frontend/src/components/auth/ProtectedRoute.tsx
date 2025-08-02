@@ -26,8 +26,7 @@ interface ProtectedRouteProps {
   // Security clearance protection
   requireMinimumClearance?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
   
-  // Business hours protection
-  requireBusinessHours?: boolean;
+
   
   // Custom authorization function
   customAuth?: (user: User, permissions: PermissionHookResult) => boolean;
@@ -48,7 +47,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   requireDomain,
   requireOwnDomain,
   requireMinimumClearance,
-  requireBusinessHours,
+
   customAuth,
   fallback,
   redirectTo = '/login',
@@ -114,10 +113,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return renderUnauthorized(`Minimum security clearance '${requireMinimumClearance}' is required`);
   }
 
-  // Check business hours
-  if (requireBusinessHours && !isBusinessHours()) {
-    return renderUnauthorized('Access is only allowed during business hours (9 AM - 6 PM, Mon-Fri)');
-  }
+
 
   // Check custom authorization
   if (customAuth && !customAuth(user, permissions)) {
@@ -153,14 +149,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
   }
 
-  function isBusinessHours(): boolean {
-    const now = new Date();
-    const hour = now.getHours();
-    const day = now.getDay();
-    
-    // Monday to Friday, 9 AM to 6 PM
-    return day >= 1 && day <= 5 && hour >= 9 && hour < 18;
-  }
+
 };
 
 // Convenience components for common protection patterns
@@ -200,16 +189,11 @@ export const CriticalSecurityRoute: React.FC<{ children: React.ReactNode }> = ({
   </ProtectedRoute>
 );
 
-export const BusinessHoursRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <ProtectedRoute requireBusinessHours>
-    {children}
-  </ProtectedRoute>
-);
+
 
 export const CDRRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <ProtectedRoute 
+  <ProtectedRoute
     requireAnyPermission={['cdr:read', 'cdr:execute']}
-    requireBusinessHours
   >
     {children}
   </ProtectedRoute>
@@ -225,10 +209,9 @@ export const RecordingRoute: React.FC<{ children: React.ReactNode }> = ({ childr
 );
 
 export const BillingRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <ProtectedRoute 
+  <ProtectedRoute
     requireAnyPermission={['billing:read', 'billing:manage']}
     requireMinimumClearance="HIGH"
-    requireBusinessHours
   >
     {children}
   </ProtectedRoute>

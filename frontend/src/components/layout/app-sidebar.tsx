@@ -35,7 +35,7 @@ import {
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
+import { useAuth } from '@/hooks/useAuth';
 
 import { PermissionGate } from '@/components/auth/PermissionGate';
 
@@ -66,7 +66,6 @@ const navigationItems = [
         url: '/dashboard/cdr',
         icon: Phone,
         permission: 'cdr:read',
-        requireBusinessHours: true,
       },
       {
         title: 'Recordings',
@@ -150,7 +149,6 @@ const navigationItems = [
         icon: DollarSign,
         permission: 'billing:read',
         requireMinimumClearance: 'HIGH',
-        requireBusinessHours: true,
         requireAnyRole: ['SuperAdmin', 'BillingAdmin', 'DomainAdmin'],
       },
     ],
@@ -225,7 +223,7 @@ const navigationItems = [
 
 export function AppSidebar() {
   const pathname = usePathname();
-  const { user } = useEnhancedAuth();
+  const { user } = useAuth();
 
   return (
     <Sidebar>

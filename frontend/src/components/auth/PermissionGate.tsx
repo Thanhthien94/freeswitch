@@ -1,6 +1,6 @@
 import React from 'react';
-import { useEnhancedPermissions, EnhancedPermissionHookResult } from '@/hooks/useEnhancedPermissions';
-import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
+import { usePermissions, PermissionHookResult } from '@/hooks/usePermissions';
+import { useAuth } from '@/hooks/useAuth';
 import { User } from '@/services/auth.service';
 
 interface PermissionGateProps {
@@ -21,11 +21,10 @@ interface PermissionGateProps {
   // Security clearance gates
   requireMinimumClearance?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
   
-  // Business hours gate
-  requireBusinessHours?: boolean;
+
   
   // Custom authorization function
-  customAuth?: (user: User, permissions: EnhancedPermissionHookResult) => boolean;
+  customAuth?: (user: User, permissions: PermissionHookResult) => boolean;
   
   // Fallback component when access is denied
   fallback?: React.ReactNode;
@@ -46,14 +45,14 @@ export const PermissionGate: React.FC<PermissionGateProps> = ({
   requireDomain,
   requireOwnDomain,
   requireMinimumClearance,
-  requireBusinessHours,
+
   customAuth,
   fallback = null,
   showLoading = false,
   invert = false,
 }) => {
-  const { user, isAuthenticated, isLoading } = useEnhancedAuth();
-  const permissions = useEnhancedPermissions();
+  const { user, isAuthenticated, isLoading } = useAuth();
+  const permissions = usePermissions();
 
   // Show loading if requested
   if (isLoading && showLoading) {
@@ -99,10 +98,7 @@ export const PermissionGate: React.FC<PermissionGateProps> = ({
     hasAccess = false;
   }
 
-  // Check business hours
-  if (requireBusinessHours && !isBusinessHours()) {
-    hasAccess = false;
-  }
+
 
   // Check custom authorization
   if (customAuth && !customAuth(user, permissions)) {
@@ -116,14 +112,7 @@ export const PermissionGate: React.FC<PermissionGateProps> = ({
 
   return hasAccess ? <>{children}</> : <>{fallback}</>;
 
-  function isBusinessHours(): boolean {
-    const now = new Date();
-    const hour = now.getHours();
-    const day = now.getDay();
-    
-    // Monday to Friday, 9 AM to 6 PM
-    return day >= 1 && day <= 5 && hour >= 9 && hour < 18;
-  }
+
 };
 
 // Convenience components for common permission patterns
@@ -181,14 +170,7 @@ export const CriticalSecurityGate: React.FC<{ children: React.ReactNode; fallbac
   </PermissionGate>
 );
 
-export const BusinessHoursGate: React.FC<{ children: React.ReactNode; fallback?: React.ReactNode }> = ({ 
-  children, 
-  fallback 
-}) => (
-  <PermissionGate requireBusinessHours fallback={fallback}>
-    {children}
-  </PermissionGate>
-);
+
 
 // Resource-specific gates
 export const UserManagementGate: React.FC<{ 
@@ -201,14 +183,13 @@ export const UserManagementGate: React.FC<{
   </PermissionGate>
 );
 
-export const CDRGate: React.FC<{ 
-  children: React.ReactNode; 
+export const CDRGate: React.FC<{
+  children: React.ReactNode;
   action?: 'read' | 'execute' | 'delete';
   fallback?: React.ReactNode;
 }> = ({ children, action = 'read', fallback }) => (
-  <PermissionGate 
-    requirePermissions={[`cdr:${action}`]} 
-    requireBusinessHours 
+  <PermissionGate
+    requirePermissions={[`cdr:${action}`]}
     fallback={fallback}
   >
     {children}
@@ -229,15 +210,14 @@ export const RecordingGate: React.FC<{
   </PermissionGate>
 );
 
-export const BillingGate: React.FC<{ 
-  children: React.ReactNode; 
+export const BillingGate: React.FC<{
+  children: React.ReactNode;
   action?: 'read' | 'manage';
   fallback?: React.ReactNode;
 }> = ({ children, action = 'read', fallback }) => (
-  <PermissionGate 
-    requirePermissions={[`billing:${action}`]} 
+  <PermissionGate
+    requirePermissions={[`billing:${action}`]}
     requireMinimumClearance="HIGH"
-    requireBusinessHours
     fallback={fallback}
   >
     {children}

@@ -11,7 +11,7 @@ import {
   AdminGate,
   ManagerGate,
   HighSecurityGate,
-  BusinessHoursGate,
+
   CDRGate,
   RecordingGate,
   BillingGate,
@@ -179,12 +179,10 @@ export const RoleBasedDashboard: React.FC = () => {
                 Performance Reports
               </Button>
 
-              <BusinessHoursGate>
-                <Button variant="outline" className="w-full justify-start">
-                  <FileText className="mr-2 h-4 w-4" />
-                  Generate Reports
-                </Button>
-              </BusinessHoursGate>
+              <Button variant="outline" className="w-full justify-start">
+                <FileText className="mr-2 h-4 w-4" />
+                Generate Reports
+              </Button>
             </CardContent>
           </Card>
         </ManagerGate>

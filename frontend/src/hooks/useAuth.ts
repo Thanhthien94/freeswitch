@@ -33,7 +33,7 @@ export const useAuth = () => {
           error: null,
           token,
         });
-      } catch {
+      } catch (error) {
         setAuthState({
           user: null,
           isAuthenticated: false,

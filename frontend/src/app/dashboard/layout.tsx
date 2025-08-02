@@ -1,5 +1,5 @@
 import { DashboardLayout } from '@/components/layout/dashboard-layout';
-import { ProtectedPage } from '@/components/auth/UnifiedAuthGuard';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 
 export default function Layout({
   children,
@@ -7,8 +7,8 @@ export default function Layout({
   children: React.ReactNode;
 }) {
   return (
-    <ProtectedPage>
+    <ProtectedRoute>
       <DashboardLayout>{children}</DashboardLayout>
-    </ProtectedPage>
+    </ProtectedRoute>
   );
 }

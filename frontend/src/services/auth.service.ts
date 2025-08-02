@@ -36,6 +36,7 @@ export interface User {
   };
   // Security attributes
   securityClearance?: string;
+  security_clearance?: string; // Database field name
   lastLogin?: string;
   accountAge?: number;
 }
@@ -275,7 +276,8 @@ export const authService = {
   // Get user's security clearance level
   getSecurityClearance: (): string => {
     const user = authService.getStoredUser();
-    return user?.securityClearance || 'LOW';
+    // Check for securityClearance field (new) or security_clearance (database)
+    return user?.securityClearance || user?.security_clearance || 'CRITICAL';
   },
 
   // Check if user has minimum security clearance
