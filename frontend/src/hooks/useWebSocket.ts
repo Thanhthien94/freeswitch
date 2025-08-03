@@ -71,8 +71,8 @@ export const useWebSocket = (): UseWebSocketReturn => {
         console.log('🔍 Attempting to get WebSocket token for authenticated user');
 
         try {
-          // Try to get WebSocket token from backend
-          const response = await fetch('/api/v1/auth/websocket-token', {
+          // Try to get WebSocket token from backend via frontend proxy
+          const response = await fetch('/api/auth/websocket-token', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

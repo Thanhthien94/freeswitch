@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
     // Decode cookies to prevent double-encoding
     const cookies = decodeURIComponent(rawCookies)
 
-    console.log('🔍 Frontend /api/v1/auth/websocket-token called')
+    console.log('🔍 Frontend /api/auth/websocket-token called')
     console.log('🔍 Backend URL:', fullUrl)
     console.log('🔍 Raw cookies:', rawCookies)
     console.log('🔍 Decoded cookies to forward:', cookies)
