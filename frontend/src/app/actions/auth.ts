@@ -117,15 +117,18 @@ export async function login(state: FormState, formData: FormData): Promise<FormS
         const [name, value] = nameValue.split('=', 2) // Limit to 2 parts
 
         if (name && value) {
-          // Decode the value to prevent double-encoding
-          const decodedValue = decodeURIComponent(value)
-          cookieStore.set(name.trim(), decodedValue, {
+          // Don't decode the value - keep it as-is from backend
+          const cookieName = name.trim()
+          const cookieValue = value.trim()
+
+          cookieStore.set(cookieName, cookieValue, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
+            secure: false, // Set to false for HTTP production
             sameSite: 'lax',
             path: '/',
+            domain: undefined, // Let browser handle domain
           })
-          console.log('🔍 Set cookie:', name.trim(), '=', decodedValue.substring(0, 20) + '...')
+          console.log('🔍 Set cookie:', cookieName, '=', cookieValue.substring(0, 20) + '...')
         }
       })
     } else {
