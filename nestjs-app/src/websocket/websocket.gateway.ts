@@ -10,9 +10,8 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { Logger, UseGuards, Inject, forwardRef } from '@nestjs/common';
-import { ProfessionalAuthGuard } from '../auth/guards/professional-auth.guard';
 import { EslService } from '../esl/esl.service';
-import { AuthWsMiddleware } from './middleware/auth-ws.middleware';
+import { HybridAuthWsMiddleware } from './middleware/hybrid-auth-ws.middleware';
 
 export interface CallEvent {
   eventType: 'CHANNEL_CREATE' | 'CHANNEL_ANSWER' | 'CHANNEL_HANGUP' | 'CHANNEL_BRIDGE' | 'CHANNEL_UNBRIDGE';
@@ -55,13 +54,13 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
   constructor(
     @Inject(forwardRef(() => EslService))
     private eslService: EslService,
-    private authWsMiddleware: AuthWsMiddleware,
+    private hybridAuthWsMiddleware: HybridAuthWsMiddleware,
   ) {}
 
   afterInit(server: Server) {
-    // Apply authentication middleware to all connections
-    server.use(this.authWsMiddleware.createMiddleware());
-    this.logger.log('WebSocket Gateway initialized with authentication middleware');
+    // Apply hybrid authentication middleware to all connections
+    server.use(this.hybridAuthWsMiddleware.createMiddleware());
+    this.logger.log('WebSocket Gateway initialized with hybrid authentication middleware');
   }
 
   handleConnection(client: Socket) {
@@ -107,14 +106,13 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
     this.server.emit('active-calls', activeCalls);
   }
 
-  // Broadcast system status update
-  broadcastSystemStatus(status: any) {
+  // Broadcast system status update to all clients
+  broadcastSystemStatusToAll(status: any) {
     this.server.emit('system-status', status);
   }
 
   // Handle call control commands from clients
   @SubscribeMessage('call-control')
-  @UseGuards(ProfessionalAuthGuard)
   async handleCallControl(
     @MessageBody() data: { action: string; callId: string; params?: any },
     @ConnectedSocket() client: Socket,
@@ -175,6 +173,13 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
   @SubscribeMessage('get-system-status')
   async handleGetSystemStatus(@ConnectedSocket() client: Socket) {
     try {
+      // Check permissions for system status
+      const user = client.data?.user;
+      if (!user || (!user.permissions?.includes('system:view') && !user.permissions?.includes('*:manage'))) {
+        client.emit('error', { message: 'Insufficient permissions for system status' });
+        return;
+      }
+
       const isConnected = await this.eslService.isConnected();
       const activeCallsCount = this.eslService.getActiveCallsCount();
 
@@ -183,11 +188,68 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
         databaseStatus: 'connected', // TODO: Check database connection
         totalActiveCalls: activeCallsCount,
         timestamp: new Date(),
+        authMethod: client.data?.authMethod || 'none',
+        user: user.isGuest ? 'guest' : user.username,
       };
+
+      this.logger.log(`📊 System status requested by ${user.username} (${client.data?.authMethod})`);
       client.emit('system-status', status);
     } catch (error) {
       this.logger.error('Error getting system status:', error);
       client.emit('error', { message: 'Failed to get system status' });
+    }
+  }
+
+  @SubscribeMessage('subscribe-system-status')
+  async handleSubscribeSystemStatus(@ConnectedSocket() client: Socket) {
+    try {
+      const user = client.data?.user;
+      if (!user || (!user.permissions?.includes('system:view') && !user.permissions?.includes('*:manage'))) {
+        client.emit('error', { message: 'Insufficient permissions for system status subscription' });
+        return;
+      }
+
+      // Add client to system status subscribers
+      client.join('system-status-subscribers');
+      this.logger.log(`📊 Client ${client.id} subscribed to system status updates`);
+
+      // Send initial status
+      await this.handleGetSystemStatus(client);
+    } catch (error) {
+      this.logger.error('Error subscribing to system status:', error);
+      client.emit('error', { message: 'Failed to subscribe to system status' });
+    }
+  }
+
+  @SubscribeMessage('unsubscribe-system-status')
+  async handleUnsubscribeSystemStatus(@ConnectedSocket() client: Socket) {
+    try {
+      client.leave('system-status-subscribers');
+      this.logger.log(`📊 Client ${client.id} unsubscribed from system status updates`);
+      client.emit('system-status-unsubscribed', { success: true });
+    } catch (error) {
+      this.logger.error('Error unsubscribing from system status:', error);
+      client.emit('error', { message: 'Failed to unsubscribe from system status' });
+    }
+  }
+
+  // Broadcast system status to all subscribers
+  broadcastSystemStatus() {
+    try {
+      const isConnected = this.eslService.isConnected();
+      const activeCallsCount = this.eslService.getActiveCallsCount();
+
+      const status = {
+        freeswitchStatus: isConnected ? 'online' : 'offline',
+        databaseStatus: 'connected',
+        totalActiveCalls: activeCallsCount,
+        timestamp: new Date(),
+      };
+
+      this.server.to('system-status-subscribers').emit('system-status-update', status);
+      this.logger.debug('📊 System status broadcasted to subscribers');
+    } catch (error) {
+      this.logger.error('Error broadcasting system status:', error);
     }
   }
 }

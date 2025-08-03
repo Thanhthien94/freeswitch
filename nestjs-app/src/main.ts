@@ -6,6 +6,10 @@ import { WinstonModule } from 'nest-winston';
 import * as winston from 'winston';
 // import * as helmet from 'helmet';
 import * as compression from 'compression';
+import * as session from 'express-session';
+import RedisStore from 'connect-redis';
+import { createClient } from 'redis';
+import { IoAdapter } from '@nestjs/platform-socket.io';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -88,7 +92,128 @@ async function bootstrap() {
     logger,
   });
 
+  // Setup WebSocket adapter
+  app.useWebSocketAdapter(new IoAdapter(app));
+
   const configService = app.get(ConfigService);
+
+  // Setup Redis for session storage with comprehensive monitoring
+  const redisUrl = configService.get('REDIS_URL');
+  const redisHost = configService.get('REDIS_HOST', 'localhost');
+  const redisPort = configService.get('REDIS_PORT', 6379);
+  const redisPassword = configService.get('REDIS_PASSWORD');
+
+  let redisClient: any;
+  let redisConnected = false;
+
+  try {
+    logger.log('🔄 Initializing Redis connection...', 'Bootstrap');
+
+    if (redisUrl) {
+      // Production: Use REDIS_URL
+      logger.log(`🔗 Connecting to Redis via URL: ${redisUrl}`, 'Bootstrap');
+      redisClient = createClient({ url: redisUrl });
+    } else {
+      // Development: Use host/port
+      logger.log(`🔗 Connecting to Redis at ${redisHost}:${redisPort}`, 'Bootstrap');
+      redisClient = createClient({
+        socket: {
+          host: redisHost,
+          port: redisPort,
+        },
+        password: redisPassword,
+      });
+    }
+
+    // Add Redis event listeners for monitoring
+    redisClient.on('connect', () => {
+      logger.log('🟢 Redis client connected', 'Redis');
+    });
+
+    redisClient.on('ready', () => {
+      logger.log('✅ Redis client ready for commands', 'Redis');
+      redisConnected = true;
+    });
+
+    redisClient.on('error', (err: any) => {
+      logger.error('🔴 Redis client error:', err, 'Redis');
+      redisConnected = false;
+    });
+
+    redisClient.on('end', () => {
+      logger.warn('🟡 Redis client connection ended', 'Redis');
+      redisConnected = false;
+    });
+
+    redisClient.on('reconnecting', () => {
+      logger.log('🔄 Redis client reconnecting...', 'Redis');
+    });
+
+    // Connect with timeout
+    const connectTimeout = setTimeout(() => {
+      logger.error('⏰ Redis connection timeout after 10 seconds', 'Redis');
+      throw new Error('Redis connection timeout');
+    }, 10000);
+
+    await redisClient.connect();
+    clearTimeout(connectTimeout);
+
+    // Test Redis connection
+    const pingResult = await redisClient.ping();
+    logger.log(`🏓 Redis ping test: ${pingResult}`, 'Bootstrap');
+
+    logger.log('✅ Redis connected successfully', 'Bootstrap');
+
+    // Setup session middleware with monitoring
+    const sessionStore = new RedisStore({
+      client: redisClient,
+    });
+
+    // Monitor session store events
+    sessionStore.on('connect', () => {
+      logger.log('🟢 Session store connected to Redis', 'Session');
+    });
+
+    sessionStore.on('disconnect', () => {
+      logger.warn('🔴 Session store disconnected from Redis', 'Session');
+    });
+
+    app.use(
+      session({
+        store: sessionStore,
+        secret: configService.get('SESSION_SECRET', 'your-secret-key'),
+        resave: false,
+        saveUninitialized: false,
+        name: 'pbx.session.id', // Custom session name
+        cookie: {
+          secure: configService.get('NODE_ENV') === 'production',
+          httpOnly: true,
+          maxAge: 24 * 60 * 60 * 1000, // 24 hours
+          sameSite: 'lax',
+        },
+      }),
+    );
+
+    logger.log('✅ Session middleware configured with Redis store', 'Bootstrap');
+
+    // Setup periodic Redis health check
+    setInterval(async () => {
+      try {
+        if (redisClient && redisConnected) {
+          const pingResult = await redisClient.ping();
+          if (pingResult === 'PONG') {
+            logger.debug('🏓 Redis health check: OK', 'Redis');
+          }
+        }
+      } catch (error) {
+        logger.error('❌ Redis health check failed:', error, 'Redis');
+        redisConnected = false;
+      }
+    }, 30000); // Check every 30 seconds
+  } catch (error) {
+    logger.error('Redis connection failed, continuing without sessions:', error);
+    // Continue without Redis sessions - JWT still works
+  }
 
   // Security middleware - Disabled for CORS testing
   // app.use(helmet.default({
@@ -122,7 +247,7 @@ async function bootstrap() {
   // Add origins from CORS_ORIGIN environment variable
   const corsOriginEnv = configService.get('CORS_ORIGIN');
   if (corsOriginEnv) {
-    corsOriginEnv.split(',').forEach(origin => {
+    corsOriginEnv.split(',').forEach((origin: string) => {
       corsOrigins.add(origin.trim());
     });
   }

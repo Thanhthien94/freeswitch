@@ -1,10 +1,14 @@
 import { LoginForm } from '@/components/auth/LoginForm';
-import { PublicPage } from '@/components/auth/AuthGuard';
+import { getCurrentUser } from '@/lib/auth';
+import { redirect } from 'next/navigation';
 
-export default function LoginPage() {
-  return (
-    <PublicPage>
-      <LoginForm />
-    </PublicPage>
-  );
+export default async function LoginPage() {
+  // Server-side auth check
+  const user = await getCurrentUser();
+
+  if (user) {
+    redirect('/dashboard');
+  }
+
+  return <LoginForm />;
 }

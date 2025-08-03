@@ -1,11 +1,16 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { EslService } from '../esl/esl.service';
+import { createClient } from 'redis';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class HealthService {
   private readonly logger = new Logger(HealthService.name);
 
-  constructor(private readonly eslService: EslService) {}
+  constructor(
+    private readonly eslService: EslService,
+    private readonly configService: ConfigService,
+  ) {}
 
   async getHealthStatus() {
     const startTime = Date.now();
@@ -135,6 +140,86 @@ export class HealthService {
     } catch (error) {
       this.logger.warn('Failed to get active calls count:', error);
       return 0;
+    }
+  }
+
+  async getRedisHealth() {
+    const startTime = Date.now();
+    let redisClient: any = null;
+
+    try {
+      // Get Redis configuration
+      const redisUrl = this.configService.get('REDIS_URL');
+      const redisHost = this.configService.get('REDIS_HOST', 'localhost');
+      const redisPort = this.configService.get('REDIS_PORT', 6379);
+      const redisPassword = this.configService.get('REDIS_PASSWORD');
+
+      // Create Redis client for health check
+      if (redisUrl) {
+        redisClient = createClient({ url: redisUrl });
+      } else {
+        redisClient = createClient({
+          socket: {
+            host: redisHost,
+            port: redisPort,
+          },
+          password: redisPassword,
+        });
+      }
+
+      // Connect with timeout
+      const connectPromise = redisClient.connect();
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Connection timeout')), 5000);
+      });
+
+      await Promise.race([connectPromise, timeoutPromise]);
+
+      // Test Redis operations
+      const pingResult = await redisClient.ping();
+      const setResult = await redisClient.set('health_check', Date.now(), { EX: 10 });
+      const getResult = await redisClient.get('health_check');
+
+      const responseTime = Date.now() - startTime;
+
+      await redisClient.disconnect();
+
+      return {
+        status: 'healthy',
+        timestamp: new Date().toISOString(),
+        responseTime,
+        connection: {
+          host: redisHost,
+          port: redisPort,
+          url: redisUrl ? '[CONFIGURED]' : null,
+        },
+        tests: {
+          ping: pingResult === 'PONG',
+          set: setResult === 'OK',
+          get: !!getResult,
+        },
+        message: 'Redis is responding normally'
+      };
+
+    } catch (error) {
+      const responseTime = Date.now() - startTime;
+      this.logger.error('Redis health check failed:', error);
+
+      if (redisClient) {
+        try {
+          await redisClient.disconnect();
+        } catch (disconnectError) {
+          this.logger.warn('Failed to disconnect Redis client:', disconnectError);
+        }
+      }
+
+      return {
+        status: 'unhealthy',
+        timestamp: new Date().toISOString(),
+        responseTime,
+        error: error.message,
+        message: 'Redis connection failed'
+      };
     }
   }
 }

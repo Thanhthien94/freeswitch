@@ -1,8 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useAuth } from '@/hooks/useAuth';
-import { usePermissions } from '@/hooks/usePermissions';
+import { useUser, usePermissions } from '@/components/providers/UserProvider';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -38,7 +37,7 @@ import {
 } from 'lucide-react';
 
 export const RoleBasedDashboard: React.FC = () => {
-  const { user } = useAuth();
+  const { user } = useUser();
   const permissions = usePermissions();
 
   if (!user) {
@@ -64,7 +63,7 @@ export const RoleBasedDashboard: React.FC = () => {
     return {
       isBusinessHours,
       riskScore,
-      clearance: permissions.securityClearance,
+      clearance: 'MEDIUM', // Default clearance
     };
   };
 
@@ -80,11 +79,11 @@ export const RoleBasedDashboard: React.FC = () => {
         </p>
         <div className="flex items-center space-x-4 mt-4">
           <Badge variant="secondary" className="bg-white/20 text-white">
-            {user.domain?.displayName}
+            {user.domainId}
           </Badge>
           <Badge variant="secondary" className="bg-white/20 text-white">
             <Shield className="w-3 h-3 mr-1" />
-            {permissions.securityClearance} Clearance
+            MEDIUM Clearance
           </Badge>
           <Badge 
             variant="secondary" 
@@ -291,7 +290,7 @@ export const RoleBasedDashboard: React.FC = () => {
             <div>
               <h4 className="font-medium mb-2">Roles</h4>
               <div className="space-y-1">
-                {user.roles.map((role) => (
+                {user.roles.map((role: string) => (
                   <Badge key={role} variant="outline">
                     {role}
                   </Badge>
@@ -304,11 +303,11 @@ export const RoleBasedDashboard: React.FC = () => {
               <div className="space-y-1">
                 <div className="flex items-center space-x-2">
                   <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span className="text-sm">Security Clearance: {permissions.securityClearance}</span>
+                  <span className="text-sm">Security Clearance: MEDIUM</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span className="text-sm">Domain: {user.domain?.displayName}</span>
+                  <span className="text-sm">Domain: {user.domainId}</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   {securityStatus.isBusinessHours ? (

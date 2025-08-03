@@ -31,12 +31,29 @@ export class RolesGuard implements CanActivate {
     }
 
     try {
-      // Check if user has any of the required roles
-      const hasRole = await this.rbacService.hasAnyRole(user.id, requiredRoles);
-      
-      if (!hasRole) {
-        this.logger.warn(`User ${user.id} lacks required roles: ${requiredRoles.join(', ')}`);
-        throw new ForbiddenException('Insufficient role privileges');
+      // Convert user.id to number if it's a string (from JWT)
+      const userId = typeof user.id === 'string' ? parseInt(user.id, 10) : user.id;
+
+      this.logger.debug(`Checking roles for user ${userId}, required: ${requiredRoles.join(', ')}, user roles: ${user.roles?.join(', ') || 'none'}`);
+
+      // TEMPORARY: Check user roles directly from JWT token first
+      if (user.roles && Array.isArray(user.roles)) {
+        const hasRoleInToken = requiredRoles.some(role => user.roles.includes(role));
+        if (hasRoleInToken) {
+          this.logger.debug(`User ${userId} has required role in JWT token`);
+          // Continue to domain check if needed
+        } else {
+          this.logger.warn(`User ${userId} lacks required roles in JWT token: ${requiredRoles.join(', ')}`);
+          throw new ForbiddenException('Insufficient role privileges');
+        }
+      } else {
+        // Fallback to database check
+        const hasRole = await this.rbacService.hasAnyRole(userId, requiredRoles);
+
+        if (!hasRole) {
+          this.logger.warn(`User ${userId} lacks required roles in database: ${requiredRoles.join(', ')}`);
+          throw new ForbiddenException('Insufficient role privileges');
+        }
       }
 
       // Check domain scope if specified
@@ -49,10 +66,10 @@ export class RolesGuard implements CanActivate {
         const targetDomainId = this.extractDomainId(request);
         
         if (domainScope === 'own' && targetDomainId) {
-          const canManageDomain = await this.rbacService.canManageDomain(user.id, targetDomainId);
-          
+          const canManageDomain = await this.rbacService.canManageDomain(userId, targetDomainId);
+
           if (!canManageDomain) {
-            this.logger.warn(`User ${user.id} cannot access domain ${targetDomainId}`);
+            this.logger.warn(`User ${userId} cannot access domain ${targetDomainId}`);
             throw new ForbiddenException('Insufficient domain privileges');
           }
         }

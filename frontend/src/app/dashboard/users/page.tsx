@@ -53,7 +53,7 @@ import {
 import { userService, User, CreateUserRequest, UserQuery } from '@/services/user.service';
 import { domainService, Domain } from '@/services/domain.service';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/hooks/useAuth';
+import { useUser } from '@/components/providers/UserProvider';
 
 const AVAILABLE_ROLES = [
   { value: 'superadmin', label: 'Super Admin', description: 'Full system access' },
@@ -72,7 +72,7 @@ const USER_STATUSES = [
 export default function UsersPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const { user: currentUser } = useAuth();
+  const { user: currentUser } = useUser();
   
   const [users, setUsers] = useState<User[]>([]);
   const [domains, setDomains] = useState<Domain[]>([]);

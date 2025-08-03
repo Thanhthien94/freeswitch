@@ -18,7 +18,7 @@ import {
   ApiParam,
   ApiBody,
 } from '@nestjs/swagger';
-import { ProfessionalAuthGuard } from '../../auth/guards/professional-auth.guard';
+import { HybridAuthGuard } from '../../auth/guards/hybrid-auth.guard';
 import { 
   RequirePermissions, 
   PERMISSIONS 
@@ -35,7 +35,7 @@ import {
 @ApiTags('Configuration Management')
 @Controller('config')
 @ApiBearerAuth()
-@UseGuards(ProfessionalAuthGuard)
+@UseGuards(HybridAuthGuard)
 export class ConfigProfessionalController {
   constructor(
     private readonly configService: ConfigProfessionalService,

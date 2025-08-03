@@ -56,9 +56,14 @@ export_table() {
 
 # Essential tables for production sync
 ESSENTIAL_TABLES=(
+    # Core configuration
     "config_categories:Configuration Categories"
     "config_items:Configuration Items"
+    "config_history:Configuration History"
     "global_network_configs:Global Network Configuration"
+
+    # Domain and user management
+    "domains:Legacy Domains"
     "freeswitch_domains:FreeSWITCH Domains"
     "users:Users"
     "permissions:Permissions"
@@ -67,10 +72,16 @@ ESSENTIAL_TABLES=(
     "user_roles:User Roles"
     "user_attributes:User Attributes"
     "policies:Policies"
+
+    # FreeSWITCH configuration
     "freeswitch_sip_profiles:SIP Profiles"
     "freeswitch_gateways:Gateways"
     "freeswitch_dialplans:Dialplans"
     "freeswitch_extensions:Extensions"
+    "freeswitch_config_versions:FreeSWITCH Config Versions"
+    "freeswitch_config_deployments:FreeSWITCH Config Deployments"
+
+    # System data
     "migrations:Database Migrations"
 )
 
@@ -150,9 +161,11 @@ echo "📊 Importing Essential Data..."
 # Core configuration first
 import_data "config_categories.sql" "Configuration Categories"
 import_data "config_items.sql" "Configuration Items"
+import_data "config_history.sql" "Configuration History"
 import_data "global_network_configs.sql" "Global Network Configuration"
 
 # Domain and user management
+import_data "domains.sql" "Legacy Domains"
 import_data "freeswitch_domains.sql" "FreeSWITCH Domains"
 import_data "permissions.sql" "Permissions"
 import_data "roles.sql" "Roles"
@@ -167,6 +180,8 @@ import_data "freeswitch_sip_profiles.sql" "SIP Profiles"
 import_data "freeswitch_gateways.sql" "Gateways"
 import_data "freeswitch_dialplans.sql" "Dialplans"
 import_data "freeswitch_extensions.sql" "Extensions"
+import_data "freeswitch_config_versions.sql" "FreeSWITCH Config Versions"
+import_data "freeswitch_config_deployments.sql" "FreeSWITCH Config Deployments"
 
 # System data
 import_data "migrations.sql" "Database Migrations"

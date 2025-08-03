@@ -22,15 +22,22 @@ import { Response } from 'express';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto, ChangePasswordDto, UserQueryDto, BulkUpdateDto, BulkDeleteDto } from './dto/update-user.dto';
-import { ProfessionalAuthGuard } from '../auth/guards/professional-auth.guard';
+import { HybridAuthGuard } from '../auth/guards/hybrid-auth.guard';
 import { RequirePermissions } from '../auth/decorators/permissions.decorator';
 
 @ApiTags('Users')
 @ApiBearerAuth()
-@UseGuards(ProfessionalAuthGuard)
+@UseGuards(HybridAuthGuard)
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
+
+  @Get('test')
+  @ApiOperation({ summary: 'Test endpoint' })
+  @ApiResponse({ status: 200, description: 'Test response' })
+  async test() {
+    return { message: 'Users controller is working!', timestamp: new Date() };
+  }
 
   @Get()
   @ApiOperation({ summary: 'Get all users with pagination and filtering' })

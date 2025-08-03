@@ -48,7 +48,7 @@ import {
   Info,
 } from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
-import { usePermissions } from '@/hooks/usePermissions';
+import { usePermissions } from '@/components/providers/UserProvider';
 import { ConfigCategoryWithItems, ConfigItem as ConfigItemType, ConfigDataType } from '@/types/config';
 import ConfigCategory from './ConfigCategory';
 import { toast } from 'sonner';

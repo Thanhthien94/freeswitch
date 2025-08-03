@@ -1,4 +1,4 @@
-// Modern NextJS 15 API Client - Using native fetch instead of axios
+// Modern NextJS 15 API Client - Session-based authentication
 
 // API Client Configuration
 // For Docker: Frontend runs on :3002, Backend on :3000
@@ -14,35 +14,36 @@ interface RequestConfig {
   responseType?: 'json' | 'blob' | 'text';
 }
 
-// Create fetch wrapper with auth
+// Create fetch wrapper with hybrid session + JWT auth
 async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Response> {
-  // Get token from localStorage (client-side only)
-  const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
-
   // Prepare headers
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...options.headers as Record<string, string>,
   };
 
-  // Add auth token if available
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
+  // Session-based authentication - cookies are automatically included
 
-  // Make request
+  // Make request with session cookies + JWT token
   const response = await fetch(`${API_BASE_URL}${url}`, {
     ...options,
     headers,
-    credentials: 'include', // Include cookies for session-based auth
+    credentials: 'include', // Include session cookies
   });
 
   // Handle 401 unauthorized
   if (response.status === 401) {
-    // Clear token and redirect to login
+    // Redirect to login on client-side
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('auth_token');
-      window.location.href = '/login';
+      // Call logout API to clear session properly
+      fetch('/api/auth/logout', { method: 'POST' })
+        .then(() => {
+          window.location.href = '/login';
+        })
+        .catch(() => {
+          // If logout fails, still redirect to login
+          window.location.href = '/login';
+        });
     }
     throw new Error('Unauthorized');
   }
@@ -178,3 +179,6 @@ export const api = {
     window.URL.revokeObjectURL(downloadUrl);
   },
 };
+
+// Export the API client
+export { api as apiClient };

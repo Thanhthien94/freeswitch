@@ -28,6 +28,20 @@ export interface LoginResponse {
   tokenType: string;
 }
 
+export interface SessionLoginResponse {
+  user: {
+    id: string;
+    username: string;
+    email: string;
+    displayName: string;
+    domainId: string;
+    roles: string[];
+    permissions: string[];
+    primaryRole: string;
+  };
+  message: string;
+}
+
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
@@ -422,6 +436,25 @@ export class AuthService {
     }
   }
 
+  async validateSession(sessionId: string): Promise<any> {
+    try {
+      // For now, we'll use a simplified approach
+      // In production, you'd validate against your session store (Redis, database, etc.)
+      this.logger.log(`Validating session: ${sessionId}`);
+
+      // Since we're using express-session with connect.sid format,
+      // we need to decode the session ID and validate it
+      // For now, return null to indicate session validation is not implemented
+      // This will force fallback to JWT token authentication
+
+      this.logger.warn('Session validation not fully implemented, falling back to JWT');
+      return null;
+    } catch (error) {
+      this.logger.error(`Session validation failed: ${error.message}`);
+      return null;
+    }
+  }
+
   async validateWebSocketToken(token: string): Promise<any> {
     try {
       const payload = this.jwtService.verify(token, {
@@ -468,6 +501,160 @@ export class AuthService {
     } catch (error) {
       this.logger.error('WebSocket token validation failed:', error);
       throw new UnauthorizedException('Invalid WebSocket token');
+    }
+  }
+
+  // Session-based login method
+  async sessionLogin(loginDto: LoginDto, session: any, clientIp?: string, userAgent?: string): Promise<SessionLoginResponse> {
+    try {
+      // Find user by email or username
+      const user = await this.userRepository.findOne({
+        where: [
+          { email: loginDto.emailOrUsername },
+          { username: loginDto.emailOrUsername },
+        ],
+      });
+
+      if (!user) {
+        await this.logFailedLogin(loginDto.emailOrUsername, 'User not found', clientIp, userAgent);
+        throw new UnauthorizedException('Invalid credentials');
+      }
+
+      // Check if user is active
+      if (!user.isActive) {
+        await this.logFailedLogin(user.username, 'Account inactive', clientIp, userAgent);
+        throw new UnauthorizedException('Account is inactive');
+      }
+
+      // Validate password
+      const isPasswordValid = await user.validatePassword(loginDto.password);
+
+      if (!isPasswordValid) {
+        await this.logFailedLogin(user.username, 'Invalid password', clientIp, userAgent);
+        throw new UnauthorizedException('Invalid credentials');
+      }
+
+      // Load user roles
+      let roles: string[] = [];
+      let permissions: string[] = [];
+      let primaryRole = 'user';
+
+      try {
+        const rawQuery = `
+          SELECT ur.*, r.name as role_name, r.id as role_id
+          FROM user_roles ur
+          LEFT JOIN roles r ON ur.role_id = r.id
+          WHERE ur.user_id = $1 AND ur.is_active = true
+        `;
+
+        const rawResult = await this.userRepository.query(rawQuery, [user.id]);
+
+        if (rawResult && rawResult.length > 0) {
+          roles = rawResult.map(row => row.role_name);
+          primaryRole = rawResult.find(row => row.is_primary)?.role_name || roles[0] || 'user';
+
+          // Assign permissions based on roles
+          if (roles.includes('superadmin')) {
+            permissions = [
+              '*:manage',
+              'users:manage', 'cdr:manage', 'recordings:manage', 'billing:manage',
+              'reports:manage', 'analytics:manage', 'system:manage', 'config:manage',
+              'security:manage', 'monitoring:manage', 'extensions:manage', 'calls:manage'
+            ];
+          } else if (roles.includes('admin')) {
+            permissions = [
+              'users:read', 'users:create', 'users:update', 'users:delete',
+              'cdr:read', 'cdr:execute', 'recordings:read', 'recordings:download',
+              'config:read', 'config:update', 'monitoring:read'
+            ];
+          } else {
+            permissions = ['cdr:read', 'recordings:read', 'users:read'];
+          }
+        }
+      } catch (roleError) {
+        this.logger.error('Error loading roles, using defaults:', roleError.message);
+        roles = ['user'];
+        permissions = ['cdr:read', 'recordings:read'];
+      }
+
+      // Create session
+      session.user = {
+        id: user.id.toString(),
+        username: user.username,
+        email: user.email,
+        displayName: user.displayName || user.username,
+        domainId: user.domainId,
+        roles,
+        permissions,
+        primaryRole,
+      };
+
+      // Log successful login
+      await this.logSuccessfulLogin(user, clientIp, userAgent);
+
+      return {
+        user: session.user,
+        message: 'Login successful',
+      };
+
+    } catch (error) {
+      this.logger.error('Session login failed:', error);
+      throw error;
+    }
+  }
+
+  // Get current user from session
+  getCurrentUserFromSession(session: any) {
+    if (!session || !session.user) {
+      throw new UnauthorizedException('No active session');
+    }
+    return session.user;
+  }
+
+  // Logout - destroy session
+  sessionLogout(session: any) {
+    return new Promise((resolve, reject) => {
+      session.destroy((err) => {
+        if (err) {
+          this.logger.error('Session destroy error:', err);
+          reject(err);
+        } else {
+          resolve({ message: 'Logout successful' });
+        }
+      });
+    });
+  }
+
+  // Find user by ID for WebSocket authentication
+  async findUserById(userId: string | number): Promise<any> {
+    try {
+      this.logger.log(`🔍 Finding user by ID: ${userId}`);
+
+      const user = await this.userRepository.findOne({
+        where: { id: Number(userId) },
+        relations: ['domain'],
+      });
+
+      if (!user) {
+        this.logger.warn(`❌ User not found with ID: ${userId}`);
+        return null;
+      }
+
+      this.logger.log(`✅ User found: ${user.username} (ID: ${user.id})`);
+
+      return {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        domainId: user.domainId,
+        roles: user.roles || [],
+        permissions: user.hasPermission ? [] : [], // TODO: Get actual permissions
+        primaryRole: user.getPrimaryRole ? user.getPrimaryRole() : 'user',
+        isActive: user.isActive,
+      };
+    } catch (error) {
+      this.logger.error(`❌ Error finding user by ID ${userId}:`, error);
+      return null;
     }
   }
 

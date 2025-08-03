@@ -13,11 +13,11 @@ import {
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Bell, LogOut, Settings, User } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/hooks/useAuth';
+import { useUser } from '@/components/providers/UserProvider';
 
 export function Header() {
   const router = useRouter();
-  const { user, logout: authLogout } = useAuth();
+  const { user } = useUser();
 
   return (
     <header className="flex h-16 items-center justify-between border-b px-6">
@@ -69,9 +69,13 @@ export function Header() {
               <span>Settings</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={async () => {
-              await authLogout();
-              router.push('/login');
+            <DropdownMenuItem onClick={() => {
+              // Use form submission for logout
+              const form = document.createElement('form');
+              form.method = 'POST';
+              form.action = '/api/auth/logout';
+              document.body.appendChild(form);
+              form.submit();
             }}>
               <LogOut className="mr-2 h-4 w-4" />
               <span>Log out</span>

@@ -13,7 +13,7 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
-import { ProfessionalAuthGuard } from '../../auth/guards/professional-auth.guard';
+import { HybridAuthGuard } from '../../auth/guards/hybrid-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { CurrentUser } from '../../auth/decorators/auth.decorators';
@@ -49,8 +49,8 @@ export interface DomainQueryDto {
 }
 
 @ApiTags('FreeSWITCH Domains')
-@ApiBearerAuth()
-@UseGuards(ProfessionalAuthGuard, RolesGuard)
+@ApiBearerAuth('JWT-auth')
+@UseGuards(HybridAuthGuard, RolesGuard)
 @Controller('freeswitch/domains')
 export class FreeSwitchDomainController {
   constructor(

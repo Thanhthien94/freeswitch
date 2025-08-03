@@ -13,68 +13,57 @@ export class UsersService {
   ) {}
 
   async findAll(query: any = {}) {
-    const {
-      page = 1,
-      limit = 10,
-      search,
-      domainId,
-      role,
-      status,
-      department,
-      sortBy = 'createdAt',
-      sortOrder = 'desc'
-    } = query;
+    try {
+      console.log('findAll called with query:', query);
 
-    const queryBuilder = this.userRepository.createQueryBuilder('user')
-      .leftJoinAndSelect('user.domain', 'domain');
+      const {
+        page = 1,
+        limit = 10
+      } = query;
 
-    // Search functionality
-    if (search) {
-      queryBuilder.andWhere(
-        '(user.username ILIKE :search OR user.email ILIKE :search OR user.displayName ILIKE :search OR user.firstName ILIKE :search OR user.lastName ILIKE :search)',
-        { search: `%${search}%` }
-      );
+      console.log('About to query users...');
+
+      // Very simple query first
+      const users = await this.userRepository.find({
+        take: Number(limit),
+        skip: (Number(page) - 1) * Number(limit),
+        order: { createdAt: 'DESC' }
+      });
+
+      console.log('Users found:', users.length);
+
+      const total = await this.userRepository.count();
+      console.log('Total count:', total);
+
+      const result = {
+        data: users.map(user => ({
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          displayName: user.fullName || user.username,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          status: user.isActive ? 'active' : 'inactive',
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
+          roles: ['user'],
+          permissions: [],
+          primaryRole: 'user'
+        })),
+        pagination: {
+          page: Number(page),
+          limit: Number(limit),
+          total,
+          totalPages: Math.ceil(total / Number(limit)),
+        },
+      };
+
+      console.log('Returning result:', result);
+      return result;
+    } catch (error) {
+      console.error('Error in findAll:', error);
+      throw error;
     }
-
-    // Filters
-    if (domainId) {
-      queryBuilder.andWhere('user.domainId = :domainId', { domainId });
-    }
-
-    if (role) {
-      // Role filtering would need to be implemented via UserRole entity join
-      // For now, skip this filter
-    }
-
-    if (status) {
-      const isActive = status === 'active';
-      queryBuilder.andWhere('user.isActive = :isActive', { isActive });
-    }
-
-    if (department) {
-      queryBuilder.andWhere('user.department ILIKE :department', { department: `%${department}%` });
-    }
-
-    // Sorting
-    const validSortFields = ['createdAt', 'updatedAt', 'username', 'email', 'displayName', 'lastLoginAt'];
-    const sortField = validSortFields.includes(sortBy) ? sortBy : 'createdAt';
-    queryBuilder.orderBy(`user.${sortField}`, sortOrder.toUpperCase() as 'ASC' | 'DESC');
-
-    // Pagination
-    const skip = (page - 1) * limit;
-    queryBuilder.skip(skip).take(limit);
-
-    const [users, total] = await queryBuilder.getManyAndCount();
-
-    return {
-      data: users.map(user => user.toSafeObject()),
-      pagination: {
-        page: Number(page),
-        limit: Number(limit),
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
-    };
   }
 
   async findOne(id: number): Promise<User> {
@@ -354,8 +343,8 @@ export class UsersService {
       user.username,
       user.email,
       `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.username,
-      user.domain?.name || '',
-      user.isActive ? 'Yes' : 'No',
+      '', // Domain removed for now
+      user.status === 'active' ? 'Yes' : 'No',
       user.createdAt
     ]);
 

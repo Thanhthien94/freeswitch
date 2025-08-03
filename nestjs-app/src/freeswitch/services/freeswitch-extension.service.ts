@@ -510,14 +510,16 @@ export class FreeSwitchExtensionService {
     const extension = await this.findOne(id);
 
     try {
-      // Get registration status via ESL
-      const command = `sofia status profile internal reg ${extension.extensionNumber}@${extension.domain?.name || 'localhost'}`;
+      // Get registration status via ESL using show registrations command
+      const command = `show registrations ${extension.extensionNumber}`;
       const result = await this.eslService.executeCommand(command);
 
-      // Parse registration result
-      const isRegistered = result.includes('Registrations:') &&
-                          !result.includes('Total items returned: 0') &&
-                          !result.includes('0 total');
+      // Parse registration result - check if extension is in the output
+      const lines = result.split('\n');
+      const isRegistered = lines.some(line =>
+        line.includes(extension.extensionNumber) &&
+        line.includes(extension.domain?.name || 'localhost')
+      );
 
       // Extract registration details if available
       let registrationIp: string | undefined;
@@ -525,17 +527,18 @@ export class FreeSwitchExtensionService {
       let expires: string | undefined;
 
       if (isRegistered) {
-        const lines = result.split('\n');
-        for (const line of lines) {
-          if (line.includes('Contact:')) {
-            const ipMatch = line.match(/sip:.*@([^:;]+)/);
-            if (ipMatch) registrationIp = ipMatch[1];
-          }
-          if (line.includes('User-Agent:')) {
-            userAgent = line.split('User-Agent:')[1]?.trim();
-          }
-          if (line.includes('Expires:')) {
-            expires = line.split('Expires:')[1]?.trim();
+        // Find the registration line for this extension
+        const regLine = lines.find(line =>
+          line.includes(extension.extensionNumber) &&
+          line.includes(extension.domain?.name || 'localhost')
+        );
+
+        if (regLine) {
+          // Parse CSV format: reg_user,realm,token,url,expires,network_ip,network_port,network_proto,hostname,metadata
+          const parts = regLine.split(',');
+          if (parts.length >= 6) {
+            registrationIp = parts[5]; // network_ip
+            expires = new Date(parseInt(parts[4]) * 1000).toISOString(); // expires timestamp
           }
         }
       }

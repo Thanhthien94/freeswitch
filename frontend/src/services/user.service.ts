@@ -112,7 +112,7 @@ export interface UserStatsResponse {
 }
 
 class UserService {
-  private baseUrl = '/api/v1/users';
+  private baseUrl = '/users';
 
   async getUsers(query: UserQuery = {}): Promise<UserListResponse> {
     const params = new URLSearchParams();

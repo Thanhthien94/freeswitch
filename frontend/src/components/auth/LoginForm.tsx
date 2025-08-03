@@ -1,7 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, useActionState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,42 +8,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, Phone, Eye, EyeOff } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
+import { login, type FormState } from '@/app/actions/auth';
 
 export const LoginForm: React.FC = () => {
-  const [emailOrUsername, setEmailOrUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const { login, isAuthenticated, isLoading, error, clearError } = useAuth();
-  const router = useRouter();
-  const searchParams = useSearchParams();
-
-  // Handle redirect after successful login
-  useEffect(() => {
-    if (isAuthenticated) {
-      const redirectTo = searchParams.get('from') || '/dashboard';
-      console.log('✅ Login successful, redirecting to:', redirectTo);
-      router.push(redirectTo);
-    }
-  }, [isAuthenticated, router, searchParams]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    clearError();
-
-    if (!emailOrUsername || !password) {
-      return;
-    }
-
-    try {
-      await login({ emailOrUsername, password, rememberMe });
-      // Redirect will happen automatically via useEffect
-    } catch (err) {
-      // Error is handled by useAuth hook
-      console.error('Login failed:', err);
-    }
-  };
+  const [state, formAction, isPending] = useActionState(login, {
+    message: '',
+  });
 
 
 
@@ -76,18 +46,20 @@ export const LoginForm: React.FC = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form action={formAction} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="emailOrUsername">Email hoặc Tên đăng nhập</Label>
                   <Input
                     id="emailOrUsername"
+                    name="emailOrUsername"
                     type="text"
                     placeholder="Nhập email hoặc tên đăng nhập"
-                    value={emailOrUsername}
-                    onChange={(e) => setEmailOrUsername(e.target.value)}
                     required
-                    disabled={isLoading}
+                    disabled={isPending}
                   />
+                  {state.errors?.emailOrUsername && (
+                    <p className="text-sm text-red-500">{state.errors.emailOrUsername[0]}</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -95,12 +67,11 @@ export const LoginForm: React.FC = () => {
                   <div className="relative">
                     <Input
                       id="password"
+                      name="password"
                       type={showPassword ? 'text' : 'password'}
                       placeholder="Nhập mật khẩu"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
                       required
-                      disabled={isLoading}
+                      disabled={isPending}
                     />
                     <Button
                       type="button"
@@ -108,7 +79,7 @@ export const LoginForm: React.FC = () => {
                       size="sm"
                       className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                       onClick={() => setShowPassword(!showPassword)}
-                      disabled={isLoading}
+                      disabled={isPending}
                     >
                       {showPassword ? (
                         <EyeOff className="h-4 w-4" />
@@ -117,32 +88,34 @@ export const LoginForm: React.FC = () => {
                       )}
                     </Button>
                   </div>
+                  {state.errors?.password && (
+                    <p className="text-sm text-red-500">{state.errors.password[0]}</p>
+                  )}
                 </div>
 
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="rememberMe"
-                    checked={rememberMe}
-                    onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                    disabled={isLoading}
+                    name="rememberMe"
+                    disabled={isPending}
                   />
                   <Label htmlFor="rememberMe" className="text-sm">
                     Ghi nhớ đăng nhập (7 ngày)
                   </Label>
                 </div>
 
-                {error && (
+                {state.message && (
                   <Alert variant="destructive">
-                    <AlertDescription>{error}</AlertDescription>
+                    <AlertDescription>{state.message}</AlertDescription>
                   </Alert>
                 )}
 
                 <Button
                   type="submit"
                   className="w-full"
-                  disabled={isLoading || !emailOrUsername || !password}
+                  disabled={isPending}
                 >
-                  {isLoading ? (
+                  {isPending ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Đang đăng nhập...

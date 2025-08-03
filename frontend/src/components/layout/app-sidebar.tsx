@@ -35,7 +35,7 @@ import {
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { useAuth } from '@/hooks/useAuth';
+import { useUser } from '@/components/providers/UserProvider';
 
 import { PermissionGate } from '@/components/auth/PermissionGate';
 
@@ -223,7 +223,7 @@ const navigationItems = [
 
 export function AppSidebar() {
   const pathname = usePathname();
-  const { user } = useAuth();
+  const { user } = useUser();
 
   return (
     <Sidebar>

@@ -1,89 +1,109 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
-import { useAuth } from '@/hooks/useAuth';
-import { Loader2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { getCurrentUserClient } from '@/lib/auth-client';
+import { User } from '@/types/auth';
+import { UserProvider } from '@/components/providers/UserProvider';
 
 interface AuthGuardProps {
   children: React.ReactNode;
   requireAuth?: boolean;
   redirectTo?: string;
-  fallback?: React.ReactNode;
 }
 
-export const AuthGuard: React.FC<AuthGuardProps> = ({
-  children,
-  requireAuth = true,
-  redirectTo = '/login',
-  fallback
-}) => {
-  const { isAuthenticated, isLoading } = useAuth();
+export function AuthGuard({ 
+  children, 
+  requireAuth = true, 
+  redirectTo = '/login' 
+}: AuthGuardProps) {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
-  const pathname = usePathname();
-  const [shouldRender, setShouldRender] = useState(false);
 
   useEffect(() => {
-    if (isLoading) {
-      // Still checking authentication status
-      return;
-    }
+    const checkAuth = async () => {
+      try {
+        console.log('🔍 AuthGuard: Checking authentication...');
+        console.log('🔍 AuthGuard: Current pathname:', window.location.pathname);
+        console.log('🔍 AuthGuard: requireAuth:', requireAuth);
+        console.log('🔍 AuthGuard: redirectTo:', redirectTo);
 
-    if (requireAuth && !isAuthenticated) {
-      // Need auth but not authenticated - redirect to login
-      console.log('🚫 Not authenticated, redirecting to login');
-      const loginUrl = `${redirectTo}?from=${encodeURIComponent(pathname)}`;
-      router.push(loginUrl);
-      return;
-    }
+        const currentUser = await getCurrentUserClient();
+        console.log('🔍 AuthGuard: User found:', currentUser ? 'YES' : 'NO');
 
-    if (!requireAuth && isAuthenticated && pathname === '/login') {
-      // Don't need auth but authenticated and on login page - redirect to dashboard
-      console.log('✅ Already authenticated, redirecting to dashboard');
-      router.push('/dashboard');
-      return;
-    }
+        setUser(currentUser);
 
-    // All checks passed, render the component
-    setShouldRender(true);
-  }, [isAuthenticated, isLoading, requireAuth, pathname, router, redirectTo]);
+        if (requireAuth && !currentUser) {
+          console.log('🔍 AuthGuard: Redirecting to login - no user');
+          router.push(redirectTo);
+          return;
+        }
 
-  // Show loading while checking authentication
-  if (isLoading) {
-    return fallback || (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p className="text-sm text-muted-foreground">Checking authentication...</p>
-        </div>
+        if (!requireAuth && currentUser) {
+          console.log('🔍 AuthGuard: Redirecting to dashboard - user already authenticated');
+          console.log('🔍 AuthGuard: Current path starts with /dashboard?', window.location.pathname.startsWith('/dashboard'));
+          // Only redirect if we're on a public route, not if we're already on dashboard
+          if (!window.location.pathname.startsWith('/dashboard')) {
+            console.log('🔍 AuthGuard: Executing redirect to /dashboard');
+            router.push('/dashboard');
+          } else {
+            console.log('🔍 AuthGuard: Already on dashboard, no redirect needed');
+          }
+          return;
+        }
+
+        console.log('🔍 AuthGuard: No redirect needed, proceeding normally');
+        
+      } catch (error) {
+        console.error('🔍 AuthGuard: Error checking auth:', error);
+        if (requireAuth) {
+          router.push(redirectTo);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkAuth();
+  }, [requireAuth, redirectTo, router]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
       </div>
     );
   }
 
-  // Show loading while redirecting
-  if (!shouldRender) {
-    return fallback || (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p className="text-sm text-muted-foreground">Redirecting...</p>
-        </div>
-      </div>
-    );
+  if (requireAuth && !user) {
+    return null; // Will redirect
   }
 
-  return <>{children}</>;
-};
+  if (!requireAuth && user) {
+    return null; // Will redirect
+  }
+
+  return (
+    <UserProvider initialUser={user}>
+      {children}
+    </UserProvider>
+  );
+}
 
 // Convenience components
-export const ProtectedPage: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <AuthGuard requireAuth={true}>
-    {children}
-  </AuthGuard>
-);
+export function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  return (
+    <AuthGuard requireAuth={true}>
+      {children}
+    </AuthGuard>
+  );
+}
 
-export const PublicPage: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <AuthGuard requireAuth={false}>
-    {children}
-  </AuthGuard>
-);
+export function PublicRoute({ children }: { children: React.ReactNode }) {
+  return (
+    <AuthGuard requireAuth={false}>
+      {children}
+    </AuthGuard>
+  );
+}

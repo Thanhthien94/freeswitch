@@ -70,7 +70,7 @@ class WebSocketService {
                      (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000').replace('/api/v1', '').replace('http', 'ws');
 
         this.socket = io(`${wsUrl}/realtime`, {
-          auth: token ? { token } : undefined,
+          auth: { token: token || 'guest-auth' },
           transports: ['websocket', 'polling'],
           timeout: 10000,
           forceNew: true,
@@ -247,6 +247,33 @@ class WebSocketService {
       reconnectAttempts: this.reconnectAttempts,
       maxReconnectAttempts: this.maxReconnectAttempts,
     };
+  }
+
+  // System status methods
+  subscribeToSystemStatus(callback: (status: any) => void) {
+    if (!this.socket) return;
+
+    console.log('🔍 Subscribing to system status updates');
+    this.socket.on('system-status', callback);
+    this.socket.on('system-status-update', callback);
+    this.socket.emit('subscribe-system-status');
+  }
+
+  unsubscribeFromSystemStatus() {
+    if (!this.socket) return;
+
+    console.log('🔍 Unsubscribing from system status updates');
+    this.socket.off('system-status');
+    this.socket.off('system-status-update');
+    this.socket.emit('unsubscribe-system-status');
+  }
+
+  // Get current system status
+  getSystemStatus() {
+    if (!this.socket) return;
+
+    console.log('🔍 Requesting current system status');
+    this.socket.emit('get-system-status');
   }
 }
 

@@ -23,6 +23,7 @@ import { WebSocketModule } from './websocket/websocket.module';
 import { ConfigModule as ProfessionalConfigModule } from './config/config.module';
 import { FreeSwitchModule } from './freeswitch/freeswitch.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { SystemModule } from './system/system.module';
 
 // Controllers
 import { AppController } from './app.controller';
@@ -169,6 +170,7 @@ import { CustomTypeOrmLogger } from './common/interceptors/database-logging.inte
     // EnterpriseConfigModule, // TEMPORARILY DISABLED - Has conflicts
     ProfessionalConfigModule, // Professional Config Module
     FreeSwitchModule, // Enterprise FreeSWITCH Config Module
+    SystemModule, // System Status Module
   ],
   controllers: [AppController],
   providers: [

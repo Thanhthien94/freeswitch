@@ -133,15 +133,12 @@ export const cdrService = {
 
     queryParams.append('format', format);
 
-    // Use direct fetch for file download
-    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+    // Use direct fetch for file download with session cookies
     const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
 
     const response = await fetch(`${API_BASE_URL}/cdr/export?${queryParams.toString()}`, {
       method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
+      credentials: 'include', // Include session cookies
     });
 
     if (!response.ok) {
@@ -168,20 +165,13 @@ export const cdrService = {
     return `${API_BASE_URL}/recordings/${callUuid}/stream`;
   },
 
-  // Get recording stream with auth headers for audio element
+  // Get recording stream with session cookies for audio element
   getRecordingUrlWithAuth: async (callUuid: string): Promise<string> => {
     const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
-    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
 
-    if (!token) {
-      throw new Error('No authentication token available');
-    }
-
-    // Create a blob URL with authenticated fetch
+    // Create a blob URL with authenticated fetch using session cookies
     const response = await fetch(`${API_BASE_URL}/recordings/${callUuid}/stream`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
+      credentials: 'include', // Include session cookies
     });
 
     if (!response.ok) {

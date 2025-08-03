@@ -18,13 +18,13 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 import { LiveCallsService, CallControlAction } from './live-calls.service';
-import { ProfessionalAuthGuard } from '../auth/guards/professional-auth.guard';
+import { HybridAuthGuard } from '../auth/guards/hybrid-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 
 @ApiTags('Live Calls')
 @ApiBearerAuth()
-@UseGuards(ProfessionalAuthGuard, RolesGuard)
+@UseGuards(HybridAuthGuard, RolesGuard)
 @Controller('calls/live')
 export class LiveCallsController {
   constructor(private readonly liveCallsService: LiveCallsService) {}
