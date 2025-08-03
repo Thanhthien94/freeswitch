@@ -186,10 +186,11 @@ async function bootstrap() {
         saveUninitialized: false,
         name: 'pbx.session.id', // Custom session name
         cookie: {
-          secure: configService.get('NODE_ENV') === 'production',
+          secure: false, // Set to false for HTTP in production (behind proxy)
           httpOnly: true,
           maxAge: 24 * 60 * 60 * 1000, // 24 hours
           sameSite: 'lax',
+          domain: undefined, // Let browser handle domain
         },
       }),
     );
