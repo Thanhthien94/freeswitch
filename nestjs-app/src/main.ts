@@ -190,7 +190,7 @@ async function bootstrap() {
           httpOnly: true,
           maxAge: 24 * 60 * 60 * 1000, // 24 hours
           sameSite: 'lax',
-          domain: undefined, // Let browser handle domain
+          domain: '.finstar.vn', // Share cookies across subdomains
         },
       }),
     );
