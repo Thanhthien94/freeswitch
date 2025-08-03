@@ -34,6 +34,9 @@ export interface FormState {
 
 // Login Server Action
 export async function login(state: FormState, formData: FormData): Promise<FormState> {
+  console.log('🚀 LOGIN SERVER ACTION CALLED!')
+  console.log('🔍 FormData entries:', Array.from(formData.entries()))
+
   // 1. Validate form fields
   const validatedFields = LoginSchema.safeParse({
     emailOrUsername: formData.get('emailOrUsername'),
@@ -41,7 +44,10 @@ export async function login(state: FormState, formData: FormData): Promise<FormS
     rememberMe: formData.get('rememberMe') === 'on',
   })
 
+  console.log('🔍 Validation result:', validatedFields.success)
+
   if (!validatedFields.success) {
+    console.log('❌ Validation failed:', validatedFields.error.flatten().fieldErrors)
     return {
       errors: validatedFields.error.flatten().fieldErrors,
       message: 'Vui lòng kiểm tra lại thông tin đăng nhập.',
