@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(request: NextRequest) {
   try {
-    // Forward request to backend with cookies
-    const backendUrl = process.env.BACKEND_API_URL || 'http://nestjs-api:3000/api/v1'
+    // Forward request to backend with cookies - use public domain
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1'
     const fullUrl = `${backendUrl}/auth/websocket-token`
     const rawCookies = request.headers.get('cookie') || ''
     
