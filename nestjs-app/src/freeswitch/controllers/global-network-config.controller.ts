@@ -21,7 +21,7 @@ import {
   ApiBody,
   ApiParam,
 } from '@nestjs/swagger';
-import { ProfessionalAuthGuard } from '../../auth/guards/professional-auth.guard';
+import { HybridAuthGuard } from '../../auth/guards/hybrid-auth.guard';
 import { RequireRoles, AdminOnly, SuperAdminOnly } from '../../auth/decorators/auth.decorators';
 import { GlobalNetworkConfigService } from '../services/global-network-config.service';
 import { GlobalNetworkConfig } from '../entities/global-network-config.entity';
@@ -42,7 +42,7 @@ import {
 
 @ApiTags('Global Network Configuration')
 @ApiBearerAuth()
-@UseGuards(ProfessionalAuthGuard)
+@UseGuards(HybridAuthGuard)
 @Controller('freeswitch/network-config')
 export class GlobalNetworkConfigController {
   private readonly logger = new Logger(GlobalNetworkConfigController.name);

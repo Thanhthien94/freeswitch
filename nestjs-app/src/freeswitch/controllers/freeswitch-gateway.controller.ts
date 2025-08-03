@@ -13,7 +13,7 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
-import { ProfessionalAuthGuard } from '../../auth/guards/professional-auth.guard';
+import { HybridAuthGuard } from '../../auth/guards/hybrid-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { CurrentUser } from '../../auth/decorators/auth.decorators';
@@ -22,7 +22,7 @@ import { FreeSwitchGateway } from '../entities/freeswitch-gateway.entity';
 
 @ApiTags('FreeSWITCH Gateways')
 @ApiBearerAuth()
-@UseGuards(ProfessionalAuthGuard, RolesGuard)
+@UseGuards(HybridAuthGuard, RolesGuard)
 @Controller('freeswitch/gateways')
 export class FreeSwitchGatewayController {
   constructor(
