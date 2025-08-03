@@ -1,11 +1,8 @@
 // Modern NextJS 15 API Client - Session-based authentication
 
 // API Client Configuration
-// For Docker: Frontend runs on :3002, Backend on :3000
-// Browser uses environment variable or fallback, Server uses container name
-const API_BASE_URL = typeof window !== 'undefined'
-  ? (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1')  // Browser: use env var
-  : 'http://nestjs-api:3000/api/v1'; // Server-side: use container name
+// Use public domain for both browser and server-side to avoid mixed content issues
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
 
 // Request configuration type
 interface RequestConfig {
