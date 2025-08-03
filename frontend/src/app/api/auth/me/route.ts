@@ -5,11 +5,15 @@ export async function GET(request: NextRequest) {
     // Forward request to backend with cookies
     const backendUrl = process.env.BACKEND_API_URL || 'http://nestjs-api:3000/api/v1'
     const fullUrl = `${backendUrl}/auth/me`
-    const cookies = request.headers.get('cookie') || ''
+    const rawCookies = request.headers.get('cookie') || ''
+
+    // Decode cookies to prevent double-encoding
+    const cookies = decodeURIComponent(rawCookies)
 
     console.log('🔍 Frontend /api/auth/me called')
     console.log('🔍 Backend URL:', fullUrl)
-    console.log('🔍 Cookies to forward:', cookies)
+    console.log('🔍 Raw cookies:', rawCookies)
+    console.log('🔍 Decoded cookies to forward:', cookies)
     console.log('🔍 Environment BACKEND_API_URL:', process.env.BACKEND_API_URL)
 
     const response = await fetch(fullUrl, {
