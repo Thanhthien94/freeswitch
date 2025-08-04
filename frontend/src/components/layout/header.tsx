@@ -84,17 +84,17 @@ export function Header() {
                 });
 
                 if (response.ok || response.redirected) {
-                  // Redirect to login page
-                  window.location.href = '/login';
+                  // Redirect to login page with absolute URL
+                  window.location.href = `${window.location.origin}/login`;
                 } else {
                   console.error('Logout failed:', response.status);
                   // Still redirect to login on error
-                  window.location.href = '/login';
+                  window.location.href = `${window.location.origin}/login`;
                 }
               } catch (error) {
                 console.error('Logout error:', error);
                 // Still redirect to login on error
-                window.location.href = '/login';
+                window.location.href = `${window.location.origin}/login`;
               }
             }}>
               <LogOut className="mr-2 h-4 w-4" />
