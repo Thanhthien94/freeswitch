@@ -135,17 +135,24 @@ export async function DELETE(
 
     console.log('🔍 Backend response status:', response.status)
 
-    if (!response.ok) {
-      console.error('❌ Backend error:', response.status, response.statusText)
-      return NextResponse.json(
-        { error: 'Backend request failed', status: response.status },
-        { status: response.status }
-      )
-    }
-
     // DELETE typically returns 204 No Content
     if (response.status === 204) {
+      console.log('✅ FreeSWITCH extension deleted successfully (204)')
       return new NextResponse(null, { status: 204 })
+    }
+
+    if (!response.ok) {
+      console.error('❌ Backend error:', response.status, response.statusText)
+      // Try to get error message from response
+      try {
+        const errorData = await response.json()
+        return NextResponse.json(errorData, { status: response.status })
+      } catch {
+        return NextResponse.json(
+          { error: 'Backend request failed', status: response.status },
+          { status: response.status }
+        )
+      }
     }
 
     const data = await response.json()

@@ -91,9 +91,14 @@ export class FreeSwitchExtensionService {
       createdBy
     );
 
-    // Auto sync extension to FreeSWITCH directory
+    // Auto sync extension to FreeSWITCH directory with timeout
     try {
-      const syncResult = await this.directorySyncService.syncExtensionToDirectory(savedExtension.id);
+      const syncPromise = this.directorySyncService.syncExtensionToDirectory(savedExtension.id);
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Directory sync timeout')), 10000)
+      );
+
+      const syncResult = await Promise.race([syncPromise, timeoutPromise]) as any;
       if (syncResult.success) {
         this.logger.log(`Extension ${savedExtension.extensionNumber} synced to FreeSWITCH directory`);
       } else {
@@ -101,6 +106,7 @@ export class FreeSwitchExtensionService {
       }
     } catch (error) {
       this.logger.error(`Error syncing extension ${savedExtension.extensionNumber}:`, error);
+      // Continue without failing the entire operation
     }
 
     this.logger.log(`Extension created successfully: ${savedExtension.id}`);
@@ -283,9 +289,14 @@ export class FreeSwitchExtensionService {
 
     const extension = await this.findOne(id);
 
-    // Remove from FreeSWITCH directory before removing from database
+    // Remove from FreeSWITCH directory before removing from database with timeout
     try {
-      const syncResult = await this.directorySyncService.removeExtensionFromDirectory(id);
+      const syncPromise = this.directorySyncService.removeExtensionFromDirectory(id);
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Directory sync timeout')), 10000)
+      );
+
+      const syncResult = await Promise.race([syncPromise, timeoutPromise]) as any;
       if (syncResult.success) {
         this.logger.log(`Extension ${extension.extensionNumber} removed from FreeSWITCH directory`);
       } else {
@@ -293,6 +304,7 @@ export class FreeSwitchExtensionService {
       }
     } catch (error) {
       this.logger.error(`Error removing extension ${extension.extensionNumber} from directory:`, error);
+      // Continue without failing the entire operation
     }
 
     await this.extensionRepository.remove(extension);

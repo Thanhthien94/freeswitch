@@ -158,13 +158,23 @@ export default function ExtensionsPage() {
         description: "Extension deleted successfully",
       });
       loadExtensions();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting extension:', error);
-      toast({
-        title: "Error",
-        description: "Failed to delete extension",
-        variant: "destructive",
-      });
+
+      // If extension is already deleted (404), treat as success
+      if (error.message?.includes('404') || error.message?.includes('not found')) {
+        toast({
+          title: "Success",
+          description: "Extension was already deleted",
+        });
+        loadExtensions();
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to delete extension",
+          variant: "destructive",
+        });
+      }
     }
   };
 
