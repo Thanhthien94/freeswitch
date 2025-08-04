@@ -100,7 +100,7 @@ export const recordingService = {
 
   // Get recording statistics
   getRecordingStats: async (): Promise<RecordingStats> => {
-    const response = await api.get<RecordingStats>('/recordings/stats');
+    const response = await api.get<RecordingStats>('/recordings-stats');
     // Stats endpoint returns data directly
     return response;
   },
