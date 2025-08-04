@@ -87,18 +87,18 @@ export function Header() {
                 console.log('🔍 Logout response:', response.status, response.ok, response.redirected);
 
                 if (response.ok || response.redirected) {
-                  // Use hardcoded production URL for now
-                  console.log('🔍 Redirecting to login...');
-                  window.location.href = 'https://office.finstar.vn/login';
+                  // Use Next.js router for navigation
+                  console.log('🔍 Redirecting to login with router...');
+                  router.push('/login');
                 } else {
                   console.error('Logout failed:', response.status);
                   // Still redirect to login on error
-                  window.location.href = 'https://office.finstar.vn/login';
+                  router.push('/login');
                 }
               } catch (error) {
                 console.error('Logout error:', error);
                 // Still redirect to login on error
-                window.location.href = 'https://office.finstar.vn/login';
+                router.push('/login');
               }
             }}>
               <LogOut className="mr-2 h-4 w-4" />
