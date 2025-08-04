@@ -75,6 +75,7 @@ export function Header() {
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={async () => {
               try {
+                console.log('🔍 Logout clicked, origin:', window.location.origin);
                 // Call logout API directly
                 const response = await fetch('/api/auth/logout', {
                   method: 'POST',
@@ -83,18 +84,21 @@ export function Header() {
                   },
                 });
 
+                console.log('🔍 Logout response:', response.status, response.ok, response.redirected);
+
                 if (response.ok || response.redirected) {
-                  // Redirect to login page with absolute URL
-                  window.location.href = `${window.location.origin}/login`;
+                  // Use hardcoded production URL for now
+                  console.log('🔍 Redirecting to login...');
+                  window.location.href = 'https://office.finstar.vn/login';
                 } else {
                   console.error('Logout failed:', response.status);
                   // Still redirect to login on error
-                  window.location.href = `${window.location.origin}/login`;
+                  window.location.href = 'https://office.finstar.vn/login';
                 }
               } catch (error) {
                 console.error('Logout error:', error);
                 // Still redirect to login on error
-                window.location.href = `${window.location.origin}/login`;
+                window.location.href = 'https://office.finstar.vn/login';
               }
             }}>
               <LogOut className="mr-2 h-4 w-4" />
