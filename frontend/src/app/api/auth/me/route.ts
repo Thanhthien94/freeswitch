@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(request: NextRequest) {
   try {
-    // Forward request to backend with cookies
-    const backendUrl = process.env.BACKEND_API_URL || 'http://nestjs-api:3000/api/v1'
+    // Forward request to backend with cookies - use public domain
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1'
     const fullUrl = `${backendUrl}/auth/me`
     const rawCookies = request.headers.get('cookie') || ''
 
@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     console.log('🔍 Backend URL:', fullUrl)
     console.log('🔍 Raw cookies:', rawCookies)
     console.log('🔍 Decoded cookies to forward:', cookies)
-    console.log('🔍 Environment BACKEND_API_URL:', process.env.BACKEND_API_URL)
+    console.log('🔍 Environment NEXT_PUBLIC_API_URL:', process.env.NEXT_PUBLIC_API_URL)
 
     const response = await fetch(fullUrl, {
       method: 'GET',

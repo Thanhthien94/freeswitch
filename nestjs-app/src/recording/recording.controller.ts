@@ -1,19 +1,27 @@
-import { 
-  Controller, 
-  Get, 
-  Delete, 
-  Param, 
-  Query, 
-  Res, 
-  NotFoundException, 
+import {
+  Controller,
+  Get,
+  Delete,
+  Param,
+  Query,
+  Res,
+  NotFoundException,
   BadRequestException,
   StreamableFile,
-  Header
+  Header,
+  UseGuards
 } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { Response } from 'express';
 import { RecordingService, RecordingInfo } from './recording.service';
 import * as path from 'path';
+import { HybridAuthGuard } from '../auth/guards/hybrid-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
 
+@ApiTags('Recordings')
+@ApiBearerAuth('JWT-auth')
+@UseGuards(HybridAuthGuard, RolesGuard)
 @Controller('recordings')
 export class RecordingController {
   constructor(private readonly recordingService: RecordingService) {}
@@ -22,6 +30,9 @@ export class RecordingController {
    * Get all recordings with optional filters
    */
   @Get()
+  @Roles('superadmin', 'admin', 'user')
+  @ApiOperation({ summary: 'Get all recordings with optional filters' })
+  @ApiResponse({ status: 200, description: 'List of recordings' })
   async getRecordings(
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
@@ -176,6 +187,9 @@ export class RecordingController {
    * Get recording statistics
    */
   @Get('stats')
+  @Roles('superadmin', 'admin', 'user')
+  @ApiOperation({ summary: 'Get recording statistics' })
+  @ApiResponse({ status: 200, description: 'Recording statistics' })
   async getRecordingStats() {
     return await this.recordingService.getRecordingStats();
   }

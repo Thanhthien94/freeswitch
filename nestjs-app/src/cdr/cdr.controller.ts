@@ -1,13 +1,20 @@
-import { Controller, Get, Param, Query, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { Controller, Get, Param, Query, Post, Body, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { CdrService } from './cdr.service';
+import { HybridAuthGuard } from '../auth/guards/hybrid-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { Public } from '../auth/decorators/auth.decorators';
 
 @ApiTags('CDR')
+@ApiBearerAuth('JWT-auth')
+@UseGuards(HybridAuthGuard, RolesGuard)
 @Controller('cdr')
 export class CdrController {
   constructor(private readonly cdrService: CdrService) {}
 
   @Get()
+  @Roles('superadmin', 'admin', 'user')
   @ApiOperation({ summary: 'Get call detail records' })
   @ApiResponse({ status: 200, description: 'List of CDR records' })
   async getCdrRecords(@Query() query: any) {
@@ -76,6 +83,7 @@ export class CdrController {
   }
 
   @Get('stats')
+  @Roles('superadmin', 'admin', 'user')
   @ApiOperation({ summary: 'Get call statistics' })
   @ApiResponse({ status: 200, description: 'Call statistics' })
   async getCallStats(@Query() query: any) {
@@ -91,6 +99,7 @@ export class CdrController {
   }
 
   @Post('webhook')
+  @Public() // Webhook endpoint should be public for FreeSWITCH
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Webhook endpoint for FreeSWITCH CDR data' })
   @ApiResponse({ status: 200, description: 'CDR data processed successfully' })

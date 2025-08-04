@@ -120,10 +120,10 @@ export async function deleteSession() {
 // Data Access Layer (DAL) - Official NextJS Pattern
 export const verifySession = cache(async () => {
   try {
-    // Check backend session via /auth/me endpoint
-    const apiUrl = process.env.BACKEND_API_URL || 'http://nestjs-api:3000/api/v1'
+    // Check backend session via /auth/me endpoint - use public domain
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1'
     console.log('🔍 verifySession: Using API URL:', apiUrl)
-    console.log('🔍 Environment BACKEND_API_URL:', process.env.BACKEND_API_URL)
+    console.log('🔍 Environment NEXT_PUBLIC_API_URL:', process.env.NEXT_PUBLIC_API_URL)
     const cookieStore = await cookies()
 
     // Get all cookies to forward to backend
@@ -176,8 +176,8 @@ export const verifySession = cache(async () => {
 // Get current user (server-side only)
 export const getCurrentUser = cache(async (): Promise<User | null> => {
   try {
-    // Check backend session via /auth/me endpoint
-    const apiUrl = process.env.BACKEND_API_URL || 'http://nestjs-api:3000/api/v1'
+    // Check backend session via /auth/me endpoint - use public domain
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1'
     const cookieStore = await cookies()
 
     // Get all cookies to forward to backend

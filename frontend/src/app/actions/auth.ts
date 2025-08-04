@@ -59,10 +59,10 @@ export async function login(state: FormState, formData: FormData): Promise<FormS
   try {
     console.log('🔍 Login attempt:', { emailOrUsername, password: '***', rememberMe })
 
-    // 2. Call NestJS API directly from Server Action
-    const apiUrl = process.env.BACKEND_API_URL || 'http://nestjs-api:3000/api/v1'
+    // 2. Call NestJS API directly from Server Action - use public domain
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1'
     console.log('🔍 API URL:', `${apiUrl}/auth/session-login`)
-    console.log('🔍 Environment BACKEND_API_URL:', process.env.BACKEND_API_URL)
+    console.log('🔍 Environment NEXT_PUBLIC_API_URL:', process.env.NEXT_PUBLIC_API_URL)
 
     const response = await fetch(`${apiUrl}/auth/session-login`, {
       method: 'POST',
@@ -237,8 +237,8 @@ export async function logout(): Promise<void> {
   try {
     console.log('🔍 Logout action called')
 
-    // Call backend session logout
-    const apiUrl = process.env.BACKEND_API_URL || 'http://nestjs-api:3000/api/v1'
+    // Call backend session logout - use public domain
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1'
     try {
       await fetch(`${apiUrl}/auth/session-logout`, {
         method: 'POST',
