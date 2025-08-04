@@ -57,12 +57,22 @@ export const recordingService = {
     });
 
     console.log('🔍 Recording Service: Fetching recordings list with params:', params);
-    const response = await api.get<Recording[]>(`/recordings?${queryParams.toString()}`);
+    const response = await api.get<{data: Recording[], pagination: any}>(`/recordings?${queryParams.toString()}`);
     console.log('✅ Recording Service: Response received:', response);
-    // Backend returns { data: [...], pagination: {...} } directly
+
+    // Backend returns { data: [...], pagination: {...} } structure
+    // Extract data and pagination from response
+    if (response && typeof response === 'object' && 'data' in response) {
+      return {
+        data: (response as any).data || [],
+        pagination: (response as any).pagination || {}
+      };
+    }
+
+    // Fallback for direct array response
     return {
-      data: response,
-      pagination: (response as any).pagination
+      data: Array.isArray(response) ? response : [],
+      pagination: {}
     };
   },
 
