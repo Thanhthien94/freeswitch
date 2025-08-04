@@ -24,6 +24,7 @@ import { ConfigModule as ProfessionalConfigModule } from './config/config.module
 import { FreeSwitchModule } from './freeswitch/freeswitch.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { SystemModule } from './system/system.module';
+import { AuditModule } from './audit/audit.module';
 
 // Controllers
 import { AppController } from './app.controller';
@@ -171,6 +172,7 @@ import { CustomTypeOrmLogger } from './common/interceptors/database-logging.inte
     ProfessionalConfigModule, // Professional Config Module
     FreeSwitchModule, // Enterprise FreeSWITCH Config Module
     SystemModule, // System Status Module
+    AuditModule, // Audit Logs Module
   ],
   controllers: [AppController],
   providers: [
