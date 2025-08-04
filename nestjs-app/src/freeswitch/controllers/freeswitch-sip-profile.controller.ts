@@ -21,7 +21,7 @@ import { FreeSwitchSipProfileService, CreateSipProfileDto, UpdateSipProfileDto, 
 import { FreeSwitchSipProfile } from '../entities/freeswitch-sip-profile.entity';
 
 @ApiTags('FreeSWITCH SIP Profiles')
-@ApiBearerAuth()
+@ApiBearerAuth('JWT-auth')
 @UseGuards(HybridAuthGuard, RolesGuard)
 @Controller('freeswitch/sip-profiles')
 export class FreeSwitchSipProfileController {
