@@ -78,6 +78,9 @@ export const useWebSocket = (): UseWebSocketReturn => {
               'Content-Type': 'application/json',
             },
             credentials: 'include', // Include session cookies
+            body: JSON.stringify({
+              userId: user?.id || 0 // Send userId as required by backend
+            }),
           });
 
           if (response.ok) {

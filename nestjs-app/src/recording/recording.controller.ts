@@ -27,6 +27,17 @@ export class RecordingController {
   constructor(private readonly recordingService: RecordingService) {}
 
   /**
+   * Get recording statistics
+   */
+  @Get('stats')
+  @Roles('superadmin', 'admin', 'user')
+  @ApiOperation({ summary: 'Get recording statistics' })
+  @ApiResponse({ status: 200, description: 'Recording statistics' })
+  async getRecordingStats() {
+    return await this.recordingService.getRecordingStats();
+  }
+
+  /**
    * Get all recordings with optional filters
    */
   @Get()
@@ -181,17 +192,6 @@ export class RecordingController {
       success: true,
       message: `Recording for call ${callUuid} deleted successfully`
     };
-  }
-
-  /**
-   * Get recording statistics
-   */
-  @Get('stats')
-  @Roles('superadmin', 'admin', 'user')
-  @ApiOperation({ summary: 'Get recording statistics' })
-  @ApiResponse({ status: 200, description: 'Recording statistics' })
-  async getRecordingStats() {
-    return await this.recordingService.getRecordingStats();
   }
 
   /**
