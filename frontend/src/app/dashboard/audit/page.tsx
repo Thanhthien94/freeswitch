@@ -82,7 +82,7 @@ export default function AuditLogsPage() {
   const handleFilterChange = (key: keyof AuditLogQueryParams, value: any) => {
     setFilters(prev => ({
       ...prev,
-      [key]: value,
+      [key]: value === 'all' ? undefined : value,
       page: 1,
     }));
   };
@@ -278,14 +278,14 @@ export default function AuditLogsPage() {
               <div>
                 <label className="text-sm font-medium mb-2 block">Hành động</label>
                 <Select
-                  value={filters.action || ''}
-                  onValueChange={(value) => handleFilterChange('action', value || undefined)}
+                  value={filters.action || 'all'}
+                  onValueChange={(value) => handleFilterChange('action', value)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Tất cả hành động" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Tất cả hành động</SelectItem>
+                    <SelectItem value="all">Tất cả hành động</SelectItem>
                     {Object.values(AuditAction).map((action) => (
                       <SelectItem key={action} value={action}>
                         {auditService.formatAction(action)}
@@ -298,14 +298,14 @@ export default function AuditLogsPage() {
               <div>
                 <label className="text-sm font-medium mb-2 block">Kết quả</label>
                 <Select
-                  value={filters.result || ''}
-                  onValueChange={(value) => handleFilterChange('result', value || undefined)}
+                  value={filters.result || 'all'}
+                  onValueChange={(value) => handleFilterChange('result', value)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Tất cả kết quả" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Tất cả kết quả</SelectItem>
+                    <SelectItem value="all">Tất cả kết quả</SelectItem>
                     {Object.values(AuditResult).map((result) => (
                       <SelectItem key={result} value={result}>
                         {auditService.formatResult(result)}
@@ -318,14 +318,14 @@ export default function AuditLogsPage() {
               <div>
                 <label className="text-sm font-medium mb-2 block">Mức độ rủi ro</label>
                 <Select
-                  value={filters.riskLevel || ''}
-                  onValueChange={(value) => handleFilterChange('riskLevel', value || undefined)}
+                  value={filters.riskLevel || 'all'}
+                  onValueChange={(value) => handleFilterChange('riskLevel', value)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Tất cả mức độ" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Tất cả mức độ</SelectItem>
+                    <SelectItem value="all">Tất cả mức độ</SelectItem>
                     {Object.values(RiskLevel).map((level) => (
                       <SelectItem key={level} value={level}>
                         {auditService.formatRiskLevel(level)}
