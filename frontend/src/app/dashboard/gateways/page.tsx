@@ -1136,7 +1136,6 @@ export default function GatewaysPage() {
             </div>
           </div>
         )}
-      </div>
 
       {/* Notification */}
       {notification && (
