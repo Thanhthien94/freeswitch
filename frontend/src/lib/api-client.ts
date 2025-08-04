@@ -22,7 +22,9 @@ async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Re
   // Session-based authentication - cookies are automatically included
 
   // Make request with session cookies + JWT token
-  const response = await fetch(`${API_BASE_URL}/api/v1${url}`, {
+  // Remove /api/v1 from API_BASE_URL to avoid duplicate
+  const baseUrl = API_BASE_URL.replace('/api/v1', '');
+  const response = await fetch(`${baseUrl}/api/v1${url}`, {
     ...options,
     headers,
     credentials: 'include', // Include session cookies
