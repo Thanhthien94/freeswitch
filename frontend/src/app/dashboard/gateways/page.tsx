@@ -9,22 +9,31 @@ import {
   CreateGatewayRequest
 } from '@/services/gateway.service';
 import { sipProfileService } from '@/services/sip-profile.service';
-// Temporarily comment out icons for debugging
-// import {
-//   Plus,
-//   Search,
-//   RefreshCw,
-//   Eye,
-//   Edit,
-//   Trash2,
-//   Code,
-//   Signal,
-//   Server,
-//   CheckCircle,
-//   XCircle,
-//   AlertCircle,
-//   X
-// } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  Plus,
+  Search,
+  RefreshCw,
+  Eye,
+  Edit,
+  Trash2,
+  Code,
+  Signal,
+  Server,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  X,
+  Settings,
+  Network
+} from 'lucide-react';
 
 interface SipProfile {
   id: string;
@@ -84,107 +93,102 @@ function AddGatewayModal({ sipProfiles, onClose, onSubmit }: AddGatewayModalProp
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-medium text-gray-900">Add New Gateway</h3>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
-          >
-            ✕
-          </button>
-        </div>
+    <div className="fixed inset-0 bg-black/50 overflow-y-auto h-full w-full z-50">
+      <Card className="relative top-20 mx-auto w-11/12 md:w-3/4 lg:w-1/2">
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <CardTitle>Add New Gateway</CardTitle>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClose}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Name *</label>
-              <input
+              <label className="block text-sm font-medium mb-2">Name *</label>
+              <Input
                 type="text"
                 value={formData.name}
                 onChange={(e) => handleChange('name', e.target.value)}
-                className={`mt-1 block w-full border rounded-md px-3 py-2 ${
-                  errors.name ? 'border-red-300' : 'border-gray-300'
-                }`}
                 placeholder="Gateway name"
+                className={errors.name ? 'border-destructive' : ''}
               />
-              {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
+              {errors.name && <p className="text-destructive text-xs mt-1">{errors.name}</p>}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Username *</label>
-              <input
+              <label className="block text-sm font-medium mb-2">Username *</label>
+              <Input
                 type="text"
                 value={formData.username}
                 onChange={(e) => handleChange('username', e.target.value)}
-                className={`mt-1 block w-full border rounded-md px-3 py-2 ${
-                  errors.username ? 'border-red-300' : 'border-gray-300'
-                }`}
                 placeholder="SIP username"
+                className={errors.username ? 'border-destructive' : ''}
               />
-              {errors.username && <p className="text-red-500 text-xs mt-1">{errors.username}</p>}
+              {errors.username && <p className="text-destructive text-xs mt-1">{errors.username}</p>}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Password *</label>
-              <input
+              <label className="block text-sm font-medium mb-2">Password *</label>
+              <Input
                 type="password"
                 value={formData.password}
                 onChange={(e) => handleChange('password', e.target.value)}
-                className={`mt-1 block w-full border rounded-md px-3 py-2 ${
-                  errors.password ? 'border-red-300' : 'border-gray-300'
-                }`}
                 placeholder="SIP password"
+                className={errors.password ? 'border-destructive' : ''}
               />
-              {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
+              {errors.password && <p className="text-destructive text-xs mt-1">{errors.password}</p>}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Realm *</label>
-              <input
+              <label className="block text-sm font-medium mb-2">Realm *</label>
+              <Input
                 type="text"
                 value={formData.realm}
                 onChange={(e) => handleChange('realm', e.target.value)}
-                className={`mt-1 block w-full border rounded-md px-3 py-2 ${
-                  errors.realm ? 'border-red-300' : 'border-gray-300'
-                }`}
                 placeholder="SIP realm/domain"
+                className={errors.realm ? 'border-destructive' : ''}
               />
-              {errors.realm && <p className="text-red-500 text-xs mt-1">{errors.realm}</p>}
+              {errors.realm && <p className="text-destructive text-xs mt-1">{errors.realm}</p>}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Proxy *</label>
-              <input
+              <label className="block text-sm font-medium mb-2">Proxy *</label>
+              <Input
                 type="text"
                 value={formData.proxy}
                 onChange={(e) => handleChange('proxy', e.target.value)}
-                className={`mt-1 block w-full border rounded-md px-3 py-2 ${
-                  errors.proxy ? 'border-red-300' : 'border-gray-300'
-                }`}
                 placeholder="SIP proxy server"
+                className={errors.proxy ? 'border-destructive' : ''}
               />
-              {errors.proxy && <p className="text-red-500 text-xs mt-1">{errors.proxy}</p>}
+              {errors.proxy && <p className="text-destructive text-xs mt-1">{errors.proxy}</p>}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">SIP Profile *</label>
-              <select
+              <label className="block text-sm font-medium mb-2">SIP Profile *</label>
+              <Select
                 value={formData.profileId}
-                onChange={(e) => handleChange('profileId', e.target.value)}
-                className={`mt-1 block w-full border rounded-md px-3 py-2 ${
-                  errors.profileId ? 'border-red-300' : 'border-gray-300'
-                }`}
+                onValueChange={(value) => handleChange('profileId', value)}
               >
-                <option value="">Select SIP Profile</option>
-                {Array.isArray(sipProfiles) ? sipProfiles.map((profile) => (
-                  <option key={profile.id} value={profile.id}>
-                    {profile.name}
-                  </option>
-                )) : []}
-              </select>
-              {errors.profileId && <p className="text-red-500 text-xs mt-1">{errors.profileId}</p>}
+                <SelectTrigger className={errors.profileId ? 'border-destructive' : ''}>
+                  <SelectValue placeholder="Select SIP Profile" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.isArray(sipProfiles) ? sipProfiles.map((profile) => (
+                    <SelectItem key={profile.id} value={profile.id}>
+                      {profile.name}
+                    </SelectItem>
+                  )) : []}
+                </SelectContent>
+              </Select>
+              {errors.profileId && <p className="text-destructive text-xs mt-1">{errors.profileId}</p>}
             </div>
           </div>
 
@@ -211,22 +215,22 @@ function AddGatewayModal({ sipProfiles, onClose, onSubmit }: AddGatewayModalProp
           </div>
 
           <div className="flex justify-end space-x-3 pt-4">
-            <button
+            <Button
               type="button"
+              variant="outline"
               onClick={onClose}
-              className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
-              className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
             >
               Create Gateway
-            </button>
+            </Button>
           </div>
         </form>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
@@ -702,32 +706,32 @@ export default function GatewaysPage() {
     loadGateways();
   };
 
-  const getStatusColor = (status?: string) => {
+  const getStatusVariant = (status?: string): "default" | "secondary" | "destructive" | "outline" => {
     switch (status) {
       case 'REGED':
-        return 'bg-green-100 text-green-800';
+        return 'default';
       case 'NOREG':
-        return 'bg-gray-100 text-gray-800';
+        return 'secondary';
       case 'UNREGED':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'outline';
       case 'FAILED':
       case 'FAIL_WAIT':
-        return 'bg-red-100 text-red-800';
+        return 'destructive';
       case 'TRYING':
-        return 'bg-blue-100 text-blue-800';
+        return 'outline';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'secondary';
     }
   };
 
-  const getStateColor = (state?: string) => {
+  const getStateVariant = (state?: string): "default" | "secondary" | "destructive" | "outline" => {
     switch (state) {
       case 'UP':
-        return 'bg-green-100 text-green-800';
+        return 'default';
       case 'DOWN':
-        return 'bg-red-100 text-red-800';
+        return 'destructive';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'secondary';
     }
   };
 
@@ -801,9 +805,31 @@ export default function GatewaysPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <span className="ml-2">Loading gateways...</span>
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <Skeleton className="h-8 w-32" />
+            <Skeleton className="h-4 w-64 mt-2" />
+          </div>
+          <div className="flex space-x-3">
+            <Skeleton className="h-10 w-20" />
+            <Skeleton className="h-10 w-32" />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          {[...Array(4)].map((_, i) => (
+            <Card key={i}>
+              <CardContent className="p-6">
+                <Skeleton className="h-16 w-full" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        <Card>
+          <CardContent className="p-6">
+            <Skeleton className="h-64 w-full" />
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -813,304 +839,294 @@ export default function GatewaysPage() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Gateways</h1>
-          <p className="text-gray-600">Manage FreeSWITCH gateway configurations</p>
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            <Network className="h-6 w-6" />
+            Gateways
+          </h1>
+          <p className="text-muted-foreground">Manage FreeSWITCH gateway configurations</p>
         </div>
         <div className="flex space-x-3">
-          <button
+          <Button
+            variant="outline"
             onClick={handleRefresh}
             disabled={refreshing}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
           >
-            <span className={refreshing ? 'animate-spin' : ''}>🔄</span>
+            <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
             Refresh
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={() => setShowAddModal(true)}
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
           >
-            <span className="mr-2">➕</span>
+            <Plus className="h-4 w-4 mr-2" />
             Add Gateway
-          </button>
+          </Button>
         </div>
       </div>
 
       {/* Stats Cards */}
       {stats && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
+          <Card>
+            <CardContent className="p-6">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  {/* <Server className="h-8 w-8 text-gray-400" /> */}
-                  📊
+                  <Server className="h-8 w-8 text-muted-foreground" />
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Total Gateways</dt>
-                    <dd className="text-lg font-medium text-gray-900">{stats.total}</dd>
+                    <dt className="text-sm font-medium text-muted-foreground truncate">Total Gateways</dt>
+                    <dd className="text-lg font-medium">{stats.total}</dd>
                   </dl>
                 </div>
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
+          <Card>
+            <CardContent className="p-6">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  {/* <CheckCircle className="h-8 w-8 text-green-400" /> */}
-                  ✅
+                  <CheckCircle className="h-8 w-8 text-green-500" />
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Active</dt>
-                    <dd className="text-lg font-medium text-gray-900">{stats.active}</dd>
+                    <dt className="text-sm font-medium text-muted-foreground truncate">Active</dt>
+                    <dd className="text-lg font-medium">{stats.active}</dd>
                   </dl>
                 </div>
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
+          <Card>
+            <CardContent className="p-6">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  {/* <XCircle className="h-8 w-8 text-red-400" /> */}
-                  ❌
+                  <XCircle className="h-8 w-8 text-red-500" />
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Inactive</dt>
-                    <dd className="text-lg font-medium text-gray-900">{stats.inactive}</dd>
+                    <dt className="text-sm font-medium text-muted-foreground truncate">Inactive</dt>
+                    <dd className="text-lg font-medium">{stats.inactive}</dd>
                   </dl>
                 </div>
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
+          <Card>
+            <CardContent className="p-6">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  {/* <Signal className="h-8 w-8 text-yellow-400" /> */}
-                  📡
+                  <Signal className="h-8 w-8 text-blue-500" />
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Registered</dt>
-                    <dd className="text-lg font-medium text-gray-900">{stats.registered}</dd>
+                    <dt className="text-sm font-medium text-muted-foreground truncate">Registered</dt>
+                    <dd className="text-lg font-medium">{stats.registered}</dd>
                   </dl>
                 </div>
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </div>
       )}
 
       {/* Filters */}
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-4 py-5 sm:p-6">
+      <Card>
+        <CardContent className="p-6">
           <form onSubmit={handleSearch} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
-                <label htmlFor="search" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="search" className="block text-sm font-medium mb-2">
                   Search
                 </label>
-                <div className="mt-1 relative rounded-md shadow-sm">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <span className="text-gray-400">🔍</span>
-                  </div>
-                  <input
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
                     type="text"
                     id="search"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md"
+                    className="pl-10"
                     placeholder="Search gateways..."
                   />
                 </div>
               </div>
 
               <div>
-                <label htmlFor="profile" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="profile" className="block text-sm font-medium mb-2">
                   SIP Profile
                 </label>
-                <select
-                  id="profile"
+                <Select
                   value={selectedProfile}
-                  onChange={(e) => {
-                    setSelectedProfile(e.target.value);
+                  onValueChange={(value) => {
+                    setSelectedProfile(value);
                     handleFilterChange();
                   }}
-                  className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
                 >
-                  <option value="">All Profiles</option>
-                  {Array.isArray(sipProfiles) ? sipProfiles.map((profile) => (
-                    <option key={profile.id} value={profile.id}>
-                      {profile.name}
-                    </option>
-                  )) : []}
-                </select>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All Profiles" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All Profiles</SelectItem>
+                    {Array.isArray(sipProfiles) ? sipProfiles.map((profile) => (
+                      <SelectItem key={profile.id} value={profile.id}>
+                        {profile.name}
+                      </SelectItem>
+                    )) : []}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div>
-                <label htmlFor="status" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="status" className="block text-sm font-medium mb-2">
                   Status
                 </label>
-                <select
-                  id="status"
+                <Select
                   value={selectedStatus}
-                  onChange={(e) => {
-                    setSelectedStatus(e.target.value);
+                  onValueChange={(value) => {
+                    setSelectedStatus(value);
                     handleFilterChange();
                   }}
-                  className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
                 >
-                  <option value="">All Status</option>
-                  <option value="REGED">Registered</option>
-                  <option value="NOREG">No Registration</option>
-                  <option value="UNREGED">Unregistered</option>
-                  <option value="FAILED">Failed</option>
-                  <option value="TRYING">Trying</option>
-                </select>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All Status</SelectItem>
+                    <SelectItem value="REGED">Registered</SelectItem>
+                    <SelectItem value="NOREG">No Registration</SelectItem>
+                    <SelectItem value="UNREGED">Unregistered</SelectItem>
+                    <SelectItem value="FAILED">Failed</SelectItem>
+                    <SelectItem value="TRYING">Trying</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="flex items-end">
-                <button
+                <Button
                   type="submit"
-                  className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+                  className="w-full"
                 >
-                  <span className="mr-2">🔍</span>
+                  <Search className="h-4 w-4 mr-2" />
                   Search
-                </button>
+                </Button>
               </div>
             </div>
           </form>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* Gateways Table */}
-      <div className="bg-white shadow overflow-hidden sm:rounded-md">
-        <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg leading-6 font-medium text-gray-900">
-              Gateways ({totalGateways})
-            </h3>
-          </div>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Name
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Profile
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Gateway
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Registration
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  State
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+      <Card>
+        <CardHeader>
+          <CardTitle>Gateways ({totalGateways})</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Profile</TableHead>
+                  <TableHead>Gateway</TableHead>
+                  <TableHead>Registration</TableHead>
+                  <TableHead>State</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
               {Array.isArray(gateways) ? gateways.map((gateway) => (
-                <tr key={gateway.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
+                <TableRow key={gateway.id}>
+                  <TableCell>
                     <div className="flex items-center">
                       <div>
-                        <div className="text-sm font-medium text-gray-900">
+                        <div className="font-medium">
                           {gateway.name}
                         </div>
-                        <div className="text-sm text-gray-500">
+                        <div className="text-sm text-muted-foreground">
                           {gateway.username}@{gateway.realm}
                         </div>
                       </div>
                     </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  </TableCell>
+                  <TableCell>
                     {gateway.profileName || gateway.profileId}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  </TableCell>
+                  <TableCell>
                     {gateway.proxy}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(gateway.status)}`}>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={getStatusVariant(gateway.status)}>
                       {gateway.status || 'Unknown'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStateColor(gateway.state)}`}>
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={getStateVariant(gateway.state)}>
                       {gateway.state || 'Unknown'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
                     <div className="flex space-x-2">
-                      <button
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => openViewModal(gateway)}
-                        className="text-blue-600 hover:text-blue-900 px-2 py-1 text-sm"
                         title="View Details"
                       >
-                        View
-                      </button>
-                      <button
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => openEditModal(gateway)}
-                        className="text-green-600 hover:text-green-900 px-2 py-1 text-sm"
                         title="Edit Gateway"
                       >
-                        Edit
-                      </button>
-                      <button
-                        className="text-gray-600 hover:text-gray-900 px-2 py-1 text-sm"
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         title="View Configuration"
                       >
-                        Config
-                      </button>
-                      <button
+                        <Code className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => openDeleteModal(gateway)}
-                        className="text-red-600 hover:text-red-900 px-2 py-1 text-sm"
                         title="Delete Gateway"
                       >
-                        Delete
-                      </button>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               )) : []}
-            </tbody>
-          </table>
+              </TableBody>
+            </Table>
 
-          {gateways.length === 0 && (
-            <div className="text-center py-12">
-              {/* <Server className="mx-auto h-12 w-12 text-gray-400" /> */}
-              <div className="mx-auto text-4xl">🖥️</div>
-              <h3 className="mt-2 text-sm font-medium text-gray-900">No gateways</h3>
-              <p className="mt-1 text-sm text-gray-500">
-                Get started by creating a new gateway.
-              </p>
-              <div className="mt-6">
-                <button
-                  onClick={() => setShowAddModal(true)}
-                  className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-                >
-                  <span className="mr-2">➕</span>
-                  Add Gateway
-                </button>
+            {gateways.length === 0 && (
+              <div className="text-center py-12">
+                <Server className="mx-auto h-12 w-12 text-muted-foreground" />
+                <h3 className="mt-2 text-sm font-medium">No gateways</h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Get started by creating a new gateway.
+                </p>
+                <div className="mt-6">
+                  <Button
+                    onClick={() => setShowAddModal(true)}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Gateway
+                  </Button>
+                </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
         {/* Pagination - Temporarily disabled for debugging */}
         {false && totalPages > 1 && (
@@ -1124,32 +1140,30 @@ export default function GatewaysPage() {
 
       {/* Notification */}
       {notification && (
-        <div className={`fixed top-4 right-4 z-50 p-4 rounded-md shadow-lg ${
-          notification.type === 'success'
-            ? 'bg-green-100 border border-green-400 text-green-700'
-            : 'bg-red-100 border border-red-400 text-red-700'
+        <Alert className={`fixed top-4 right-4 z-50 max-w-md ${
+          notification.type === 'success' ? 'border-green-500' : 'border-red-500'
         }`}>
           <div className="flex items-center">
             <div className="flex-shrink-0">
               {notification.type === 'success' ? (
-                <span>✅</span>
+                <CheckCircle className="h-4 w-4 text-green-500" />
               ) : (
-                <span>⚠️</span>
+                <AlertTriangle className="h-4 w-4 text-red-500" />
               )}
             </div>
-            <div className="ml-3">
-              <p className="text-sm font-medium">{notification.message}</p>
-            </div>
-            <div className="ml-auto pl-3">
-              <button
-                onClick={() => setNotification(null)}
-                className="inline-flex text-gray-400 hover:text-gray-600"
-              >
-                ✕
-              </button>
-            </div>
+            <AlertDescription className="ml-3 flex-1">
+              {notification.message}
+            </AlertDescription>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setNotification(null)}
+              className="ml-auto"
+            >
+              <X className="h-4 w-4" />
+            </Button>
           </div>
-        </div>
+        </Alert>
       )}
 
       {/* Add Gateway Modal */}
