@@ -649,8 +649,8 @@ export default function GatewaysPage() {
         page: currentPage,
         limit: itemsPerPage,
         search: searchTerm || undefined,
-        profileId: selectedProfile || undefined,
-        status: selectedStatus || undefined,
+        profileId: selectedProfile && selectedProfile !== 'all' ? selectedProfile : undefined,
+        status: selectedStatus && selectedStatus !== 'all' ? selectedStatus : undefined,
         sortBy: 'name',
         sortOrder: 'ASC'
       };
@@ -969,7 +969,7 @@ export default function GatewaysPage() {
                     <SelectValue placeholder="All Profiles" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Profiles</SelectItem>
+                    <SelectItem value="all">All Profiles</SelectItem>
                     {Array.isArray(sipProfiles) ? sipProfiles.map((profile) => (
                       <SelectItem key={profile.id} value={profile.id}>
                         {profile.name}
@@ -994,7 +994,7 @@ export default function GatewaysPage() {
                     <SelectValue placeholder="All Status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Status</SelectItem>
+                    <SelectItem value="all">All Status</SelectItem>
                     <SelectItem value="REGED">Registered</SelectItem>
                     <SelectItem value="NOREG">No Registration</SelectItem>
                     <SelectItem value="UNREGED">Unregistered</SelectItem>
