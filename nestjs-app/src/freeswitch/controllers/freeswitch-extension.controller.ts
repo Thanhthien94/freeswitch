@@ -128,15 +128,6 @@ export class FreeSwitchExtensionController {
     return { xml };
   }
 
-  @Get(':id')
-  @Roles('superadmin', 'admin', 'user')
-  @ApiOperation({ summary: 'Get extension by ID' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Extension retrieved successfully' })
-  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Extension not found' })
-  async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<FreeSwitchExtension> {
-    return this.extensionService.findOne(id);
-  }
-
   @Get(':id/xml')
   @Roles('superadmin', 'admin')
   @ApiOperation({ summary: 'Generate XML configuration for extension' })
@@ -304,5 +295,14 @@ export class FreeSwitchExtensionController {
     @CurrentUser() user: any,
   ): Promise<FreeSwitchExtension> {
     return this.extensionService.updateDndSettings(id, settings, user.id);
+  }
+
+  @Get(':id')
+  @Roles('superadmin', 'admin', 'user')
+  @ApiOperation({ summary: 'Get extension by ID' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Extension retrieved successfully' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Extension not found' })
+  async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<FreeSwitchExtension> {
+    return this.extensionService.findOne(id);
   }
 }
