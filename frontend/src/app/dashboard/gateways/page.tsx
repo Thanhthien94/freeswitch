@@ -289,103 +289,97 @@ function EditGatewayModal({ gateway, sipProfiles, onClose, onSubmit }: EditGatew
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-medium text-gray-900">Edit Gateway: {gateway.name}</h3>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
-          >
-            {/* <X className="h-6 w-6" /> */}
-            ✕
-          </button>
-        </div>
+    <div className="fixed inset-0 bg-black/50 overflow-y-auto h-full w-full z-50">
+      <Card className="relative top-20 mx-auto w-11/12 md:w-3/4 lg:w-1/2">
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <CardTitle>Edit Gateway: {gateway.name}</CardTitle>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClose}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Name *</label>
-              <input
+              <label className="block text-sm font-medium mb-2">Name *</label>
+              <Input
                 type="text"
                 value={formData.name}
                 onChange={(e) => handleChange('name', e.target.value)}
-                className={`mt-1 block w-full border rounded-md px-3 py-2 ${
-                  errors.name ? 'border-red-300' : 'border-gray-300'
-                }`}
+                className={errors.name ? 'border-destructive' : ''}
               />
-              {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
+              {errors.name && <p className="text-destructive text-xs mt-1">{errors.name}</p>}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Username *</label>
-              <input
+              <label className="block text-sm font-medium mb-2">Username *</label>
+              <Input
                 type="text"
                 value={formData.username}
                 onChange={(e) => handleChange('username', e.target.value)}
-                className={`mt-1 block w-full border rounded-md px-3 py-2 ${
-                  errors.username ? 'border-red-300' : 'border-gray-300'
-                }`}
+                className={errors.username ? 'border-destructive' : ''}
               />
-              {errors.username && <p className="text-red-500 text-xs mt-1">{errors.username}</p>}
+              {errors.username && <p className="text-destructive text-xs mt-1">{errors.username}</p>}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Password *</label>
-              <input
+              <label className="block text-sm font-medium mb-2">Password *</label>
+              <Input
                 type="password"
                 value={formData.password}
                 onChange={(e) => handleChange('password', e.target.value)}
-                className={`mt-1 block w-full border rounded-md px-3 py-2 ${
-                  errors.password ? 'border-red-300' : 'border-gray-300'
-                }`}
+                className={errors.password ? 'border-destructive' : ''}
               />
-              {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
+              {errors.password && <p className="text-destructive text-xs mt-1">{errors.password}</p>}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Realm *</label>
-              <input
+              <label className="block text-sm font-medium mb-2">Realm *</label>
+              <Input
                 type="text"
                 value={formData.realm}
                 onChange={(e) => handleChange('realm', e.target.value)}
-                className={`mt-1 block w-full border rounded-md px-3 py-2 ${
-                  errors.realm ? 'border-red-300' : 'border-gray-300'
-                }`}
+                className={errors.realm ? 'border-destructive' : ''}
               />
-              {errors.realm && <p className="text-red-500 text-xs mt-1">{errors.realm}</p>}
+              {errors.realm && <p className="text-destructive text-xs mt-1">{errors.realm}</p>}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Proxy *</label>
-              <input
+              <label className="block text-sm font-medium mb-2">Proxy *</label>
+              <Input
                 type="text"
                 value={formData.proxy}
                 onChange={(e) => handleChange('proxy', e.target.value)}
-                className={`mt-1 block w-full border rounded-md px-3 py-2 ${
-                  errors.proxy ? 'border-red-300' : 'border-gray-300'
-                }`}
+                className={errors.proxy ? 'border-destructive' : ''}
               />
-              {errors.proxy && <p className="text-red-500 text-xs mt-1">{errors.proxy}</p>}
+              {errors.proxy && <p className="text-destructive text-xs mt-1">{errors.proxy}</p>}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">SIP Profile *</label>
-              <select
+              <label className="block text-sm font-medium mb-2">SIP Profile *</label>
+              <Select
                 value={formData.profileId}
-                onChange={(e) => handleChange('profileId', e.target.value)}
-                className={`mt-1 block w-full border rounded-md px-3 py-2 ${
-                  errors.profileId ? 'border-red-300' : 'border-gray-300'
-                }`}
+                onValueChange={(value) => handleChange('profileId', value)}
               >
-                <option value="">Select SIP Profile</option>
-                {Array.isArray(sipProfiles) ? sipProfiles.map((profile) => (
-                  <option key={profile.id} value={profile.id}>
-                    {profile.name}
-                  </option>
-                )) : []}
-              </select>
-              {errors.profileId && <p className="text-red-500 text-xs mt-1">{errors.profileId}</p>}
+                <SelectTrigger className={errors.profileId ? 'border-destructive' : ''}>
+                  <SelectValue placeholder="Select SIP Profile" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.isArray(sipProfiles) ? sipProfiles.map((profile) => (
+                    <SelectItem key={profile.id} value={profile.id}>
+                      {profile.name}
+                    </SelectItem>
+                  )) : []}
+                </SelectContent>
+              </Select>
+              {errors.profileId && <p className="text-destructive text-xs mt-1">{errors.profileId}</p>}
             </div>
           </div>
 
@@ -412,22 +406,22 @@ function EditGatewayModal({ gateway, sipProfiles, onClose, onSubmit }: EditGatew
           </div>
 
           <div className="flex justify-end space-x-3 pt-4">
-            <button
+            <Button
               type="button"
+              variant="outline"
               onClick={onClose}
-              className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
-              className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
             >
               Update Gateway
-            </button>
+            </Button>
           </div>
         </form>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
@@ -441,42 +435,49 @@ interface DeleteGatewayModalProps {
 
 function DeleteGatewayModal({ gateway, onClose, onConfirm }: DeleteGatewayModalProps) {
   return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-medium text-gray-900">Delete Gateway</h3>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
-          >
-            ✕
-          </button>
-        </div>
+    <div className="fixed inset-0 bg-black/50 overflow-y-auto h-full w-full z-50">
+      <Card className="relative top-20 mx-auto w-96">
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <CardTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              Delete Gateway
+            </CardTitle>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClose}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="mb-6">
+            <p className="text-sm text-muted-foreground">
+              Are you sure you want to delete the gateway <strong>{gateway.name}</strong>?
+            </p>
+            <p className="text-sm text-destructive mt-2">
+              This action cannot be undone.
+            </p>
+          </div>
 
-        <div className="mb-6">
-          <p className="text-sm text-gray-600">
-            Are you sure you want to delete the gateway <strong>{gateway.name}</strong>?
-          </p>
-          <p className="text-sm text-red-600 mt-2">
-            This action cannot be undone.
-          </p>
-        </div>
-
-        <div className="flex justify-end space-x-3">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={onConfirm}
-            className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700"
-          >
-            Delete Gateway
-          </button>
-        </div>
-      </div>
+          <div className="flex justify-end space-x-3">
+            <Button
+              variant="outline"
+              onClick={onClose}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={onConfirm}
+            >
+              Delete Gateway
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
@@ -489,106 +490,123 @@ interface ViewGatewayModalProps {
 
 function ViewGatewayModal({ gateway, onClose }: ViewGatewayModalProps) {
   return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-medium text-gray-900">Gateway Details: {gateway.name}</h3>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
-          >
-            ✕
-          </button>
-        </div>
+    <div className="fixed inset-0 bg-black/50 overflow-y-auto h-full w-full z-50">
+      <Card className="relative top-20 mx-auto w-11/12 md:w-3/4 lg:w-1/2">
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <CardTitle className="flex items-center gap-2">
+              <Eye className="h-5 w-5" />
+              Gateway Details: {gateway.name}
+            </CardTitle>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClose}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
 
         <div className="space-y-6">
           {/* Basic Information */}
           <div>
-            <h4 className="text-md font-medium text-gray-900 mb-3">Basic Information</h4>
+            <h4 className="text-md font-medium mb-3 flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              Basic Information
+            </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-500">Name</label>
-                <p className="mt-1 text-sm text-gray-900">{gateway.name}</p>
+                <label className="block text-sm font-medium text-muted-foreground">Name</label>
+                <p className="mt-1 text-sm font-medium">{gateway.name}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-500">Username</label>
-                <p className="mt-1 text-sm text-gray-900">{gateway.username}</p>
+                <label className="block text-sm font-medium text-muted-foreground">Username</label>
+                <p className="mt-1 text-sm font-medium">{gateway.username}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-500">Realm</label>
-                <p className="mt-1 text-sm text-gray-900">{gateway.realm}</p>
+                <label className="block text-sm font-medium text-muted-foreground">Realm</label>
+                <p className="mt-1 text-sm font-medium">{gateway.realm}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-500">Proxy</label>
-                <p className="mt-1 text-sm text-gray-900">{gateway.proxy}</p>
+                <label className="block text-sm font-medium text-muted-foreground">Proxy</label>
+                <p className="mt-1 text-sm font-medium">{gateway.proxy}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-500">SIP Profile</label>
-                <p className="mt-1 text-sm text-gray-900">{gateway.profileName || gateway.profileId}</p>
+                <label className="block text-sm font-medium text-muted-foreground">SIP Profile</label>
+                <p className="mt-1 text-sm font-medium">{gateway.profileName || gateway.profileId}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-500">Extension</label>
-                <p className="mt-1 text-sm text-gray-900">{gateway.extension || 'N/A'}</p>
+                <label className="block text-sm font-medium text-muted-foreground">Extension</label>
+                <p className="mt-1 text-sm font-medium">{gateway.extension || 'N/A'}</p>
               </div>
             </div>
           </div>
 
           {/* Status Information */}
           <div>
-            <h4 className="text-md font-medium text-gray-900 mb-3">Status Information</h4>
+            <h4 className="text-md font-medium mb-3 flex items-center gap-2">
+              <Signal className="h-4 w-4" />
+              Status Information
+            </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-500">Registration Status</label>
-                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                  gateway.status === 'REGED' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                }`}>
-                  {gateway.status || 'Unknown'}
-                </span>
+                <label className="block text-sm font-medium text-muted-foreground">Registration Status</label>
+                <div className="mt-1">
+                  <Badge variant={getStatusVariant(gateway.status)}>
+                    {gateway.status || 'Unknown'}
+                  </Badge>
+                </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-500">State</label>
-                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                  gateway.state === 'UP' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                }`}>
-                  {gateway.state || 'Unknown'}
-                </span>
+                <label className="block text-sm font-medium text-muted-foreground">State</label>
+                <div className="mt-1">
+                  <Badge variant={getStateVariant(gateway.state)}>
+                    {gateway.state || 'Unknown'}
+                  </Badge>
+                </div>
               </div>
             </div>
           </div>
 
           {/* Configuration */}
           <div>
-            <h4 className="text-md font-medium text-gray-900 mb-3">Configuration</h4>
+            <h4 className="text-md font-medium mb-3 flex items-center gap-2">
+              <Code className="h-4 w-4" />
+              Configuration
+            </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-500">Register</label>
-                <p className="mt-1 text-sm text-gray-900">{gateway.register ? 'Yes' : 'No'}</p>
+                <label className="block text-sm font-medium text-muted-foreground">Register</label>
+                <p className="mt-1 text-sm font-medium">{gateway.register ? 'Yes' : 'No'}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-500">Retry Seconds</label>
-                <p className="mt-1 text-sm text-gray-900">{gateway.retrySeconds || 30}</p>
+                <label className="block text-sm font-medium text-muted-foreground">Retry Seconds</label>
+                <p className="mt-1 text-sm font-medium">{gateway.retrySeconds || 30}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-500">Context</label>
-                <p className="mt-1 text-sm text-gray-900">{gateway.context || 'default'}</p>
+                <label className="block text-sm font-medium text-muted-foreground">Context</label>
+                <p className="mt-1 text-sm font-medium">{gateway.context || 'default'}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-500">Caller ID in From</label>
-                <p className="mt-1 text-sm text-gray-900">{gateway.callerIdInFrom ? 'Yes' : 'No'}</p>
+                <label className="block text-sm font-medium text-muted-foreground">Caller ID in From</label>
+                <p className="mt-1 text-sm font-medium">{gateway.callerIdInFrom ? 'Yes' : 'No'}</p>
               </div>
             </div>
           </div>
         </div>
 
         <div className="flex justify-end pt-6">
-          <button
+          <Button
+            variant="outline"
             onClick={onClose}
-            className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
           >
             Close
-          </button>
+          </Button>
         </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
