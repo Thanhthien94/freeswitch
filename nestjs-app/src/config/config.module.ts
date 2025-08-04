@@ -42,10 +42,10 @@ import { ConfigProfessionalController } from './controllers/config-professional.
       inject: [ConfigService],
     }),
 
-    // Config module for environment variables
+    // Config module for environment variables - Load production env files first
     NestConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: ['.env.local', '.env'],
+      envFilePath: ['.env.production.local', '.env.production', '.env.local', '.env'],
     }),
   ],
 

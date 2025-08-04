@@ -44,7 +44,22 @@ check_env_file() {
 load_env() {
     print_status "Loading environment variables..."
     set -a
-    source .env
+
+    # Load environment files in priority order
+    if [ -f ".env.production.local" ]; then
+        print_status "Loading .env.production.local..."
+        source .env.production.local
+    elif [ -f ".env.production" ]; then
+        print_status "Loading .env.production..."
+        source .env.production
+    fi
+
+    # Load base .env as fallback
+    if [ -f ".env" ]; then
+        print_status "Loading .env as fallback..."
+        source .env
+    fi
+
     set +a
 }
 

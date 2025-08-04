@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation'
 import { createSession, deleteSession, decrypt } from '@/lib/auth'
 import { cookies } from 'next/headers'
 import type { User } from '@/lib/auth'
+import { api } from '@/lib/api-client'
 
 // Validation schemas
 const LoginSchema = z.object({

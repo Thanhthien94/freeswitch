@@ -40,10 +40,10 @@ import { CustomTypeOrmLogger } from './common/interceptors/database-logging.inte
 
 @Module({
   imports: [
-    // Configuration
+    // Configuration - Load production env files first
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: ['.env.local', '.env'],
+      envFilePath: ['.env.production.local', '.env.production', '.env.local', '.env'],
       cache: true,
     }),
 
