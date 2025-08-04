@@ -75,28 +75,14 @@ export function Header() {
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={async () => {
               try {
-                console.log('🔍 Logout clicked, origin:', window.location.origin);
-                // Call logout API directly
-                const response = await fetch('/api/auth/logout', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                  },
-                });
-
-                console.log('🔍 Logout response:', response.status, response.ok, response.redirected);
-
-                if (response.ok || response.redirected) {
-                  // Use Next.js router for navigation
-                  console.log('🔍 Redirecting to login with router...');
-                  router.push('/login');
-                } else {
-                  console.error('Logout failed:', response.status);
-                  // Still redirect to login on error
-                  router.push('/login');
-                }
+                console.log('🔍 Logout clicked - calling logout action directly');
+                // Import and call logout action directly
+                const { logout } = await import('@/app/actions/auth');
+                await logout();
+                console.log('🔍 Logout action completed, redirecting...');
+                router.push('/login');
               } catch (error) {
-                console.error('Logout error:', error);
+                console.error('🔍 Logout error:', error);
                 // Still redirect to login on error
                 router.push('/login');
               }
