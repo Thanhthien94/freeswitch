@@ -39,14 +39,14 @@ export const WebSocketStatus = () => {
   const getConnectionBadge = () => {
     if (connected) {
       return (
-        <Badge variant="default" className="bg-green-500">
+        <Badge className="status-online">
           <Wifi className="w-3 h-3 mr-1" />
           Đã kết nối
         </Badge>
       );
     } else {
       return (
-        <Badge variant="destructive">
+        <Badge className="status-offline">
           <WifiOff className="w-3 h-3 mr-1" />
           Mất kết nối
         </Badge>

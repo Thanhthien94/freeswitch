@@ -14,13 +14,14 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Bell, LogOut, Settings, User } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/components/providers/UserProvider';
+import { ModeToggle } from '@/components/mode-toggle';
 
 export function Header() {
   const router = useRouter();
   const { user } = useUser();
 
   return (
-    <header className="flex h-16 items-center justify-between border-b px-6">
+    <header className="flex h-16 items-center justify-between border-b px-6 header-glass">
       <div className="flex items-center gap-4">
         <SidebarTrigger />
         <div>
@@ -32,6 +33,9 @@ export function Header() {
       </div>
 
       <div className="flex items-center gap-4">
+        {/* Theme Toggle */}
+        <ModeToggle />
+
         {/* Notifications */}
         <Button variant="ghost" size="icon">
           <Bell className="h-4 w-4" />

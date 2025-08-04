@@ -51,7 +51,7 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
+  --primary: oklch(0.4 0.177 255.34);
   --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
@@ -62,20 +62,20 @@
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
+  --ring: oklch(0.4 0.177 255.34);
+  --chart-1: oklch(0.4 0.177 255.34);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary: oklch(0.4 0.177 255.34);
   --sidebar-primary-foreground: oklch(0.985 0 0);
   --sidebar-accent: oklch(0.97 0 0);
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar-ring: oklch(0.4 0.177 255.34);
 }
 
 .dark {
@@ -85,8 +85,8 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
+  --primary: oklch(0.6 0.177 255.34);
+  --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
@@ -104,7 +104,7 @@
   --chart-5: oklch(0.645 0.246 16.439);
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary: oklch(0.6 0.177 255.34);
   --sidebar-primary-foreground: oklch(0.985 0 0);
   --sidebar-accent: oklch(0.269 0 0);
   --sidebar-accent-foreground: oklch(0.985 0 0);
@@ -118,5 +118,50 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer components {
+  /* Professional Card Styles */
+  .card-gradient {
+    @apply bg-gradient-to-br from-card via-card to-card/95 backdrop-blur-sm;
+  }
+
+  /* Enhanced Sidebar */
+  .sidebar-gradient {
+    @apply bg-gradient-to-b from-sidebar via-sidebar to-sidebar/98;
+  }
+
+  /* Professional Header */
+  .header-glass {
+    @apply bg-background/80 backdrop-blur-md border-border/50;
+  }
+
+  /* Status Indicators */
+  .status-online {
+    @apply bg-green-500/20 text-green-700 dark:text-green-400 border-green-500/30;
+  }
+
+  .status-offline {
+    @apply bg-red-500/20 text-red-700 dark:text-red-400 border-red-500/30;
+  }
+
+  .status-warning {
+    @apply bg-yellow-500/20 text-yellow-700 dark:text-yellow-400 border-yellow-500/30;
+  }
+
+  /* Enhanced Buttons */
+  .btn-primary-gradient {
+    @apply bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 shadow-lg shadow-primary/25;
+  }
+
+  /* Professional Metrics Cards */
+  .metric-card {
+    @apply bg-gradient-to-br from-card via-card to-card/95 border border-border/50 shadow-sm hover:shadow-md transition-all duration-200;
+  }
+
+  /* Enhanced Focus States */
+  .focus-enhanced {
+    @apply focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background;
   }
 }

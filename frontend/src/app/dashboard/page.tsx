@@ -72,24 +72,31 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
-          <Card key={stat.title}>
+          <Card key={stat.title} className="metric-card hover:scale-105 transition-transform duration-200">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
                 {stat.title}
               </CardTitle>
-              <stat.icon className="h-4 w-4 text-muted-foreground" />
+              <div className="p-2 rounded-lg bg-primary/10">
+                <stat.icon className="h-4 w-4 text-primary" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
-                {stat.loading ? '...' : stat.value}
+              <div className="text-3xl font-bold tracking-tight">
+                {stat.loading ? (
+                  <div className="h-8 w-16 bg-muted animate-pulse rounded" />
+                ) : (
+                  stat.value
+                )}
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm text-muted-foreground mt-1">
                 {stat.description}
               </p>
               {stat.trend && (
-                <Badge variant="secondary" className="mt-1">
+                <Badge variant="secondary" className="mt-2 bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20">
+                  <TrendingUp className="h-3 w-3 mr-1" />
                   {stat.trend}
                 </Badge>
               )}
