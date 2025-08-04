@@ -7,6 +7,7 @@ interface UserContextType {
   user: User | null
   isLoading: boolean
   refreshUser: () => Promise<void>
+  clearUser: () => void
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined)
@@ -40,8 +41,13 @@ export function UserProvider({
     }
   }
 
+  const clearUser = () => {
+    console.log('🔍 Clearing user state')
+    setUser(null)
+  }
+
   return (
-    <UserContext.Provider value={{ user, isLoading, refreshUser }}>
+    <UserContext.Provider value={{ user, isLoading, refreshUser, clearUser }}>
       {children}
     </UserContext.Provider>
   )

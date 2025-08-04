@@ -18,7 +18,7 @@ import { ModeToggle } from '@/components/mode-toggle';
 
 export function Header() {
   const router = useRouter();
-  const { user } = useUser();
+  const { user, clearUser } = useUser();
 
   return (
     <header className="flex h-16 items-center justify-between border-b px-6 header-glass">
@@ -75,15 +75,29 @@ export function Header() {
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={async () => {
               try {
-                console.log('🔍 Logout clicked - calling logout action directly');
-                // Import and call logout action directly
-                const { logout } = await import('@/app/actions/auth');
-                await logout();
-                console.log('🔍 Logout action completed, redirecting...');
+                console.log('🔍 Logout clicked - clearing user session');
+
+                // 1. Clear user state immediately for better UX
+                clearUser();
+
+                // 2. Call backend logout API directly
+                const response = await fetch('/api/auth/logout', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                });
+
+                console.log('🔍 Logout API response:', response.status);
+
+                // 3. Navigate to login page
+                console.log('🔍 Redirecting to login...');
                 router.push('/login');
+
               } catch (error) {
                 console.error('🔍 Logout error:', error);
-                // Still redirect to login on error
+                // Clear user state and redirect even on error
+                clearUser();
                 router.push('/login');
               }
             }}>
