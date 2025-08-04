@@ -3,7 +3,8 @@ import { NextRequest, NextResponse } from 'next/server'
 export async function GET(request: NextRequest) {
   try {
     // Forward request to backend with cookies - use public domain
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
+    // Remove /api/v1 from NEXT_PUBLIC_API_URL to avoid duplicate
+    const backendUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000').replace('/api/v1', '')
     const fullUrl = `${backendUrl}/api/v1/auth/me`
     const rawCookies = request.headers.get('cookie') || ''
 

@@ -17,7 +17,8 @@ export async function GET() {
 
     // Check backend API connection
     try {
-      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://nestjs-api:3000';
+      // Remove /api/v1 from NEXT_PUBLIC_API_URL to avoid duplicate
+      const backendUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://nestjs-api:3000').replace('/api/v1', '');
       const response = await fetch(`${backendUrl}/api/v1/health`, {
         method: 'GET',
         headers: {
