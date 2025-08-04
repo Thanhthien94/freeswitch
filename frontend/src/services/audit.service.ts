@@ -1,4 +1,4 @@
-import { api } from './api-client';
+import { api } from '@/lib/api-client';
 
 // Enums matching backend
 export enum AuditAction {
