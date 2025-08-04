@@ -81,7 +81,6 @@ services:
       - API_PREFIX=${API_PREFIX:-api/v1}
       - SESSION_SECRET=${SESSION_SECRET}
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
-      - API_PREFIX=${API_PREFIX:-api/v1}
       - SWAGGER_ENABLED=${SWAGGER_ENABLED:-true}
       - SWAGGER_PATH=${SWAGGER_PATH:-api/docs}
     networks:
