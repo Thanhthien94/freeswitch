@@ -140,3 +140,70 @@ Before every production deployment:
 - [ ] All containers healthy
 
 **REMEMBER**: Always follow the proper workflow. Never edit production code directly!
+
+## 🚨 CRITICAL ISSUES & SOLUTIONS LEARNED
+
+### 11. **API Endpoint Debugging Issues Fixed**
+- ❌ **WebSocket Token API (500 Error)**: Frontend không gửi `userId` trong request body
+  - **Fix**: Thêm `userId: user?.id` vào request body trong `useWebSocket.ts`
+- ❌ **Recordings Stats API (404 Error)**: Next.js App Router conflict giữa `/api/recordings/route.ts` và `/api/recordings/stats/route.ts`
+  - **Fix**: Tạo endpoint mới `/api/recordings-stats` và update service
+- ❌ **Backend Route Ordering**: `/recordings/stats` route bị match với `:callUuid` parameter
+  - **Fix**: Move `/recordings/stats` route lên đầu trong controller
+
+### 12. **Next.js App Router Routing Issues**
+- **Problem**: Nested API routes conflict trong Next.js App Router
+- **Solution**: Sử dụng alternative route names để tránh conflict
+- **Example**: `/api/recordings/stats` → `/api/recordings-stats`
+- **Rule**: Khi có conflict, tạo route mới với tên khác thay vì fix routing phức tạp
+
+### 13. **Production Server Cleanup Guidelines**
+- **Files to Remove**:
+  - `.env.dev` (development only)
+  - `.env.backup`, `.env.production.backup` (old backups)
+  - `dev-start.sh` (development scripts)
+  - `scripts/backup_old_scripts/` (old backup directories)
+- **Files to Keep**:
+  - `.env.production.local` (main production config)
+  - `.env.production` (production template)
+  - `.env` (fallback)
+  - `.env.example` (template)
+- **Docker Cleanup**: Regularly run `docker image prune -f` to remove dangling images
+
+### 14. **Environment Variable Loading Priority Issues**
+- **Critical**: NestJS ConfigModule phải load `.env.production.local` FIRST
+- **Files Modified**: `app.module.ts`, `config.module.ts`
+- **Test Command**: `./scripts/test-env-loading.sh`
+- **Validation**: `./scripts/validate-env.sh`
+
+### 15. **Production Deployment Best Practices**
+- **Always rebuild containers**: `docker-compose down && docker-compose up --build -d`
+- **Never use restart**: Code changes require full rebuild
+- **Test after deployment**: Run validation scripts
+- **Monitor logs**: Check all container logs after deployment
+- **Backup before cleanup**: Create temporary backup before removing files
+
+### 16. **Known Working Configuration (As of Aug 2025)**
+```bash
+# Production Server Status: ✅ STABLE
+- All 9 containers: healthy/running
+- All API endpoints: working (CDR, Recordings, WebSocket)
+- Frontend: fully functional
+- Database: connected and operational
+- FreeSWITCH: online and ready
+
+# Remaining 404 pages (non-critical):
+- /dashboard/reports (not implemented)
+- /dashboard/analytics/advanced (not implemented)
+- /dashboard/monitoring (not implemented)
+```
+
+### 17. **Emergency Debugging Workflow**
+1. **Check container status**: `docker-compose ps`
+2. **Validate environment**: `./scripts/validate-env.sh`
+3. **Test API connectivity**: `./scripts/test-production-api.sh`
+4. **Check logs**: `docker-compose logs -f [service-name]`
+5. **Browser console**: Check for JavaScript errors
+6. **Network tab**: Check API call responses
+7. **If API fails**: Check route ordering in controllers
+8. **If Next.js routing fails**: Consider alternative route names
