@@ -17,7 +17,7 @@ export interface UseNetworkConfigOptions {
 }
 
 export function useNetworkConfig(options: UseNetworkConfigOptions = {}) {
-  const { autoRefresh = false, refreshInterval = 30000 } = options;
+  const { autoRefresh = false, refreshInterval = 60000 } = options; // Tăng interval lên 60s
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [isValidating, setIsValidating] = useState(false);
@@ -43,9 +43,10 @@ export function useNetworkConfig(options: UseNetworkConfigOptions = {}) {
       }
     },
     refetchInterval: autoRefresh ? refreshInterval : false,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    retry: 3,
-    retryDelay: 1000,
+    staleTime: 10 * 60 * 1000, // Tăng stale time lên 10 phút
+    retry: 2, // Giảm retry xuống 2 lần
+    retryDelay: 2000, // Tăng delay lên 2s
+    refetchOnWindowFocus: false, // Tắt refetch khi focus window
   });
 
   // Query for configuration status
@@ -118,13 +119,15 @@ export function useNetworkConfig(options: UseNetworkConfigOptions = {}) {
           title: 'Thành công',
           description: `Đã phát hiện IP external: ${result.detectedIp} (${result.method})`,
         });
-        return result.detectedIp;
+        // Return detected IP để component có thể sử dụng
+        return result;
       } else {
         toast({
           title: 'Cảnh báo',
           description: result.error || 'Không thể phát hiện IP external',
           variant: 'destructive',
         });
+        throw new Error(result.error || 'Không thể phát hiện IP external');
       }
     },
     onError: (error: Error) => {
@@ -243,7 +246,7 @@ export function useNetworkConfig(options: UseNetworkConfigOptions = {}) {
     // Actions
     updateConfig: updateConfigMutation.mutate,
     applyConfig: applyConfigMutation.mutate,
-    detectExternalIp: detectIpMutation.mutate,
+    detectExternalIp: detectIpMutation.mutateAsync, // Sử dụng mutateAsync để có thể await result
     syncToXml: syncXmlMutation.mutate,
     resetToDefault: resetToDefaultMutation.mutate,
     validateConfig,

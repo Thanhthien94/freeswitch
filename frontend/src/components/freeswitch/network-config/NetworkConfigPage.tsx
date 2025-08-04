@@ -49,7 +49,7 @@ export function NetworkConfigPage() {
     validateConfig,
     clearValidation,
     refreshAll,
-  } = useNetworkConfig({ autoRefresh: true, refreshInterval: 30000 });
+  } = useNetworkConfig({ autoRefresh: false }); // Tắt auto-refresh để cải thiện UX
 
   // Debug logging
   console.log('🔍 NetworkConfigPage: Hook state:', {
@@ -126,9 +126,16 @@ export function NetworkConfigPage() {
 
   const handleDetectIp = async () => {
     try {
-      await detectExternalIp();
-      // The detectExternalIp mutation will handle success/error via toast
-      // If successful, user can manually copy the detected IP from the toast message
+      const result = await detectExternalIp();
+      // Tự động điền detected IP vào form
+      if (result && result.success && result.detectedIp) {
+        setFormData(prev => ({
+          ...prev,
+          externalIp: result.detectedIp
+        }));
+        setHasChanges(true);
+        console.log('✅ Auto-filled detected IP:', result.detectedIp);
+      }
     } catch (error) {
       console.error('Failed to detect IP:', error);
     }
