@@ -121,7 +121,7 @@ export async function deleteSession() {
 export const verifySession = cache(async () => {
   try {
     // Check backend session via /auth/me endpoint - use public domain
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1'
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
     console.log('🔍 verifySession: Using API URL:', apiUrl)
     console.log('🔍 Environment NEXT_PUBLIC_API_URL:', process.env.NEXT_PUBLIC_API_URL)
     const cookieStore = await cookies()
@@ -131,9 +131,9 @@ export const verifySession = cache(async () => {
     const cookieHeader = cookies.map(cookie => `${cookie.name}=${cookie.value}`).join('; ')
 
     console.log('🔍 Forwarding cookies to backend:', cookieHeader)
-    console.log('🔍 Full URL:', `${apiUrl}/auth/me`)
+    console.log('🔍 Full URL:', `${apiUrl}/api/v1/auth/me`)
 
-    const response = await fetch(`${apiUrl}/auth/me`, {
+    const response = await fetch(`${apiUrl}/api/v1/auth/me`, {
       method: 'GET',
       headers: {
         'Cookie': cookieHeader,
@@ -177,14 +177,14 @@ export const verifySession = cache(async () => {
 export const getCurrentUser = cache(async (): Promise<User | null> => {
   try {
     // Check backend session via /auth/me endpoint - use public domain
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1'
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
     const cookieStore = await cookies()
 
     // Get all cookies to forward to backend
     const cookies = cookieStore.getAll()
     const cookieHeader = cookies.map(cookie => `${cookie.name}=${cookie.value}`).join('; ')
 
-    const response = await fetch(`${apiUrl}/auth/me`, {
+    const response = await fetch(`${apiUrl}/api/v1/auth/me`, {
       method: 'GET',
       headers: {
         'Cookie': cookieHeader,

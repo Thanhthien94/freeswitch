@@ -2,7 +2,7 @@
 
 // API Client Configuration
 // Use public domain for both browser and server-side to avoid mixed content issues
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
 // Request configuration type
 interface RequestConfig {
@@ -22,7 +22,7 @@ async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Re
   // Session-based authentication - cookies are automatically included
 
   // Make request with session cookies + JWT token
-  const response = await fetch(`${API_BASE_URL}${url}`, {
+  const response = await fetch(`${API_BASE_URL}/api/v1${url}`, {
     ...options,
     headers,
     credentials: 'include', // Include session cookies
