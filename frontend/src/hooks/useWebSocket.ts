@@ -30,8 +30,8 @@ interface UseWebSocketReturn {
   refreshActiveCalls: () => void;
   refreshSystemStatus: () => void;
 
-  // Token management
-  retryGetToken: () => void;
+  // Connection management
+  retryConnection: () => void;
   clearTokenError: () => void;
 
   // Event subscription
