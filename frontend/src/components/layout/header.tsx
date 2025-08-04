@@ -73,13 +73,29 @@ export function Header() {
               <span>Settings</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => {
-              // Use form submission for logout
-              const form = document.createElement('form');
-              form.method = 'POST';
-              form.action = '/api/auth/logout';
-              document.body.appendChild(form);
-              form.submit();
+            <DropdownMenuItem onClick={async () => {
+              try {
+                // Call logout API directly
+                const response = await fetch('/api/auth/logout', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                });
+
+                if (response.ok || response.redirected) {
+                  // Redirect to login page
+                  window.location.href = '/login';
+                } else {
+                  console.error('Logout failed:', response.status);
+                  // Still redirect to login on error
+                  window.location.href = '/login';
+                }
+              } catch (error) {
+                console.error('Logout error:', error);
+                // Still redirect to login on error
+                window.location.href = '/login';
+              }
             }}>
               <LogOut className="mr-2 h-4 w-4" />
               <span>Log out</span>
