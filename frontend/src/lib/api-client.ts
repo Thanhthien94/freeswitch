@@ -1,8 +1,8 @@
 // Modern NextJS 15 API Client - Session-based authentication
 
 // API Client Configuration
-// Use public domain for both browser and server-side to avoid mixed content issues
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+// Use FE Proxy Routes for session-based authentication
+const API_BASE_URL = '/api'; // Use frontend proxy routes instead of direct backend calls
 
 // Request configuration type
 interface RequestConfig {
@@ -21,10 +21,8 @@ async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Re
 
   // Session-based authentication - cookies are automatically included
 
-  // Make request with session cookies + JWT token
-  // Remove /api/v1 from API_BASE_URL to avoid duplicate
-  const baseUrl = API_BASE_URL.replace('/api/v1', '');
-  const response = await fetch(`${baseUrl}/api/v1${url}`, {
+  // Make request using FE Proxy Routes (session cookies automatically included)
+  const response = await fetch(`${API_BASE_URL}${url}`, {
     ...options,
     headers,
     credentials: 'include', // Include session cookies
