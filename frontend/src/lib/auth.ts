@@ -121,7 +121,8 @@ export async function deleteSession() {
 export const verifySession = cache(async () => {
   try {
     // Check backend session via /auth/me endpoint - use public domain
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
+    // Remove /api/v1 from NEXT_PUBLIC_API_URL to avoid duplicate
+    const apiUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000').replace('/api/v1', '')
     console.log('🔍 verifySession: Using API URL:', apiUrl)
     console.log('🔍 Environment NEXT_PUBLIC_API_URL:', process.env.NEXT_PUBLIC_API_URL)
     const cookieStore = await cookies()
