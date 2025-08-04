@@ -258,8 +258,10 @@ export async function logout(): Promise<void> {
     // No need to delete local session since we're using backend sessions
     console.log('✅ Backend session logout completed')
 
-    // Redirect to login
-    redirect('/login')
+    // Force redirect to production domain to avoid 0.0.0.0 issue
+    const redirectUrl = process.env.NEXTAUTH_URL || process.env.DOMAIN || 'https://office.finstar.vn'
+    console.log('🔍 Redirecting to:', `${redirectUrl}/login`)
+    redirect(`${redirectUrl}/login`)
   } catch (error) {
     console.error('🔍 Logout error:', error)
 
@@ -268,7 +270,8 @@ export async function logout(): Promise<void> {
       throw error
     }
 
-    // Even if there's an error, redirect to login
-    redirect('/login')
+    // Even if there's an error, redirect to login with production domain
+    const redirectUrl = process.env.NEXTAUTH_URL || process.env.DOMAIN || 'https://office.finstar.vn'
+    redirect(`${redirectUrl}/login`)
   }
 }
