@@ -55,19 +55,28 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('🔍 Frontend POST /api/freeswitch/sip-profiles called')
-    
+    // Forward POST request to backend with cookies - use public domain
+    // Remove /api/v1 from NEXT_PUBLIC_API_URL to avoid duplicate
+    const backendUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000').replace('/api/v1', '')
+    const fullUrl = `${backendUrl}/api/v1/freeswitch/sip-profiles`
+    const rawCookies = request.headers.get('cookie') || ''
+
+    // Decode cookies to prevent double-encoding
+    const cookies = decodeURIComponent(rawCookies)
+
     const body = await request.json()
+
+    console.log('🔍 Frontend POST /api/freeswitch/sip-profiles called')
+    console.log('🔍 Backend URL:', fullUrl)
     console.log('🔍 Request body:', body)
 
-    const backendUrl = `${BACKEND_URL}/freeswitch/sip-profiles`
-    console.log('🔍 Backend URL:', backendUrl)
-
-    const response = await fetch(backendUrl, {
+    const response = await fetch(fullUrl, {
       method: 'POST',
       headers: {
-        'Cookie': request.headers.get('cookie') || '',
         'Content-Type': 'application/json',
+        'Cookie': cookies,
+        'User-Agent': request.headers.get('user-agent') || '',
+        'Accept': request.headers.get('accept') || 'application/json',
       },
       body: JSON.stringify(body),
     })

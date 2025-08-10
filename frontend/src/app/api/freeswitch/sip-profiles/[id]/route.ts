@@ -56,20 +56,29 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
+    // Forward PUT request to backend with cookies - use public domain
+    // Remove /api/v1 from NEXT_PUBLIC_API_URL to avoid duplicate
+    const backendUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000').replace('/api/v1', '')
+    const fullUrl = `${backendUrl}/api/v1/freeswitch/sip-profiles/${params.id}`
+    const rawCookies = request.headers.get('cookie') || ''
+
+    // Decode cookies to prevent double-encoding
+    const cookies = decodeURIComponent(rawCookies)
+
+    const body = await request.json()
+
     console.log('🔍 Frontend PUT /api/freeswitch/sip-profiles/[id] called')
     console.log('🔍 SIP Profile ID:', params.id)
-    
-    const body = await request.json()
+    console.log('🔍 Backend URL:', fullUrl)
     console.log('🔍 Request body:', body)
 
-    const backendUrl = `${BACKEND_URL}/freeswitch/sip-profiles/${params.id}`
-    console.log('🔍 Backend URL:', backendUrl)
-
-    const response = await fetch(backendUrl, {
+    const response = await fetch(fullUrl, {
       method: 'PUT',
       headers: {
-        'Cookie': request.headers.get('cookie') || '',
         'Content-Type': 'application/json',
+        'Cookie': cookies,
+        'User-Agent': request.headers.get('user-agent') || '',
+        'Accept': request.headers.get('accept') || 'application/json',
       },
       body: JSON.stringify(body),
     })
@@ -102,17 +111,26 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
+    // Forward DELETE request to backend with cookies - use public domain
+    // Remove /api/v1 from NEXT_PUBLIC_API_URL to avoid duplicate
+    const backendUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000').replace('/api/v1', '')
+    const fullUrl = `${backendUrl}/api/v1/freeswitch/sip-profiles/${params.id}`
+    const rawCookies = request.headers.get('cookie') || ''
+
+    // Decode cookies to prevent double-encoding
+    const cookies = decodeURIComponent(rawCookies)
+
     console.log('🔍 Frontend DELETE /api/freeswitch/sip-profiles/[id] called')
     console.log('🔍 SIP Profile ID:', params.id)
-    
-    const backendUrl = `${BACKEND_URL}/freeswitch/sip-profiles/${params.id}`
-    console.log('🔍 Backend URL:', backendUrl)
+    console.log('🔍 Backend URL:', fullUrl)
 
-    const response = await fetch(backendUrl, {
+    const response = await fetch(fullUrl, {
       method: 'DELETE',
       headers: {
-        'Cookie': request.headers.get('cookie') || '',
         'Content-Type': 'application/json',
+        'Cookie': cookies,
+        'User-Agent': request.headers.get('user-agent') || '',
+        'Accept': request.headers.get('accept') || 'application/json',
       },
     })
 
