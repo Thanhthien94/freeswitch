@@ -1,23 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.finstar.vn/api/v1'
-
 export async function GET(request: NextRequest) {
   try {
-    console.log('🔍 Frontend /api/freeswitch/sip-profiles called')
-    
+    // Forward request to backend with cookies - use public domain
+    // Remove /api/v1 from NEXT_PUBLIC_API_URL to avoid duplicate
+    const backendUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000').replace('/api/v1', '')
+
+    // Get query parameters from the request
     const { searchParams } = new URL(request.url)
     const queryString = searchParams.toString()
-    
-    const backendUrl = `${BACKEND_URL}/freeswitch/sip-profiles${queryString ? `?${queryString}` : ''}`
-    console.log('🔍 Backend URL:', backendUrl)
+
+    const fullUrl = `${backendUrl}/api/v1/freeswitch/sip-profiles${queryString ? `?${queryString}` : ''}`
+    const rawCookies = request.headers.get('cookie') || ''
+
+    // Decode cookies to prevent double-encoding
+    const cookies = decodeURIComponent(rawCookies)
+
+    console.log('🔍 Frontend /api/freeswitch/sip-profiles called')
+    console.log('🔍 Backend URL:', fullUrl)
     console.log('🔍 Query params:', queryString)
 
-    const response = await fetch(backendUrl, {
+    const response = await fetch(fullUrl, {
       method: 'GET',
       headers: {
-        'Cookie': request.headers.get('cookie') || '',
         'Content-Type': 'application/json',
+        'Cookie': cookies,
+        'User-Agent': request.headers.get('user-agent') || '',
+        'Accept': request.headers.get('accept') || 'application/json',
       },
     })
 

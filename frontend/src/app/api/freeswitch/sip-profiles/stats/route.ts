@@ -1,19 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.finstar.vn/api/v1'
-
 export async function GET(request: NextRequest) {
   try {
-    console.log('🔍 Frontend /api/freeswitch/sip-profiles/stats called')
-    
-    const backendUrl = `${BACKEND_URL}/freeswitch/sip-profiles/stats`
-    console.log('🔍 Backend URL:', backendUrl)
+    // Forward request to backend with cookies - use public domain
+    // Remove /api/v1 from NEXT_PUBLIC_API_URL to avoid duplicate
+    const backendUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000').replace('/api/v1', '')
+    const fullUrl = `${backendUrl}/api/v1/freeswitch/sip-profiles/stats`
+    const rawCookies = request.headers.get('cookie') || ''
 
-    const response = await fetch(backendUrl, {
+    // Decode cookies to prevent double-encoding
+    const cookies = decodeURIComponent(rawCookies)
+
+    console.log('🔍 Frontend /api/freeswitch/sip-profiles/stats called')
+    console.log('🔍 Backend URL:', fullUrl)
+
+    const response = await fetch(fullUrl, {
       method: 'GET',
       headers: {
-        'Cookie': request.headers.get('cookie') || '',
         'Content-Type': 'application/json',
+        'Cookie': cookies,
+        'User-Agent': request.headers.get('user-agent') || '',
+        'Accept': request.headers.get('accept') || 'application/json',
       },
     })
 
