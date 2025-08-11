@@ -19,6 +19,7 @@ import { Roles } from '../../auth/decorators/roles.decorator';
 import { CurrentUser } from '../../auth/decorators/auth.decorators';
 import { FreeSwitchSipProfileService, CreateSipProfileDto, UpdateSipProfileDto, SipProfileQueryDto } from '../services/freeswitch-sip-profile.service';
 import { FreeSwitchSipProfile } from '../entities/freeswitch-sip-profile.entity';
+import { FreeSwitchEslService } from '../services/freeswitch-esl.service';
 
 @ApiTags('FreeSWITCH SIP Profiles')
 @ApiBearerAuth('JWT-auth')
@@ -27,6 +28,7 @@ import { FreeSwitchSipProfile } from '../entities/freeswitch-sip-profile.entity'
 export class FreeSwitchSipProfileController {
   constructor(
     private readonly sipProfileService: FreeSwitchSipProfileService,
+    private readonly eslService: FreeSwitchEslService,
   ) {}
 
   @Post()
@@ -113,5 +115,31 @@ export class FreeSwitchSipProfileController {
   @ApiResponse({ status: HttpStatus.CONFLICT, description: 'Cannot delete SIP profile with dependencies' })
   async remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
     return this.sipProfileService.remove(id);
+  }
+
+  @Post(':id/reload')
+  @Roles('superadmin', 'admin')
+  @ApiOperation({ summary: 'Reload SIP profile in FreeSWITCH' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'SIP profile reloaded successfully' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'SIP profile not found' })
+  async reloadProfile(@Param('id', ParseUUIDPipe) id: string) {
+    // Get profile to get the name
+    const profile = await this.sipProfileService.findOne(id);
+
+    // Reload the profile using ESL service
+    return this.eslService.reloadSipProfile(profile.name);
+  }
+
+  @Post(':id/test')
+  @Roles('superadmin', 'admin')
+  @ApiOperation({ summary: 'Test SIP profile connection' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'SIP profile test completed' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'SIP profile not found' })
+  async testProfile(@Param('id', ParseUUIDPipe) id: string) {
+    // Get profile to get the name
+    const profile = await this.sipProfileService.findOne(id);
+
+    // Get profile status using ESL service
+    return this.eslService.getSipProfileStatus(profile.name);
   }
 }
