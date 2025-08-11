@@ -119,7 +119,7 @@ export default function SipProfilesPage() {
 
   // Test profile mutation
   const testProfileMutation = useMutation({
-    mutationFn: sipProfileService.testSipProfile,
+    mutationFn: (id: string) => sipProfileService.testSipProfile(id),
     onSuccess: (data) => {
       if (data.success) {
         toast.success(data.message);
@@ -134,7 +134,7 @@ export default function SipProfilesPage() {
 
   // Reload profile mutation
   const reloadProfileMutation = useMutation({
-    mutationFn: sipProfileService.reloadSipProfile,
+    mutationFn: (id: string) => sipProfileService.reloadSipProfile(id),
     onSuccess: (data) => {
       toast.success(data.message);
     },
