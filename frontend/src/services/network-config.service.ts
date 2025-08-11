@@ -198,7 +198,7 @@ class NetworkConfigService {
    */
   async resetToDefault(): Promise<GlobalNetworkConfig> {
     const response = await api.post<ApiResponse<GlobalNetworkConfig>>(
-      `${this.baseUrl}/reset-to-default`
+      `${this.baseUrl}/reset`
     );
     if (!response.success || !response.data) {
       throw new Error(response.message || 'Failed to reset network configuration');

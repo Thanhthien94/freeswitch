@@ -207,3 +207,17 @@ Before every production deployment:
 6. **Network tab**: Check API call responses
 7. **If API fails**: Check route ordering in controllers
 8. **If Next.js routing fails**: Consider alternative route names
+
+### 18. **CRITICAL DEBUGGING RULES - ALWAYS FOLLOW**
+- ❌ **NEVER assume without checking Network tab first**
+- ✅ **ALWAYS check Browser Developer Tools Network tab BEFORE analyzing code**
+- ✅ **ALWAYS verify API routes exist before debugging service layer**
+- ✅ **ALWAYS match service endpoint URLs with actual API route paths**
+- ❌ **NEVER make assumptions about API calls without evidence**
+- ✅ **ALWAYS follow evidence-based debugging workflow**
+
+### 19. **API Route Mismatch Issues Fixed**
+- **Problem**: Service calling `/reset-to-default` but API route is `/reset`
+- **Solution**: Updated `networkConfigService.resetToDefault()` to use correct endpoint
+- **Lesson**: Always verify service URLs match API route directory structure
+- **Files affected**: `frontend/src/services/network-config.service.ts`
