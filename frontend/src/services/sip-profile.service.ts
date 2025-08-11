@@ -107,13 +107,15 @@ class SipProfileService {
     if (params?.sortOrder) searchParams.append('sortOrder', params.sortOrder);
 
     const url = searchParams.toString() ? `${this.baseUrl}?${searchParams}` : this.baseUrl;
-    const response = await api.get<SipProfile[]>(url);
+    const response = await api.get<{data: SipProfile[], total: number, page: number, limit: number}>(url);
+
+    // Backend already returns the correct structure: {data, total, page, limit}
     return {
-      data: response,
-      total: (response as any).pagination?.total || response.length || 0,
-      page: (response as any).pagination?.page || 1,
-      limit: (response as any).pagination?.limit || 10,
-      totalPages: Math.ceil(((response as any).pagination?.total || response.length || 0) / ((response as any).pagination?.limit || 10))
+      data: response.data,
+      total: response.total,
+      page: response.page,
+      limit: response.limit,
+      totalPages: Math.ceil(response.total / response.limit)
     };
   }
 
