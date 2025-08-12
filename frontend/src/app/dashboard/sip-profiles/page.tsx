@@ -56,6 +56,7 @@ export default function SipProfilesPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<SipProfile | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -144,9 +145,22 @@ export default function SipProfilesPage() {
   });
 
   const handleDelete = (profile: SipProfile) => {
-    if (confirm(`Are you sure you want to delete SIP profile "${profile.name}"?`)) {
-      deleteMutation.mutate(profile.id);
+    // Use a proper confirmation dialog instead of window.confirm
+    setSelectedProfile(profile);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (selectedProfile) {
+      deleteMutation.mutate(selectedProfile.id);
+      setIsDeleteDialogOpen(false);
+      setSelectedProfile(null);
     }
+  };
+
+  const handleCancelDelete = () => {
+    setIsDeleteDialogOpen(false);
+    setSelectedProfile(null);
   };
 
   const handleToggleStatus = (profile: SipProfile) => {
@@ -477,6 +491,30 @@ export default function SipProfilesPage() {
         }}
       />
 
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete SIP Profile</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete SIP profile "{selectedProfile?.name}"?
+              This action cannot be undone and will remove all associated configurations.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end space-x-2 mt-4">
+            <Button variant="outline" onClick={handleCancelDelete}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmDelete}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
     </div>
   );

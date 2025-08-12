@@ -127,13 +127,25 @@ export const api = {
 
   // DELETE request
   delete: async <T = unknown>(url: string, config?: RequestConfig): Promise<T> => {
+    console.log('🔍 API Client: Making DELETE request to:', url);
+    console.log('🔍 API Client: Full URL will be:', `${API_BASE_URL}${url}`);
+
     const response = await fetchWithAuth(url, {
       method: 'DELETE',
       ...config,
     });
 
+    console.log('🔍 API Client: DELETE response status:', response.status);
+
     if (!response.ok) {
+      console.error('❌ API Client: DELETE HTTP error:', response.status);
       throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    // Handle 204 No Content response
+    if (response.status === 204) {
+      console.log('✅ API Client: DELETE successful (204 No Content)');
+      return {} as T; // Return empty object for 204 responses
     }
 
     return response.json();
