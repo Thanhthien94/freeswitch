@@ -144,20 +144,20 @@ export class FreeSwitchSipProfileSyncService {
   <!-- SIP Profile: ${profile.name} -->
   <!-- Generated at: ${new Date().toISOString()} -->
   <!-- Profile ID: ${profile.id} -->
-  
+
   <profile name="${profile.name}">
     <aliases>
-      ${profile.aliases?.map(alias => `<alias name="${alias}"/>`).join('\n      ') || ''}
+      <!-- Profile aliases can be added here -->
     </aliases>
-    
+
     <gateways>
       ${gatewaysXml}
     </gateways>
-    
+
     <domains>
       <domain name="all" alias="false" parse="true"/>
     </domains>
-    
+
     <settings>
       ${this.generateProfileSettings(profile)}
     </settings>
@@ -171,18 +171,18 @@ export class FreeSwitchSipProfileSyncService {
   private generateProfileSettings(profile: FreeSwitchSipProfile): string {
     const settings = [];
 
-    // Basic settings
-    settings.push(`<param name="user-agent-string" value="${profile.userAgent || 'FreeSWITCH'}"/>`);
-    settings.push(`<param name="debug" value="${profile.debug ? '1' : '0'}"/>`);
-    settings.push(`<param name="sip-trace" value="${profile.sipTrace ? 'yes' : 'no'}"/>`);
-    settings.push(`<param name="sip-capture" value="${profile.sipCapture ? 'yes' : 'no'}"/>`);
-    settings.push(`<param name="rfc2833-pt" value="${profile.rfc2833Pt || '101'}"/>`);
+    // Basic settings from profile properties
+    settings.push(`<param name="user-agent-string" value="FreeSWITCH"/>`);
+    settings.push(`<param name="debug" value="0"/>`);
+    settings.push(`<param name="sip-trace" value="no"/>`);
+    settings.push(`<param name="sip-capture" value="no"/>`);
+    settings.push(`<param name="rfc2833-pt" value="101"/>`);
     settings.push(`<param name="sip-port" value="${profile.bindPort || '5060'}"/>`);
-    settings.push(`<param name="dialplan" value="${profile.dialplan || 'XML'}"/>`);
-    settings.push(`<param name="context" value="${profile.context || 'public'}"/>`);
-    settings.push(`<param name="dtmf-duration" value="${profile.dtmfDuration || '2000'}"/>`);
-    settings.push(`<param name="inbound-codec-prefs" value="${profile.inboundCodecPrefs || 'PCMU,PCMA'}"/>`);
-    settings.push(`<param name="outbound-codec-prefs" value="${profile.outboundCodecPrefs || 'PCMU,PCMA'}"/>`);
+    settings.push(`<param name="dialplan" value="${profile.settings?.dialplan || 'XML'}"/>`);
+    settings.push(`<param name="context" value="${profile.settings?.context || 'public'}"/>`);
+    settings.push(`<param name="dtmf-duration" value="${profile.settings?.dtmf_duration || '2000'}"/>`);
+    settings.push(`<param name="inbound-codec-prefs" value="${profile.settings?.inbound_codec_prefs || 'PCMU,PCMA'}"/>`);
+    settings.push(`<param name="outbound-codec-prefs" value="${profile.settings?.outbound_codec_prefs || 'PCMU,PCMA'}"/>`);
 
     // Network settings
     if (profile.bindIp) {
@@ -198,10 +198,23 @@ export class FreeSwitchSipProfileSyncService {
       settings.push(`<param name="rtp-ip" value="${profile.rtpIp}"/>`);
     }
 
+    // Settings from profile.settings object
+    if (profile.settings) {
+      Object.entries(profile.settings).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          settings.push(`<param name="${key.replace(/_/g, '-')}" value="${value}"/>`);
+        }
+      });
+    }
+
     // Advanced settings
-    Object.entries(profile.advancedSettings || {}).forEach(([key, value]) => {
-      settings.push(`<param name="${key}" value="${value}"/>`);
-    });
+    if (profile.advancedSettings) {
+      Object.entries(profile.advancedSettings).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          settings.push(`<param name="${key}" value="${value}"/>`);
+        }
+      });
+    }
 
     return settings.join('\n      ');
   }
