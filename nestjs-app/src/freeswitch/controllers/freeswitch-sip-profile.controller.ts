@@ -20,6 +20,7 @@ import { CurrentUser } from '../../auth/decorators/auth.decorators';
 import { FreeSwitchSipProfileService, CreateSipProfileDto, UpdateSipProfileDto, SipProfileQueryDto } from '../services/freeswitch-sip-profile.service';
 import { FreeSwitchSipProfile } from '../entities/freeswitch-sip-profile.entity';
 import { FreeSwitchEslService } from '../services/freeswitch-esl.service';
+import { FreeSwitchSipProfileSyncService } from '../services/freeswitch-sip-profile-sync.service';
 
 @ApiTags('FreeSWITCH SIP Profiles')
 @ApiBearerAuth('JWT-auth')
@@ -29,6 +30,7 @@ export class FreeSwitchSipProfileController {
   constructor(
     private readonly sipProfileService: FreeSwitchSipProfileService,
     private readonly eslService: FreeSwitchEslService,
+    private readonly sipProfileSyncService: FreeSwitchSipProfileSyncService,
   ) {}
 
   @Post()
@@ -126,8 +128,26 @@ export class FreeSwitchSipProfileController {
     // Get profile to get the name
     const profile = await this.sipProfileService.findOne(id);
 
-    // Reload the profile using ESL service
-    return this.eslService.reloadSipProfile(profile.name);
+    // Step 1: Sync profile configuration to FreeSWITCH first
+    const syncResult = await this.sipProfileSyncService.syncSipProfileToFreeSWITCH(id);
+
+    if (!syncResult.success) {
+      return {
+        success: false,
+        message: `Failed to sync profile before reload: ${syncResult.message}`,
+        syncResult,
+      };
+    }
+
+    // Step 2: Reload the profile using ESL service
+    const reloadResult = await this.eslService.reloadSipProfile(profile.name);
+
+    return {
+      success: true,
+      message: `SIP profile ${profile.name} synced and reloaded successfully`,
+      syncResult,
+      reloadResult,
+    };
   }
 
   @Post(':id/test')
@@ -139,7 +159,40 @@ export class FreeSwitchSipProfileController {
     // Get profile to get the name
     const profile = await this.sipProfileService.findOne(id);
 
-    // Get profile status using ESL service
-    return this.eslService.getSipProfileStatus(profile.name);
+    // Step 1: Sync profile configuration to FreeSWITCH first (ensure it exists)
+    const syncResult = await this.sipProfileSyncService.syncSipProfileToFreeSWITCH(id);
+
+    if (!syncResult.success) {
+      return {
+        success: false,
+        message: `Failed to sync profile before test: ${syncResult.message}`,
+        syncResult,
+      };
+    }
+
+    // Step 2: Get profile status using ESL service
+    const statusResult = await this.eslService.getSipProfileStatus(profile.name);
+
+    return {
+      success: true,
+      message: `SIP profile ${profile.name} synced and tested successfully`,
+      syncResult,
+      statusResult,
+    };
+  }
+
+  @Post('sync-all')
+  @Roles('superadmin', 'admin')
+  @ApiOperation({ summary: 'Sync all SIP profiles to FreeSWITCH' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'All SIP profiles synced successfully' })
+  async syncAllProfiles() {
+    const syncResult = await this.sipProfileSyncService.syncAllSipProfiles();
+
+    return {
+      success: syncResult.success,
+      message: syncResult.message,
+      details: syncResult.details,
+      errors: syncResult.errors,
+    };
   }
 }

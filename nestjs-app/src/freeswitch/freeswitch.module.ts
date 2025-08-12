@@ -19,6 +19,7 @@ import { FreeSwitchConfigController } from './controllers/freeswitch-config.cont
 
 // Services
 import { FreeSwitchSipProfileService } from './services/freeswitch-sip-profile.service';
+import { FreeSwitchSipProfileSyncService } from './services/freeswitch-sip-profile-sync.service';
 import { FreeSwitchGatewayService } from './services/freeswitch-gateway.service';
 import { FreeSwitchDialplanService } from './services/freeswitch-dialplan.service';
 import { FreeSwitchExtensionService } from './services/freeswitch-extension.service';
@@ -65,6 +66,7 @@ import { EslModule } from '../esl/esl.module';
   ],
   providers: [
     FreeSwitchSipProfileService,
+    FreeSwitchSipProfileSyncService,
     FreeSwitchGatewayService,
     FreeSwitchDialplanService,
     FreeSwitchExtensionService,
@@ -78,6 +80,7 @@ import { EslModule } from '../esl/esl.module';
   ],
   exports: [
     FreeSwitchSipProfileService,
+    FreeSwitchSipProfileSyncService,
     FreeSwitchGatewayService,
     FreeSwitchDialplanService,
     FreeSwitchExtensionService,
