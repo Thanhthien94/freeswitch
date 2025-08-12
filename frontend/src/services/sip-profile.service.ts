@@ -132,8 +132,9 @@ class SipProfileService {
     return api.put<SipProfile>(`${this.baseUrl}/${id}`, data);
   }
 
-  async deleteSipProfile(id: string): Promise<void> {
+  deleteSipProfile = async (id: string): Promise<void> => {
     console.log('🔍 SIP Profile Service: Deleting profile with ID:', id);
+    console.log('🔍 SIP Profile Service: baseUrl value:', this.baseUrl);
     console.log('🔍 SIP Profile Service: Delete URL:', `${this.baseUrl}/${id}`);
     await api.delete(`${this.baseUrl}/${id}`);
   }
